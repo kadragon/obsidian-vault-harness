@@ -32,22 +32,26 @@ description: |
 
 ## 2단계: 볼트에서 본인 업무 수집
 
-아래 두 경로에서 `status: open`, `status: active`, `status: in-progress` 인 노트를 찾는다.
+아래 세 경로에서 활성 노트를 찾는다. 디렉토리가 없으면 해당 경로를 건너뛰고 사용자에게 알린다.
 
 ```bash
 VAULT=/Users/kadragon/ObsidianVault
 
-# 프로젝트 노트 (12_Projects/현재연도/)
-grep -rl "^status: open\|^status: active\|^status: in-progress" \
-  "$VAULT/12_Projects/$(date +%Y)/" 2>/dev/null
+# 프로젝트 노트 (12_Projects/ 전체 — 연도·연도접두·프로젝트명 폴더 모두 포함)
+grep -rlE "^status:\s*\"?(open|active|in-progress)\"?" \
+  "$VAULT/12_Projects/" 2>/dev/null
 
 # 업무사안 노트 (10_Areas/)
-grep -rl "^status: open\|^status: in-progress" \
+grep -rlE "^status:\s*\"?(open|active|in-progress)\"?" \
   "$VAULT/10_Areas/" 2>/dev/null
+
+# 변경사안 노트 (14_Changes/ — 인시던트·개선)
+grep -rlE "^status:\s*\"?(open|in-progress)\"?" \
+  "$VAULT/14_Changes/" 2>/dev/null
 ```
 
 각 노트에서 Read로 추출:
-- **프로젝트명**: 부모 폴더명 (`12_Projects/2026/계절학기 현장실습 운영/` → `계절학기 현장실습 운영`) 또는 `type: project` 노트의 `# 제목`
+- **프로젝트명**: 폴더명 우선 (`12_Projects/2026/계절학기 현장실습 운영/` → `계절학기 현장실습 운영`); 폴더명이 식별하기 어려운 경우(영문 코드, 숫자만 등)에 한해 `type: project` 노트의 `# 제목` 사용
 - **현황**: `## 현황` 섹션 불릿
 - **할 일**: `## 할 일` 섹션의 미완료 항목(`- [ ]`) + 마감일(`📅 YYYY-MM-DD`)
 - **담당 부서**: `#부서/학사관리과/...` 태그 → `[학사관리과]` 형식
@@ -130,7 +134,7 @@ grep -rl "^status: open\|^status: in-progress" \
 
 ## 출력 예시
 
-**1주 (4. 27. ~ 5. 3.)**
+**1주 (4. 27.(월) ~ 5. 3.(일))**
 
 ```
 포털·학사 통합 모바일 앱 구축
@@ -149,7 +153,7 @@ grep -rl "^status: open\|^status: in-progress" \
 2025학년도 대학회계 사업평가 결과 조정 (73.3점 → 75.3점, '보통' 등급)
 ```
 
-**2주 (4. 27. ~ 5. 10.)**
+**2주 (4. 27.(월) ~ 5. 10.(토))**
 
 ```
 계절학기 현장실습 운영

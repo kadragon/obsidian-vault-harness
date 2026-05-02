@@ -92,10 +92,10 @@ python3 .claude/skills/incident-analyze/scripts/new_incident_path.py {YYYY-MM-DD
 | `## 발생 정보` | 발생 일시 (`YYYY-MM-DD HH:mm`) + 기타 맥락 |
 | `## 프로시저` | `{ServiceName/methodName}` |
 | `## 메뉴 위치` | `{메뉴코드}` (텍스트 경로만; 태그는 `## 관련`으로) |
-| `## 할 일` | `- [ ] {진단 기반 처리 항목} 📅 {YYYY-MM-DD} ➕ {오늘 날짜}` |
 | `## 오류 구분` | Exception 클래스명 |
 | `### PARAMETER_INFO` | 핵심 파라미터만 발췌 (code block) |
 | `### ERR_INFO` | 에러 메시지 (code block) |
+| `## 할 일` | `- [ ] {진단 기반 처리 항목} 📅 {YYYY-MM-DD} ➕ {오늘 날짜}` |
 | `## 처리 결과` | 해결 후 결론 (완료 시 기록) |
 
 **사용자 정보 부족 시**: SESSION_USER_ID만 있고 부서명/사용자명을 특정할 수 없으면 `#부서/` 태그 없이 `## 발생 정보`에 `SESSION_USER_ID: {id}`로 기록한다.
