@@ -1,0 +1,61 @@
+# Dispatch Guide — Orchestrator 보조 참고
+
+`inbox-process` 오케스트레이터가 참조하는 세부 규칙 모음.
+
+## 루트 Triage 읽기 방법
+
+| 확장자 | 읽는 방법 |
+|--------|----------|
+| `.txt`, `.md` | Read 앞부분(~100줄) |
+| `.pdf` | `head -c 50`으로 헤더 확인 — `%PDF-`면 일반 PDF(Read `pages: "1-2"`), 그 외 포맷이면 파일명·맥락으로 추정 |
+| `.hwp`, `.hwpx`, `.xlsx`, `.docx` | 파싱 불가. 파일명·맥락으로 추정. 모호하면 사용자에게 문의 |
+
+> **Note:** PDF 내 특수 포맷(Handysoft 등) 추출은 오케스트레이터가 직접 처리하지 않는다. 워커(inbox-action-worker)가 action-branch.md 절차에 따라 처리한다.
+
+## 분류 힌트
+
+- **action 후보**: 공문 번호, 발신 부서, "요청", "제출", "회신", "기한", "조치", 내가 처리해야 할 내용
+- **reference 후보**: 정책 가이드, 보고서, 논문, 웹 클립, 기술 문서, "알아두면 좋은" 내용
+- **하이브리드**: 주 용도로 판단. 모호하면 사용자 확인.
+
+## Action 워커 호출 프롬프트 구조
+
+```
+다음 처리 단위를 10_Areas/ 업무사안 노트로 변환해줘. 세부 절차는
+.claude/skills/inbox-process/references/action-branch.md를 반드시 Read로 읽고 따를 것.
+
+처리 단위:
+- {절대경로1} → area: 수업성적 / 유사 노트 후보: [[...]], [[...]] / 태그 힌트: #업무/학사/수업성적
+- {절대경로2} → area: ?? (사용자 확인 필요)
+
+완료 후 각 단위별 생성 노트 경로 + 삭제 권고 목록을 보고. 원본 삭제는 하지 말 것.
+```
+
+## Reference 워커 호출 프롬프트 구조
+
+```
+다음 참고자료를 19_Reference/_Sources + _Wiki에 반영해줘. 세부 절차는
+.claude/skills/inbox-process/references/reference-branch.md를 반드시 Read로 읽고 따를 것.
+
+파일:
+- {절대경로1} (맥락 힌트: ...)
+- {절대경로2}
+
+완료 후 source/wiki/active note 링크 목록 + log 엔트리 + 삭제 권고를 보고. 원본 삭제는 하지 말 것.
+```
+
+## 최종 보고 형식
+
+```
+## 처리 완료
+- action: 2건 → 10_Areas/수업성적/..., 10_Areas/교직/...
+- reference: 3건 → _Sources 3건, _Wiki 2페이지 갱신
+- 루트 보류 1건: file_c.hwp (분류 확정 필요)
+
+## 삭제된 원본 파일
+- 01_Inbox/action/공문A.pdf
+- 01_Inbox/reference/파일B.pdf
+
+## 열린 질문
+- {에이전트가 보고한 열린 질문 병합}
+```

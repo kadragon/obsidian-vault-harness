@@ -1,0 +1,71 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__plugin_supabase_supabase__execute_sql",
+      "Bash(xxd \"/Users/kadragon/ObsidianVault/80_Inbox/통합학사시스템 다문화사회 전문가 수료증 관련 시스템 개발 요청.pdf\")",
+      "Skill(codex:rescue)",
+      "Bash(ls:*)",
+      "Bash(chmod +x:*)",
+      "Bash(bash /Users/kadragon/ObsidianVault/.claude/hooks/validate-tags.sh)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(mv 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스/1. 관련 공문 사본\\(총장결재\\).pdf' 'C:\\\\Dev\\\\ObsidianVault\\\\12_Projects\\\\2025\\\\교수자 AI 역량 강화 및 연구 지원 사업/과업심의관련/')",
+      "Bash(mv 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스/2. 과업지시서.hwpx' 'C:\\\\Dev\\\\ObsidianVault\\\\12_Projects\\\\2025\\\\교수자 AI 역량 강화 및 연구 지원 사업/과업심의관련/')",
+      "Bash(mv 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스/3. 심의 공문 사본.pdf' 'C:\\\\Dev\\\\ObsidianVault\\\\12_Projects\\\\2025\\\\교수자 AI 역량 강화 및 연구 지원 사업/과업심의관련/')",
+      "Bash(mv 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스/4. 과업내용 확정 종합 심의 결과서.pdf' 'C:\\\\Dev\\\\ObsidianVault\\\\12_Projects\\\\2025\\\\교수자 AI 역량 강화 및 연구 지원 사업/과업심의관련/')",
+      "Bash(mv 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스/2025-009_심의결과서.zip' 'C:\\\\Dev\\\\ObsidianVault\\\\12_Projects\\\\2025\\\\교수자 AI 역량 강화 및 연구 지원 사업/과업심의관련/')",
+      "Bash(mv 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스/[육성 5-3-3] 교수자 AI 역량 강화 및 연구지원을 위한 생성형 인공지능 서비스 구독권 구매 의뢰.pdf' 'C:\\\\Dev\\\\ObsidianVault\\\\12_Projects\\\\2025\\\\교수자 AI 역량 강화 및 연구 지원 사업/물품구입관련/')",
+      "Bash(mv 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스/견적서.zip' 'C:\\\\Dev\\\\ObsidianVault\\\\12_Projects\\\\2025\\\\교수자 AI 역량 강화 및 연구 지원 사업/물품구입관련/')",
+      "Bash(mv 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스/견적서_\\(주\\)모노플로우.pdf' 'C:\\\\Dev\\\\ObsidianVault\\\\12_Projects\\\\2025\\\\교수자 AI 역량 강화 및 연구 지원 사업/물품구입관련/')",
+      "Bash(mv 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스/견적서_아이티무유\\(주\\).pdf' 'C:\\\\Dev\\\\ObsidianVault\\\\12_Projects\\\\2025\\\\교수자 AI 역량 강화 및 연구 지원 사업/물품구입관련/')",
+      "Bash(mv 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스/사업자등록증_아이티우뮤\\(주\\).jpg' 'C:\\\\Dev\\\\ObsidianVault\\\\12_Projects\\\\2025\\\\교수자 AI 역량 강화 및 연구 지원 사업/물품구입관련/')",
+      "Bash(mkdir -p 'C:\\\\Dev\\\\ObsidianVault\\\\12_Projects\\\\2025\\\\교수자 AI 역량 강화 및 연구 지원 사업/계약관련')",
+      "Bash(mv 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스/계약/*' 'C:\\\\Dev\\\\ObsidianVault\\\\12_Projects\\\\2025\\\\교수자 AI 역량 강화 및 연구 지원 사업/계약관련/')",
+      "Bash(rmdir 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스/계약')",
+      "Bash(mkdir -p 'C:\\\\Dev\\\\ObsidianVault\\\\12_Projects\\\\2025\\\\교수자 AI 역량 강화 및 연구 지원 사업/서버구입관련')",
+      "Bash(mv 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스/서버 수입/*' 'C:\\\\Dev\\\\ObsidianVault\\\\12_Projects\\\\2025\\\\교수자 AI 역량 강화 및 연구 지원 사업/서버구입관련/')",
+      "Bash(rmdir 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스/서버 수입')",
+      "Bash(rm 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스\\\\\\(육성 5-3-3\\) 교수자 인공지능 역량 강화 및 연구 지원 사업 계획\\(안\\).hwp')",
+      "Bash(rmdir 'C:\\\\Dev\\\\ObsidianVault\\\\80_Inbox\\\\ChatGPT서비스')",
+      "Bash(cp -r /Users/kadragon/.claude/skills/inbox-processor /Users/kadragon/ObsidianVault/.claude/skills/inbox-process)",
+      "Bash(rm -rf /Users/kadragon/.claude/skills/inbox-processor)",
+      "Bash(python .claude/skills/inbox-process/scripts/extract_handysoft_pdf.py \"80_Inbox/통합학사시스템 기능 개선 개발 요청\\(현장실습\\).pdf\")",
+      "Bash(mv \"[본문] 국가인재원 5월 AI·디지털교육 대상자 확정 및 입교 안내.pdf\" action/)",
+      "Bash(mv \"붙임1 5월 AI·디지털교육 과정 확정자 명단_교육부xlsx\\(link\\).html\" action/)",
+      "Bash(mv \"붙임2 5월 AI·디지털교육 과정 입교 안내hwpx\\(link\\).html\" action/)",
+      "Bash(python3 .claude/skills/inbox-process/scripts/extract_handysoft_pdf.py \"80_Inbox/action/학습동아리/2026년 자기주도적 역량개발\\(동호회·학습동아리\\) 지원 계획 알림.pdf\")",
+      "Bash(python3 .claude/skills/inbox-process/scripts/new_work_path.py 교직 \"국가인재원 5월 AI·디지털교육 대상자 확정 및 입교 안내\" --yyyymm 202604 --json)",
+      "Bash(python3 .claude/skills/inbox-process/scripts/new_work_path.py 교직 \"2026년 자기주도적 역량개발 동호회·학습동아리 지원 계획\" --yyyymm 202603 --json)",
+      "Bash(qmd search *)",
+      "Bash(python3 .claude/skills/tag-normalize/scripts/validate_tag.py -)",
+      "Bash(rm \"[본문] 국가인재원 5월 AI·디지털교육 대상자 확정 및 입교 안내.pdf\")",
+      "Bash(rm action/\"[본문] 국가인재원 5월 AI·디지털교육 대상자 확정 및 입교 안내.pdf\" action/\"붙임1 5월 AI·디지털교육 과정 확정자 명단_교육부xlsx\\(link\\).html\" action/\"붙임2 5월 AI·디지털교육 과정 입교 안내hwpx\\(link\\).html\")",
+      "Bash(rm -rf action/학습동아리)",
+      "Bash(rm reference/2026-04-22-클로드-코드로-개발-팀장의-하루를-재설계한-이야기-컬리-기술-블로그.md reference/2026-04-23-how-ai-is-changing-our-work.md reference/2026-04-23-강원대학교-정보시스템-통합관리체계-구축-및-운영.md \"reference/2026-04-24-https-news-hada-io-topic-id-28834.md\" reference/2026-04-25-claude를-해지한-이유-토큰-문제-품질-저하-부실한-지원.md reference/2026-04-25-design-md-ai-코딩-도구를-위한-디자인-시스템-단일-파일-포맷-한국어-정리.md reference/2026-04-25-llm으로-할-수-있는-비전형적인-일-7가지.md)",
+      "Bash(python3 *)",
+      "PowerShell($env:PYTHONIOENCODING='utf-8'; python 'C:\\\\dev\\\\Obsidianvault\\\\.claude\\\\skills\\\\incident-analyze\\\\scripts\\\\new_incident_path.py' 2026-04-28)",
+      "Bash(obsidian help *)",
+      "PowerShell(Get-Command *)",
+      "Bash(command -v obsidian)",
+      "Read(//usr/local/bin/**)",
+      "Bash(/c/Users/KNUE/AppData/Roaming/npm/obsidian open *)",
+      "Bash(cmd.exe *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/validate-tags.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/qmd-update.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

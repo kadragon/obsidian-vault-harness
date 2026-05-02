@@ -1,0 +1,11 @@
+# Ignore everything
+*
+
+# Except these
+!.gitignore
+!AGENTS.md
+!CLAUDE.md
+!.claude/
+!.claude/**
+!.agents/
+!.agents/**
