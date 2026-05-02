@@ -88,15 +88,17 @@ python3 .claude/skills/incident-analyze/scripts/new_incident_path.py {YYYY-MM-DD
 |------|-----------|
 | frontmatter | `type: change`, `change_type: incident`, `status: open` (date 필드는 Linter가 자동 관리 -- 직접 넣지 않음) |
 | `#` 제목 | `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}` |
-| `## 발생일 / 사용자` | 발생 일시 + `#부서/{부서명}/{직급}_{이름}` (직급 분류는 `tag-normalize` 스킬 참조) |
+| `## 관련` | `#부서/{부서명}/{직급}_{이름}` + `#업무/{영역}/{하위영역}/{메뉴명}` (직급 분류는 `tag-normalize` 스킬 참조) |
+| `## 발생 정보` | 발생 일시 (`YYYY-MM-DD HH:mm`) + 기타 맥락 |
 | `## 프로시저` | `{ServiceName/methodName}` |
-| `## 메뉴 위치` | `{메뉴코드} / #업무/{영역}/{하위영역}/{메뉴명}` |
-| `## 처리 방안` | `- [ ] {진단 기반 처리 항목} 📅 {YYYY-MM-DD} ➕ {오늘 날짜}` |
+| `## 메뉴 위치` | `{메뉴코드}` (텍스트 경로만; 태그는 `## 관련`으로) |
+| `## 할 일` | `- [ ] {진단 기반 처리 항목} 📅 {YYYY-MM-DD} ➕ {오늘 날짜}` |
 | `## 오류 구분` | Exception 클래스명 |
 | `### PARAMETER_INFO` | 핵심 파라미터만 발췌 (code block) |
 | `### ERR_INFO` | 에러 메시지 (code block) |
+| `## 처리 결과` | 해결 후 결론 (완료 시 기록) |
 
-**사용자 정보 부족 시**: SESSION_USER_ID만 있고 부서명/사용자명을 특정할 수 없으면 `#부서/` 태그 없이 `SESSION_USER_ID: {id}`로 기록한다.
+**사용자 정보 부족 시**: SESSION_USER_ID만 있고 부서명/사용자명을 특정할 수 없으면 `#부서/` 태그 없이 `## 발생 정보`에 `SESSION_USER_ID: {id}`로 기록한다.
 
 ### Step 5: Wiki 피드백
 
