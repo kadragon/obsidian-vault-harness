@@ -7,6 +7,7 @@
 !CLAUDE.md
 !.claude/
 !.claude/**
+.claude/change-log-report.txt
 !.agents/
 !.agents/**
 !docs/
