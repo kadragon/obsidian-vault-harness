@@ -14,6 +14,7 @@ XML, Java, SQL, and procedure content comes from user-provided materials or exis
 | `docs/enforcement.md` | Enforcement layer status and how to strengthen it |
 | `_Wiki/README.md` | Understanding the wiki layer structure (index·log·MOC·entities·topics·syntheses) |
 | `_Wiki/contracts.md` | Source note / wiki page / synthesis / **operational MOC** document contracts |
+| `docs/migration-flat-areas.md` | One-time migration guide for flat `10_Areas/` notes (reference only) |
 
 ## Golden Principles
 
@@ -22,8 +23,8 @@ XML, Java, SQL, and procedure content comes from user-provided materials or exis
 3. **Normalize tags** — `#업무/` and `#부서/` tags follow `tag-normalizer` skill rules. When uncertain, delegate to `tag-validator`.
 4. **Follow folder rules** — no loose `.md` files in `12_Projects/` (folders only). No file creation in `90_Archive/`.
 5. **Inbox via skill** — all `01_Inbox/` processing (action + reference) must use the `inbox-process` skill.
-6. **Wikilink style** — always write plain `[[노트명]]`. Never prefix with `!` (`![[...]]` embeds the file inline; the user wants a link, not an embed). The only exception is when the user explicitly asks for an embed.
-7. **Wiki MOC feedback loop** — operational notes must feed back into `_Wiki/`. When a domain has 20+ notes or 3+ recurring incident types, create or update `_Wiki/topics/{도메인}-운영-MOC.md`. Standard structure → `_Wiki/contracts.md` → Operational MOC section. All new MOC pages must be registered in `_Wiki/index.md` and `_Wiki/log.md`.
+6. **Wikilink style** — always write plain `[[노트명]]`. Never `![[...]]` (embed) unless explicitly requested.
+7. **Wiki MOC feedback loop** — operational notes must feed back into `_Wiki/`. When a domain has 20+ notes or 3+ recurring incident types, create or update `_Wiki/topics/{도메인}-운영-MOC.md` (structure: `_Wiki/contracts.md`); register in `_Wiki/index.md` and `_Wiki/log.md`.
 8. **`10_Areas/` depth max 2 levels** — no attachments → single `.md` at area root; with attachments → `YYYYMM_{slug}/` folder (slug ≤ 20 chars) containing `YYYYMM_{summary}.md` + attachments. Folder name and inner note name are intentionally different. Summary ≤ 60 chars. See `docs/conventions.md` → `10_Areas/ Depth Rules`.
 
 ## Delegation — Quick Reference
@@ -43,10 +44,15 @@ Never perform these directly without the designated agent/skill:
 | Vault cleanup (Archive) | `vault-cleanup` skill |
 | Status open→closed sync | `status-sync` skill |
 | Syncthing conflict files | `syncthing-conflict-cleanup` skill |
-| Domain MOC create/update (사전 조사) | `vault-navigator` agent — domain note inventory + pattern analysis |
-| Domain MOC write (노트 생성·index·log 갱신) | `obsidian-operator` agent — pass inventory + `_Wiki/contracts.md` MOC spec |
+| 주간업무회의 자료 생성 | `weekly-report` skill |
+| Domain MOC 사전 조사 | `vault-navigator` agent |
+| Domain MOC 노트 생성·등록 | `obsidian-operator` agent |
 
 Full context manifest → `docs/delegation.md`
+
+## Branching
+
+Direct-to-main: allowed — notes-only vault; no feature branches required.
 
 ## Context Management
 
