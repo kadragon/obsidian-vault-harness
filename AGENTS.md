@@ -13,6 +13,7 @@ XML, Java, SQL, and procedure content comes from user-provided materials or exis
 | `docs/delegation.md` | Deciding which agent/skill to use |
 | `docs/enforcement.md` | Enforcement layer status and how to strengthen it |
 | `_Wiki/README.md` | Understanding the wiki layer structure (index·log·MOC·entities·topics·syntheses) |
+| `_Wiki/workflow.md` | Cross-skill process flow — when multiple skills must chain |
 | `_Wiki/contracts.md` | Source note / wiki page / synthesis / **operational MOC** document contracts |
 | `docs/migration-flat-areas.md` | One-time migration guide for flat `10_Areas/` notes (reference only) |
 
@@ -45,6 +46,7 @@ Never perform these directly without the designated agent/skill:
 | Status open→closed sync | `status-sync` skill |
 | Syncthing conflict files | `syncthing-conflict-cleanup` skill |
 | 주간업무회의 자료 생성 | `weekly-report` skill |
+| 시스템 변경 이력 주간 보고서 생성 | `change-log` skill |
 | Domain MOC 사전 조사 | `vault-navigator` agent |
 | Domain MOC 노트 생성·등록 | `obsidian-operator` agent |
 
@@ -65,3 +67,14 @@ Direct-to-main: allowed — notes-only vault; no feature branches required.
 - Task has 2+ valid interpretations.
 - Same error repeats 2+ times.
 - Modifying an existing note appears necessary (Golden Principle #1).
+
+## Maintenance
+
+Update this file **only** when ALL of the following are true:
+
+1. The information is not directly discoverable from code / config / manifests / docs
+2. It is operationally significant — affects build, test, deploy, or runtime safety
+3. It would likely cause mistakes if left undocumented
+4. It is stable and not task-specific
+
+**Never add:** architecture summaries, directory overviews, style conventions enforced by tooling, anything visible in the repo, temporary or task-specific instructions.

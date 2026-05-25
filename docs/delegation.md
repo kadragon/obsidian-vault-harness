@@ -24,6 +24,7 @@ If any trigger applies, delegate first — do not proceed without it.
 | Past cases / similar notes needed | `vault-navigator` | Keywords, work domain |
 | Complex multi-step vault task | `vault-orchestrate` skill | Full task goal |
 | Periodic vault cleanup | `vault-cleanup` skill | — |
+| Weekly system change report needed | `change-log` skill | Date range (default: past week) |
 
 ### Escalation
 

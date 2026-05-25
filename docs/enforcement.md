@@ -12,7 +12,7 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | #2 Follow templates | `tag-validator` agent side-effect check | Doc-enforced |
 | #3 Normalize tags | `validate-tags.sh` PostToolUse hook (mechanical) | Shell-enforced |
 | #4 Folder rules | AGENTS.md rule | Doc-enforced |
-| #5 InfoBox via skill | AGENTS.md delegation rule | Doc-enforced |
+| #5 Inbox (01_Inbox) via skill | AGENTS.md delegation rule | Doc-enforced |
 
 ## Tag Validation Hooks
 
