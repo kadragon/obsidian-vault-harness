@@ -8,7 +8,7 @@
 |---------|--------------|------|------|------|
 | incident-analyst | incident-analyst | 에러 로그 분석, 인시던트 노트 생성 | incident-analyze | `14_Changes/incident/` |
 | improvement-planner | improvement-planner | 개선 계획 수립, 개선 노트 생성 | improvement-plan | `14_Changes/improvement/` |
-| vault-navigator | vault-navigator | 볼트 검색, 패턴 분석 | vault-search | 검색 결과 요약 |
+| vault-navigator | vault-navigator | 볼트 검색, 패턴 분석 | — | 검색 결과 요약 |
 | obsidian-operator | obsidian-operator | Obsidian 조작 (노트 생성, 검색, 프로퍼티) | — | 실행 결과 |
 | tag-validator | tag-validator | 노트 태그 검증·수정 (haiku) | tag-normalize | 검증 결과 보고 |
 | training-note-manager | general-purpose | 교육 노트 품질 평가, 템플릿 표준화, 리팩토링 | training-manage | `20_Training/` |
