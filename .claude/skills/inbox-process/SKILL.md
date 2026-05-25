@@ -30,7 +30,7 @@ description: "This skill should be used when the user asks to process 01_Inbox/ 
 Glob으로 세 영역을 각각 스캔:
 
 - `01_Inbox/` 루트 (하위폴더 제외, 파일만)
-- `01_Inbox/action/`
+- `01_Inbox/action/` — 바로 아래 폴더·단독 파일 각각이 업무 단위. 폴더만 있어도 정상. 빈 폴더는 건너뜀.
 - `01_Inbox/reference/`
 
 모두 비어 있으면 "01_Inbox가 비어 있습니다" 알리고 종료.
