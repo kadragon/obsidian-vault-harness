@@ -12,7 +12,20 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | #2 Follow templates | `tag-validator` agent side-effect check | Doc-enforced |
 | #3 Normalize tags | `validate-tags.sh` PostToolUse hook (mechanical) | Shell-enforced |
 | #4 Folder rules | AGENTS.md rule | Doc-enforced |
+| #2 Task due dates | `check-todo-due-date.ps1` PostToolUse hook (mechanical) | Shell-enforced |
 | #5 Inbox (01_Inbox) via skill | AGENTS.md delegation rule | Doc-enforced |
+
+## Due Date Validation Hook
+
+### Active: `check-todo-due-date.ps1` (mechanical)
+
+`.claude/hooks/check-todo-due-date.ps1`, registered in `settings.json` as `PostToolUse` on `Write|Edit`. Checks:
+
+- Target: 모든 `.md` 파일 (templates/docs/harness/archive 제외)
+- 조건: `- [ ]` 체크박스에 `📅` 없으면 경고 (`hookSpecificOutput` JSON format)
+- Warning-only (does not block). Zero token cost.
+
+`validate-due-date.sh` (bash, `settings.local.json`)는 2026-05-27 retired — PS hook으로 통합.
 
 ## Tag Validation Hooks
 
