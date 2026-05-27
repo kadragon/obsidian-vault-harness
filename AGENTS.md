@@ -20,19 +20,18 @@ XML, Java, SQL, and procedure content comes from user-provided materials or exis
 ## Golden Principles
 
 1. **Existing notes are immutable** — do not modify existing notes unless the user explicitly requests it.
-2. **Follow templates** — new notes must use the matching template from `99_Template/`.
-3. **Normalize tags** — `#업무/` and `#부서/` tags follow `tag-normalizer` skill rules. When uncertain, delegate to `tag-validator`.
-4. **Follow folder rules** — no loose `.md` files in `12_Projects/` (folders only). No file creation in `90_Archive/`.
+2. **Follow templates** — new notes must use the matching template from `99_Template/`. Internal links use plain `[[노트명]]`; never `![[...]]` embeds unless explicitly requested.
+3. **Normalize tags** — `#업무/` and `#부서/` tags follow `tag-normalizer` skill rules. When uncertain, delegate to `tag-validator`. Mechanically enforced via `validate-tags.sh` PostToolUse hook.
+4. **Follow folder rules** — no loose `.md` files in `12_Projects/` (folders only); no file creation in `90_Archive/`; `10_Areas/` depth max 2 levels (attachments → `YYYYMM_{slug}/` folder, slug ≤ 20 chars, inner file `YYYYMM_{summary}.md`, summary ≤ 60 chars). See `docs/conventions.md` → `10_Areas/ Depth Rules`.
 5. **Inbox via skill** — all `01_Inbox/` processing (action + reference) must use the `inbox-process` skill.
-6. **Wikilink style** — always write plain `[[노트명]]`. Never `![[...]]` (embed) unless explicitly requested.
-7. **Wiki MOC feedback loop** — operational notes must feed back into `_Wiki/`. When a domain has 20+ notes or 3+ recurring incident types, create or update `_Wiki/topics/{도메인}-운영-MOC.md` (structure: `_Wiki/contracts.md`); register in `_Wiki/index.md` and `_Wiki/log.md`.
-8. **`10_Areas/` depth max 2 levels** — no attachments → single `.md` at area root; with attachments → `YYYYMM_{slug}/` folder (slug ≤ 20 chars) containing `YYYYMM_{summary}.md` + attachments. Folder name and inner note name are intentionally different. Summary ≤ 60 chars. See `docs/conventions.md` → `10_Areas/ Depth Rules`.
+
+Workflow gate (not a Golden Principle — threshold-based): when a domain reaches 20+ notes or 3+ recurring incident types, create or update `_Wiki/topics/{도메인}-운영-MOC.md` (structure: `_Wiki/contracts.md`); register in `_Wiki/index.md` and `_Wiki/log.md`. Details: `docs/workflows.md` → `moc` workflow.
 
 ## Delegation — Quick Reference
 
 Never perform these directly without the designated agent/skill:
 
-| Task | Delegate to |
+| Task | Delegate to (skill → Skill tool · agent → Agent tool) |
 |------|------------|
 | Error log / incident analysis | `incident-analyst` agent |
 | Improvement plan authoring | `improvement-planner` agent |
@@ -45,6 +44,7 @@ Never perform these directly without the designated agent/skill:
 | Vault cleanup (Archive) | `vault-cleanup` skill |
 | Status open→closed sync | `status-sync` skill |
 | Syncthing conflict files | `syncthing-conflict-cleanup` skill |
+| `.hwpx` 문서 생성/읽기/편집 | `toolkit:hwpx` skill |
 | 주간업무회의 자료 생성 | `weekly-report` skill |
 | 시스템 변경 이력 주간 보고서 생성 | `change-log` skill |
 | Domain MOC 사전 조사 | `vault-navigator` agent |

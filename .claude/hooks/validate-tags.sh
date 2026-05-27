@@ -16,9 +16,23 @@ inp = data.get('tool_input', {})
 print(inp.get('file_path', inp.get('filePath', '')))
 " 2>/dev/null)
 
-# Skip if no file path or not a vault .md file
+# Skip if no file path
 [[ -z "$FILE_PATH" ]] && exit 0
-[[ "$FILE_PATH" != "$VAULT_ROOT"/*.md ]] && exit 0
+
+# Normalize Windows path (C:\foo\bar → /c/foo/bar) to match bash VAULT_ROOT
+if command -v cygpath &>/dev/null; then
+    FILE_PATH=$(cygpath -u "$FILE_PATH" 2>/dev/null || echo "$FILE_PATH")
+elif [[ "$FILE_PATH" =~ ^[A-Za-z]:\\ ]]; then
+    _drive=$(echo "${FILE_PATH:0:1}" | tr 'A-Z' 'a-z')
+    _rest="${FILE_PATH:3}"
+    FILE_PATH="/${_drive}/${_rest//\\//}"
+fi
+
+# Skip if not a vault .md file (case-insensitive path comparison for Windows)
+[[ "$FILE_PATH" != *.md ]] && exit 0
+FILE_PATH_LC=$(echo "$FILE_PATH" | tr 'A-Z' 'a-z')
+VAULT_ROOT_LC=$(echo "$VAULT_ROOT" | tr 'A-Z' 'a-z')
+[[ "$FILE_PATH_LC" != "$VAULT_ROOT_LC"/* ]] && exit 0
 
 # Skip .claude/ directory, templates, and non-note files
 [[ "$FILE_PATH" == *"/.claude/"* ]] && exit 0
