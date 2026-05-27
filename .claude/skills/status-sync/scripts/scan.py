@@ -159,6 +159,8 @@ BUNDLE_PATH = VAULT / ".claude" / ".cache" / "status-sync-review.jsonl"
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     full = "--full" in sys.argv[1:]
     out = {"auto_close": [], "review": [], "keep_open": []}
     for profile in PROFILES:

@@ -51,6 +51,8 @@ description: |
 
 ### Step 1 — 대상 노트 수집 (스크립트 실행)
 
+Bash tool로 실행한다 (Windows 환경이어도 Bash tool 사용):
+
 ```bash
 python3 .claude/skills/change-log/scripts/collect_weekly_notes.py --vault .
 ```
@@ -105,13 +107,18 @@ python3 .claude/skills/change-log/scripts/collect_weekly_notes.py --vault .
 
 보고서 텍스트를 `.claude/change-log-report.txt`에 저장한 뒤 클립보드로 복사한다.
 
-```
-Write tool → C:/dev/ObsidianVault/.claude/change-log-report.txt 에 보고서 전문 저장
-```
+**주의:** Write tool은 read-first 제약으로 신규 파일 생성 불가. 반드시 PowerShell tool로 저장한다.
 
 ```powershell
-Get-Content "C:\dev\ObsidianVault\.claude\change-log-report.txt" -Encoding UTF8 -Raw | Set-Clipboard
+$report = @"
+[WEEK_START~WEEK_END]
+...보고서 전문...
+"@
+Set-Content -Path "C:\Dev\ObsidianVault\.claude\change-log-report.txt" -Encoding UTF8 -Value $report
+Get-Content "C:\Dev\ObsidianVault\.claude\change-log-report.txt" -Encoding UTF8 -Raw | Set-Clipboard
 ```
+
+위 두 명령을 단일 PowerShell tool 호출로 실행한다 (파일 저장 + 클립보드 복사 한 번에).
 
 완료 후 "클립보드에 복사되었습니다. 바로 붙여넣기 하세요."라고 안내한다.
 
