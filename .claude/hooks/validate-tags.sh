@@ -22,7 +22,7 @@ print(inp.get('file_path', inp.get('filePath', '')))
 # Normalize Windows path (C:\foo\bar → /c/foo/bar) to match bash VAULT_ROOT
 if command -v cygpath &>/dev/null; then
     FILE_PATH=$(cygpath -u "$FILE_PATH" 2>/dev/null || echo "$FILE_PATH")
-elif [[ "$FILE_PATH" =~ ^[A-Za-z]:\\ ]]; then
+elif [[ "$FILE_PATH" =~ ^[A-Za-z]:[\\/] ]]; then
     _drive=$(echo "${FILE_PATH:0:1}" | tr 'A-Z' 'a-z')
     _rest="${FILE_PATH:3}"
     FILE_PATH="/${_drive}/${_rest//\\//}"

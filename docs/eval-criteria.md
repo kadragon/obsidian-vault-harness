@@ -55,6 +55,8 @@ Internal links use plain `[[노트명]]`, never `![[embed]]` unless explicitly r
 | 5 | No embeds; all internal links are `[[link]]` style |
 | 1 | `![[embed]]` present without explicit user request |
 
+Note: Binary criterion — scores 2/3/4 not applicable. Either embeds exist (1) or they don't (5).
+
 **How to test:** Grep for `![[` in note content.
 
 ### 5. Wiki Feedback Loop (10%)
@@ -64,7 +66,7 @@ Operational note feeds back into `_Wiki/` when domain threshold reached.
 | Score | Description |
 |-------|-------------|
 | 5 | Domain has <20 notes — no MOC required, note complete |
-| 5 | Domain has 20+ notes — MOC exists and this note is linked |
+| 5 | Domain has 20+ notes — MOC exists and this note is linked | ← both map to 5: threshold not triggered in first case |
 | 2 | Domain has 20+ notes — MOC exists but note not registered |
 | 1 | Domain has 20+ notes — MOC missing entirely |
 
