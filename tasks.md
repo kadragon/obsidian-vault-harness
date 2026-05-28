@@ -10,4 +10,4 @@
 
 ### PR #4 — [HARNESS] Add eval-criteria.md references to delegation docs (2026-05-28)
 
-- [ ] [doc] Add evaluator-pass gate to `delegation.md` routing table — Background Gate row: `Note created by agent` | `evaluator pass (see docs/eval-criteria.md)` | `note path` (source: pr-review-toolkit)
+- [x] [doc] Add evaluator-pass gate to `delegation.md` routing table — Background Gate row: `Note created by agent` | `evaluator pass (see docs/eval-criteria.md)` | `note path` (source: pr-review-toolkit)
