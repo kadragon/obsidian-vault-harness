@@ -53,11 +53,12 @@ If any trigger applies, delegate first — do not proceed without it.
 - Required: search intent (what are you looking for)
 - Optional: work domain, date range, folder scope
 - Specify thoroughness: `quick` | `medium` | `very thorough`
+- Reference: `docs/eval-criteria.md`
 
 ### tag-validator
 - Required: note content or path
 - Required: mode — `suggest` (create tags) or `validate` (check existing tags)
-- Reference: `tag-normalizer` skill
+- Reference: `tag-normalizer` skill, `docs/eval-criteria.md`
 
 ### obsidian-operator
 - Required: operation type (`create` | `open` | `append` | `prepend` | `set-property`)
