@@ -11,6 +11,7 @@ XML, Java, SQL, and procedure content comes from user-provided materials or exis
 | `docs/conventions.md` | Writing filenames, tags, frontmatter, **or MOC creation rules** |
 | `docs/workflows.md` | Processing Inbox, creating incident/improvement notes, **or updating domain MOCs** |
 | `docs/delegation.md` | Deciding which agent/skill to use |
+| `docs/eval-criteria.md` | Evaluating note quality (frontmatter, tags, template, wikilinks) |
 | `docs/enforcement.md` | Enforcement layer status and how to strengthen it |
 | `_Wiki/README.md` | Understanding the wiki layer structure (index·log·MOC·entities·topics·syntheses) |
 | `_Wiki/workflow.md` | Cross-skill process flow — when multiple skills must chain |
