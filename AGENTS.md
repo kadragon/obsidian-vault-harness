@@ -11,6 +11,7 @@ XML, Java, SQL, and procedure content comes from user-provided materials or exis
 | `docs/conventions.md` | Writing filenames, tags, frontmatter, **or MOC creation rules** |
 | `docs/workflows.md` | Processing Inbox, creating incident/improvement notes, **or updating domain MOCs** |
 | `docs/delegation.md` | Deciding which agent/skill to use |
+| `docs/eval-criteria.md` | Evaluating note quality (frontmatter, tags, template, wikilinks) |
 | `docs/enforcement.md` | Enforcement layer status and how to strengthen it |
 | `_Wiki/README.md` | Understanding the wiki layer structure (index·log·MOC·entities·topics·syntheses) |
 | `_Wiki/workflow.md` | Cross-skill process flow — when multiple skills must chain |
@@ -24,6 +25,8 @@ XML, Java, SQL, and procedure content comes from user-provided materials or exis
 3. **Normalize tags** — `#업무/` and `#부서/` tags follow `tag-normalizer` skill rules. When uncertain, delegate to `tag-validator`. Mechanically enforced via `validate-tags.sh` PostToolUse hook.
 4. **Follow folder rules** — no loose `.md` files in `12_Projects/` (folders only); no file creation in `90_Archive/`; `10_Areas/` depth max 2 levels (attachments → `YYYYMM_{slug}/` folder, slug ≤ 20 chars, inner file `YYYYMM_{summary}.md`, summary ≤ 60 chars). See `docs/conventions.md` → `10_Areas/ Depth Rules`.
 5. **Inbox via skill** — all `01_Inbox/` processing (action + reference) must use the `inbox-process` skill.
+
+## Workflow Gates
 
 Workflow gate (not a Golden Principle — threshold-based): when a domain reaches 20+ notes or 3+ recurring incident types, create or update `_Wiki/topics/{도메인}-운영-MOC.md` (structure: `_Wiki/contracts.md`); register in `_Wiki/index.md` and `_Wiki/log.md`. Details: `docs/workflows.md` → `moc` workflow.
 
