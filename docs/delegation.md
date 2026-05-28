@@ -42,32 +42,34 @@ If any trigger applies, delegate first — do not proceed without it.
 ### incident-analyst
 - Required: PARAMETER_INFO block, ERR_INFO block, stack trace (if present)
 - Optional: menu path (`#업무/`), department (`#부서/`), occurrence date/time
-- Reference: `docs/architecture.md`
+- Reference: `docs/architecture.md`, `docs/eval-criteria.md`
 
 ### improvement-planner
 - Required: improvement description (free-form)
 - Optional: related SQL, procedure name, UI menu path
-- Reference: `docs/architecture.md`, `docs/conventions.md`
+- Reference: `docs/architecture.md`, `docs/conventions.md`, `docs/eval-criteria.md`
 
 ### vault-navigator
 - Required: search intent (what are you looking for)
 - Optional: work domain, date range, folder scope
 - Specify thoroughness: `quick` | `medium` | `very thorough`
+- Reference: `docs/eval-criteria.md`
 
 ### tag-validator
 - Required: note content or path
 - Required: mode — `suggest` (create tags) or `validate` (check existing tags)
-- Reference: `tag-normalizer` skill
+- Reference: `tag-normalizer` skill, `docs/eval-criteria.md`
 
 ### obsidian-operator
 - Required: operation type (`create` | `open` | `append` | `prepend` | `set-property`)
 - Required: save path or note name
 - Optional: template name, initial frontmatter
+- Reference: `docs/eval-criteria.md`
 
 ### training-note-manager
 - Required: training name, date (or note path)
 - Optional: content summary, quality evaluation requested
-- Reference: `99_Template/_교육.md`
+- Reference: `99_Template/_교육.md`, `docs/eval-criteria.md`
 
 ## Delegation Principles
 
