@@ -23,6 +23,25 @@ description: "This skill should be used when the user asks to process 01_Inbox/ 
 
 ## 처리 흐름
 
+### 0단계: HWP 사전 변환
+
+스캔 전에 `01_Inbox/` 전체에서 `.hwp` 파일 존재 여부를 Glob으로 확인한다.
+
+`.hwp` 파일이 없으면 이 단계를 건너뛴다.
+
+`.hwp` 파일이 있으면:
+
+1. 사용자에게 알림: "한컴 보안 팝업이 뜨면 **모두 허용(N)** 을 클릭하세요"
+2. 변환 스크립트 실행:
+
+```powershell
+pwsh -File ".claude/skills/inbox-process/scripts/hwp_to_hwpx.ps1" -InboxPath ".\01_Inbox"
+```
+
+3. 출력에서 `FAIL:` 줄 추출 → 해당 파일 경고 후 제외하고 계속
+4. 출력에 `ERROR: Hancom not installed` 포함 시 → "한컴 미설치 — HWP 파일 건너뜀" 경고 후 해당 파일 제외하고 계속
+5. 변환 성공·원본 삭제는 스크립트 내부에서 처리됨
+
 ### 1단계: Inbox 스캔
 
 `01_Inbox/` 존재 여부 확인. 없으면 "01_Inbox 폴더가 없습니다. 생성할까요?"라고 묻고 종료.
