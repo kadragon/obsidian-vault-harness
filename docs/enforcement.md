@@ -10,7 +10,7 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 |-----------------|-------------------|--------|
 | #1 Existing notes immutable | AGENTS.md rule + Hard Stop | Doc-enforced |
 | #2 Follow templates | `tag-validator` agent side-effect check | Doc-enforced |
-| #3 Normalize tags | `validate-tags.sh` PostToolUse hook (mechanical) | Shell-enforced |
+| #3 Normalize tags | `validate-tags.sh` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #4 Folder rules | AGENTS.md rule | Doc-enforced |
 | #2 Task due dates | `check-todo-due-date.ps1` PostToolUse hook (mechanical) | Shell-enforced |
 | #5 Inbox (01_Inbox) via skill | AGENTS.md delegation rule | Doc-enforced |
@@ -31,14 +31,24 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 
 ### Active: `validate-tags.sh` (mechanical)
 
-`.claude/hooks/validate-tags.sh`, registered in `settings.local.json` as `PostToolUse` on `Write|Edit`. Regex-based checks:
+`.claude/hooks/validate-tags.sh`, registered in **`settings.json`** (committed) as `PostToolUse` on `Write|Edit`. Regex-based checks:
 
 - Forbidden `#업무/` prefixes (e.g., `#업무/인트라넷/`, `#업무/학사/`)
 - Parentheses in `#업무/` tags
 - Unknown areas (outside allowed list)
 - `#부서/` tags appearing in frontmatter
 
-Warning-only (does not block). Zero token cost.
+Skips: `.claude/`, `99_Template/`, `docs/` (harness docs contain tag examples that would false-positive).
+
+Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-todo-due-date.ps1`, so warnings appear in Claude's tool-result context. Warning-only (does not block). Zero token cost.
+
+### Active: `qmd-update.sh` (mechanical — machine-local)
+
+`.claude/hooks/qmd-update.sh`, registered in `settings.local.json` as `PostToolUse` on `Write|Edit`. Refreshes the QMD semantic index after every note write:
+
+- Runs `qmd update` then `qmd embed` (requires `qmd` binary — present on dev machine only)
+- Silent on success; errors are non-blocking
+- Machine-local only: `qmd` CLI is not portable, so this hook stays in `settings.local.json`
 
 ### Dormant: `hookify.tag-validator.local.md` (agent delegation)
 
