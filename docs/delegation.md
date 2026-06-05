@@ -59,7 +59,7 @@ If any trigger applies, delegate first — do not proceed without it.
 ### tag-validator
 - Required: note content or path
 - Required: mode — `suggest` (create tags) or `validate` (check existing tags)
-- Reference: `tag-normalizer` skill, `docs/eval-criteria.md`
+- Reference: `tag-normalize` skill, `docs/eval-criteria.md`
 
 ### obsidian-operator
 - Required: operation type (`create` | `open` | `append` | `prepend` | `set-property`)
