@@ -10,7 +10,7 @@ fp = (d.get("tool_input") or {}).get("file_path", "")
 if not fp or not fp.endswith(".md"):
     sys.exit(0)
 
-skip = ["99_Template", "\\docs\\", ".claude\\", "90_Archive"]
+skip = ["99_Template", "\\docs\\", ".claude\\", "90_Archive", "backlog.md", "tasks.md"]
 if any(s in fp for s in skip):
     sys.exit(0)
 
