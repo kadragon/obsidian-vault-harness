@@ -9,8 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -NonInteractive -File 'C:\\dev\\ObsidianVault\\.claude\\hooks\\check-todo-due-date.ps1'",
-            "shell": "powershell",
+            "command": "python .claude/hooks/check-todo-due-date.py",
             "statusMessage": "할일 마감일 검사 중..."
           },
           {
