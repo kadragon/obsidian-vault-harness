@@ -34,9 +34,10 @@ FILE_PATH_LC=$(echo "$FILE_PATH" | tr 'A-Z' 'a-z')
 VAULT_ROOT_LC=$(echo "$VAULT_ROOT" | tr 'A-Z' 'a-z')
 [[ "$FILE_PATH_LC" != "$VAULT_ROOT_LC"/* ]] && exit 0
 
-# Skip .claude/ directory, templates, and non-note files
+# Skip harness dirs, templates, and non-note files
 [[ "$FILE_PATH" == *"/.claude/"* ]] && exit 0
 [[ "$FILE_PATH" == *"/99_Template/"* ]] && exit 0
+[[ "$FILE_PATH" == *"/docs/"* ]] && exit 0
 
 # Check if file exists
 [[ ! -f "$FILE_PATH" ]] && exit 0
@@ -84,10 +85,8 @@ if [[ -n "$FRONTMATTER_DEPT" ]]; then
   VIOLATIONS="${VIOLATIONS}\n  - #부서 태그가 frontmatter에 있음 (본문으로 이동 필요)"
 fi
 
-# Output violations if any
+# Output violations if any — hookSpecificOutput JSON so Claude sees the warning
 if [[ -n "$VIOLATIONS" ]]; then
-  echo "[태그 검증 경고] $(basename "$FILE_PATH")"
-  echo -e "위반 사항:${VIOLATIONS}"
-  echo ""
-  echo "tag-validator 에이전트를 실행하여 태그를 정규화하세요."
+  MSG="[태그 검증 경고] $(basename "$FILE_PATH")"$'\n'"위반 사항:$(printf '%b' "$VIOLATIONS")"$'\n'"tag-validator 에이전트를 실행하여 태그를 정규화하세요."
+  python3 -c "import json,sys; print(json.dumps({'hookSpecificOutput':{'hookEventName':'PostToolUse','additionalContext':sys.argv[1]}}))" "$MSG"
 fi

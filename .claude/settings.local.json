@@ -58,10 +58,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/validate-tags.sh"
-          },
-          {
-            "type": "command",
             "command": "bash .claude/hooks/qmd-update.sh"
           }
         ]

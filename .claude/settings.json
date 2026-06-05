@@ -12,6 +12,11 @@
             "command": "powershell -NoProfile -NonInteractive -File 'C:\\dev\\ObsidianVault\\.claude\\hooks\\check-todo-due-date.ps1'",
             "shell": "powershell",
             "statusMessage": "할일 마감일 검사 중..."
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/validate-tags.sh",
+            "statusMessage": "태그 검증 중..."
           }
         ]
       }
