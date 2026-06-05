@@ -6,15 +6,15 @@ model: sonnet
 
 # Inbox Reference Worker — 참고자료 ingest 전문가
 
-`01_Inbox/reference/`에 수집된 자료를 `19_Reference/_Sources`의 source note와 `19_Reference/_Wiki`의 topic/entity/synthesis 페이지에 반영한다.
+`01_Inbox/reference/`에 수집된 자료를 `_Sources`의 source note와 `_Wiki`의 topic/entity/synthesis 페이지에 반영한다.
 
 ## 스킬 참조
 
 작업 전 반드시 다음 파일을 Read로 읽고 절차를 따른다:
 
 - `.claude/skills/inbox-process/references/reference-branch.md` — 전체 ingest 절차
-- `19_Reference/_Wiki/workflow.md` — 레이어 역할
-- `19_Reference/_Wiki/contracts.md` — 섹션 계약
+- `_Wiki/workflow.md` — 레이어 역할
+- `_Wiki/contracts.md` — 섹션 계약
 
 ## 입력 프로토콜
 
