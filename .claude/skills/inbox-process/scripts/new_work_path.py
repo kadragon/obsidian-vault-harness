@@ -12,11 +12,15 @@ Uses NFC normalization for filename comparisons (macOS HFS+ stores NFD).
 
 Usage:
     python new_work_path.py <area> "<title>" [--yyyymm YYYYMM] \\
-        [--vault /path/to/vault] [--json]
+        [--vault /path/to/vault] [--doc-number "총무과-7453"] [--json]
 
 Output (default, two lines):
     <folder_path>
     <note_path>
+
+With --doc-number and --json, also includes `duplicate_candidates` list.
+If duplicates found, the caller must NOT create the note and should surface
+them to the user as an open question before proceeding.
 """
 from __future__ import annotations
 
@@ -37,6 +41,21 @@ def _nfc(s: str) -> str:
 
 def sanitize_title(title: str) -> str:
     return FORBIDDEN_CHARS.sub("", title).strip()
+
+
+def find_duplicates(vault: Path, doc_number: str) -> list[str]:
+    """Search 10_Areas/**/*.md for doc_number. Returns matching relative paths."""
+    areas_dir = vault / "10_Areas"
+    if not areas_dir.exists():
+        return []
+    matches = []
+    for md in areas_dir.rglob("*.md"):
+        try:
+            if doc_number in md.read_text(encoding="utf-8", errors="ignore"):
+                matches.append(str(md.relative_to(vault)))
+        except OSError:
+            pass
+    return matches
 
 
 def compute_paths(vault: Path, area: str, title: str, yyyymm: str) -> tuple[Path, Path]:
@@ -75,8 +94,12 @@ def main() -> int:
     p.add_argument("--yyyymm", default=None,
                    help="6-digit year-month (default: today)")
     p.add_argument("--vault", default=".", help="vault root (default: cwd)")
+    p.add_argument("--doc-number", default=None,
+                   help="공문 번호 (e.g. '총무과-7453'). If provided, searches "
+                        "10_Areas/**/*.md for duplicates and reports them in JSON.")
     p.add_argument("--json", action="store_true",
-                   help="emit {folder, note, slug, sanitized_title} as JSON")
+                   help="emit {folder, note, slug, sanitized_title, "
+                        "duplicate_candidates} as JSON")
     args = p.parse_args()
 
     yyyymm = args.yyyymm or date.today().strftime("%Y%m")
@@ -88,16 +111,25 @@ def main() -> int:
         print(f"error: {e}", file=sys.stderr)
         return 2
 
+    duplicates: list[str] = []
+    if args.doc_number:
+        duplicates = find_duplicates(vault, args.doc_number)
+
     if args.json:
         print(json.dumps({
             "folder": str(folder),
             "note": str(note),
             "slug": folder.name,
             "sanitized_title": sanitize_title(args.title),
+            "duplicate_candidates": duplicates,
         }, ensure_ascii=False, indent=2))
     else:
         print(folder)
         print(note)
+        if duplicates:
+            print("duplicate_candidates:", file=sys.stderr)
+            for d in duplicates:
+                print(f"  {d}", file=sys.stderr)
     return 0
 
 

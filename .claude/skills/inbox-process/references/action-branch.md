@@ -59,6 +59,7 @@ python3 .claude/skills/inbox-process/scripts/extract_handysoft_pdf.py "원본파
 - **업무 제목**: 공문 제목 또는 핵심 요청 사항 (간결하게)
 - **요약**: 요청 내용, 배경, 주요 사항을 3-5줄로 정리
 - **발신 부서/담당자**: 부서명과 담당자 이름 (있으면)
+- **공문 번호**: `부서명-숫자` 형식의 문서 번호 (예: `총무과-7453`, `학사관리과-2973`). 없으면 생략.
 - **할 일**: 요청받은 조치 사항 (있으면)
 - **기한**: 처리 기한 (있으면)
 - **문서 성격 판단**:
@@ -175,7 +176,17 @@ ls "_Wiki/topics/{도메인}-운영-MOC.md" 2>/dev/null
 
 ### 경로 + 파일명 (스크립트 위임)
 
-폴더·노트 경로 조합, 특수문자 sanitize, 동일 슬러그 중복 시 `_2/_3` 증분은 `scripts/new_work_path.py`에 위임한다. LLM이 직접 슬러그/sanitize 로직을 작성하지 말 것.
+폴더·노트 경로 조합, 특수문자 sanitize, 동일 슬러그 중복 시 `_2/_3` 증분, **공문 번호 기반 중복 감지**는 `scripts/new_work_path.py`에 위임한다. LLM이 직접 슬러그/sanitize 로직을 작성하지 말 것.
+
+공문 번호가 추출된 경우 반드시 `--doc-number`를 전달한다:
+
+```bash
+python3 .claude/skills/inbox-process/scripts/new_work_path.py \
+  수업성적 "강의평가 결과 조회 관련" --yyyymm 202604 \
+  --doc-number "학사관리과-1234" --json
+```
+
+공문 번호가 없는 경우 `--doc-number` 생략:
 
 ```bash
 python3 .claude/skills/inbox-process/scripts/new_work_path.py \
@@ -189,11 +200,22 @@ python3 .claude/skills/inbox-process/scripts/new_work_path.py \
   "folder": "/Users/.../10_Areas/수업성적/202604_강의평가 결과 조회 관련",
   "note":   "/Users/.../10_Areas/수업성적/202604_강의평가 결과 조회 관련/_202604_강의평가 결과 조회 관련.md",
   "slug":   "202604_강의평가 결과 조회 관련",
-  "sanitized_title": "강의평가 결과 조회 관련"
+  "sanitized_title": "강의평가 결과 조회 관련",
+  "duplicate_candidates": []
 }
 ```
 
-스크립트가 하는 일: `{YYYYMM}_{sanitized_title}` 슬러그 생성 (공백·이모지 유지, `/\:*?"<>|` 제거), 해당 area 하위 기존 폴더와 NFC 정규화 비교 후 충돌 시 `_2/_3` 증분. 폴더/파일은 생성하지 않고 경로만 반환한다. `--yyyymm` 생략 시 오늘 기준.
+**`duplicate_candidates`가 비어 있지 않으면 → 노트를 생성하지 않는다.** 해당 건을 열린 질문으로 오케스트레이터에 반환한다:
+
+```
+⚠️ 중복 공문 의심: {공문 번호}가 기존 노트에서 발견됨.
+기존 노트: {duplicate_candidates 경로 목록}
+→ 사용자 확인 필요: 기존 노트에 내용을 추가할지, 새 노트를 생성할지?
+```
+
+오케스트레이터는 이 열린 질문을 사용자에게 보고하고, 해당 인박스 파일을 삭제하지 않는다.
+
+스크립트가 하는 일: `{YYYYMM}_{sanitized_title}` 슬러그 생성 (공백·이모지 유지, `/\:*?"<>|` 제거), 해당 area 하위 기존 폴더와 NFC 정규화 비교 후 충돌 시 `_2/_3` 증분, `--doc-number` 지정 시 `10_Areas/**/*.md` 전체에서 해당 문자열 grep. 폴더/파일은 생성하지 않고 경로만 반환한다. `--yyyymm` 생략 시 오늘 기준.
 
 ### 규칙
 
