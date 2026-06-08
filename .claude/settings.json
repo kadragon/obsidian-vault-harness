@@ -1,6 +1,10 @@
 {
   "enabledPlugins": {
-    "serena@claude-plugins-official": false
+    "serena@claude-plugins-official": false,
+    "playwright@claude-plugins-official": false,
+    "typescript-lsp@claude-plugins-official": false,
+    "pyright-lsp@claude-plugins-official": false,
+    "pr-review-toolkit@claude-plugins-official": false
   },
   "hooks": {
     "PostToolUse": [
@@ -9,12 +13,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python .claude/hooks/check-todo-due-date.py",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-todo-due-date.py\"",
             "statusMessage": "할일 마감일 검사 중..."
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/validate-tags.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/validate-tags.sh\"",
             "statusMessage": "태그 검증 중..."
           }
         ]

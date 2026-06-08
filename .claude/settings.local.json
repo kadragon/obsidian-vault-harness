@@ -58,7 +58,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/qmd-update.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/qmd-update.sh\""
           }
         ]
       }
