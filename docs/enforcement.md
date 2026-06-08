@@ -9,9 +9,10 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | Golden Principle | Enforcement method | Status |
 |-----------------|-------------------|--------|
 | #1 Existing notes immutable | AGENTS.md rule + Hard Stop | Doc-enforced |
-| #2 Follow templates | `tag-validator` agent side-effect check | Doc-enforced |
-| #3 Normalize tags | `validate-tags.sh` PostToolUse hook (mechanical) | Shell-enforced (committed) |
-| #4 Folder rules | AGENTS.md rule | Doc-enforced |
+| #2 Follow templates | `check-template.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
+| #3 Normalize tags (form) | `validate-tags.sh` PostToolUse hook (mechanical) | Shell-enforced (committed) |
+| #3 Normalize tags (semantic) | `hookify.tag-validator.local.md` delegation reminder | Hookify-enforced (enabled) |
+| #4 Folder rules | `check-folder-rules.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #2 Task due dates | `check-todo-due-date.py` PostToolUse hook (mechanical) | Shell-enforced |
 | #5 Inbox (01_Inbox) via skill | AGENTS.md delegation rule | Doc-enforced |
 
@@ -50,20 +51,37 @@ Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-to
 - Silent on success; errors are non-blocking
 - Machine-local only: `qmd` CLI is not portable, so this hook stays in `settings.local.json`
 
-### Dormant: `hookify.tag-validator.local.md` (agent delegation)
+### Active: `hookify.tag-validator.local.md` (agent delegation)
 
-Defined but `enabled: false`. Would delegate to `tag-validator` agent in `validate` mode on every `.md` write containing `#업무/` or `#부서/`. Disabled because:
+`enabled: true`. On every `.md` write containing `#업무/` or `#부서/`, injects a delegation reminder to run `tag-validator` in `validate` mode. Prompt-based, advisory — the agent need not run every time. Complements `validate-tags.sh` (catches semantic area-assignment errors the regex hook cannot detect). Token cost: agent delegation is advisory, not forced.
 
-- Duplicates mechanical checks already covered by shell hook
-- Triggers agent call on every note edit (token cost)
-- Loop risk if the agent itself writes to the file
+## Template Check Hook
 
-Activate only when GP #3 reinforcement threshold is met (see below).
+### Active: `check-template.py` (mechanical)
+
+`.claude/hooks/check-template.py`, registered in `settings.json` as `PostToolUse` on `Write`. Checks:
+
+- `![[...]]` embed anywhere in file → warn (GP#2: embeds forbidden unless explicitly requested)
+- Missing `type:` frontmatter in note-bearing folders (`10_Areas`, `12_Projects`, `13_Routines`, `14_Changes`, `20_Training`) → warn (GP#2: use template from `99_Template/`)
+
+Skips: `99_Template`, `docs`, `.claude`, `90_Archive`, `_Wiki`, `19_Reference`, `01_Inbox`, `_work`, `backlog.md`, `tasks.md`. Warning-only, exit 0.
+
+## Folder Rules Hook
+
+### Active: `check-folder-rules.py` (mechanical)
+
+`.claude/hooks/check-folder-rules.py`, registered in `settings.json` as `PostToolUse` on `Write`. Three path-only checks:
+
+1. **`12_Projects/`** — loose `.md` at root (no sub-folder) → warn
+2. **`90_Archive/`** — any write → warn (no file creation allowed)
+3. **`10_Areas/`** — depth > 2 levels, attachment-folder slug > 20 chars, summary > 60 chars → warn
+
+Warning-only, exit 0.
 
 ## Reinforcement Order
 
-Add enforcement layers only when a violation actually recurs (avoid over-engineering):
+All three layers are now active. Promotion log:
 
-1. GP #3 **semantic** tag errors (correct mechanical form, wrong area assignment) repeat 2+ times → enable `hookify.tag-validator.local.md`
-2. GP #2 template non-use repeats → add PostToolUse `Write` hook for template check
-3. GP #4 folder rule violations repeat → add PostToolUse `Write` hook for path validation
+1. ✅ GP #3 **semantic** tag errors → `hookify.tag-validator.local.md` enabled (2026-06)
+2. ✅ GP #2 template non-use → `check-template.py` PostToolUse `Write` hook (2026-06)
+3. ✅ GP #4 folder rule violations → `check-folder-rules.py` PostToolUse `Write` hook (2026-06)

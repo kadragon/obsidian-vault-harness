@@ -22,6 +22,21 @@
             "statusMessage": "태그 검증 중..."
           }
         ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-template.py\"",
+            "statusMessage": "템플릿 검사 중..."
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-folder-rules.py\"",
+            "statusMessage": "폴더 규칙 검사 중..."
+          }
+        ]
       }
     ]
   }
