@@ -18,10 +18,24 @@ p = pathlib.Path(fp)
 if not p.exists():
     sys.exit(0)
 
-bad = [l for l in p.read_text(encoding="utf-8").splitlines()
-       if re.search(r"- \[ \]", l) and "📅" not in l]
+warnings = []
+for line in p.read_text(encoding="utf-8").splitlines():
+    is_open = bool(re.search(r"- \[ \]", line))
+    is_done = bool(re.search(r"- \[[xX]\]", line))
+    if not (is_open or is_done):
+        continue
 
-if bad:
-    lines = "\n".join(f"  {l}" for l in bad)
-    msg = f"[WARNING] due date 없는 할일 발견:\n{lines}\n-> 📅 YYYY-MM-DD 추가 필요"
+    missing = []
+    if "➕" not in line:
+        missing.append("➕ YYYY-MM-DD (추가일)")
+    if "📅" not in line:
+        missing.append("📅 YYYY-MM-DD (마감일)")
+    if is_done and "✅" not in line:
+        missing.append("✅ YYYY-MM-DD (완료일)")
+
+    if missing:
+        warnings.append(f"  {line.strip()}\n    → 필요: {', '.join(missing)}")
+
+if warnings:
+    msg = "[WARNING] 할일 날짜 누락:\n" + "\n".join(warnings)
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": msg}}))

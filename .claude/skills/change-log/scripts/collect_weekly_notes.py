@@ -6,7 +6,7 @@ Scans:
   - 14_Changes/improvement/       — technical improvements
   - 14_Changes/incident/          — incidents
 
-Criteria: notes whose `date created` frontmatter falls in the target week.
+Criteria: notes whose `✅ YYYY-MM-DD` completion dates or `date created` frontmatter falls in the target week.
 
 Output (stdout): JSON with week range and list of note metadata.
 
@@ -58,11 +58,12 @@ CATEGORY_MAP: dict[str, str] = {
     "학적": "학사",
     "교수업적": "행정",
     "시설물이용": "행정",
-    "전임교원공채": "행정",
+    "전임교원공채": "부속",
     "강사료퇴직금": "행정",
     "교육연구학생지도": "행정",
     "AI플랫폼": "공통",
     "개발공통": "공통",
+    "시스템": "공통",
 }
 
 # Non-standard tag prefixes found in some 14_Changes notes → canonical area
@@ -70,9 +71,12 @@ TAG_ALIAS: dict[str, str | None] = {
     "교무": "수업성적",
     "수업": "수업성적",
     "성적": "수업성적",
+    "시간표": "수업성적",
     "수강": "수강신청",
     "교직이수": "교직",
     "시설": "시설물이용",
+    "교원임용": "전임교원공채",
+    "통합학사": "시스템",
     "행정": None,  # Need second level — handled separately
 }
 
@@ -110,6 +114,32 @@ def first_tag(text: str) -> str | None:
     return m.group(0) if m else None
 
 
+def find_completed_todo_dates(text: str) -> list[date]:
+    """Return dates from completed todos — ✅ YYYY-MM-DD (explicit done) or
+    📅 YYYY-MM-DD on a checked - [x] line (due date as proxy when no ✅)."""
+    results = []
+    for m in re.finditer(r"✅\s*(\d{4}-\d{2}-\d{2})", text):
+        d = parse_date_value(m.group(1))
+        if d is not None:
+            results.append(d)
+    # Fallback: checked todo with 📅 but no ✅
+    for m in re.finditer(r"^- \[x\][^\n]*📅\s*(\d{4}-\d{2}-\d{2})(?![^\n]*✅)", text, re.MULTILINE):
+        d = parse_date_value(m.group(1))
+        if d is not None:
+            results.append(d)
+    return results
+
+
+def matched_date_in_range(text: str, start: date, end: date) -> str | None:
+    todo_dates = [d for d in find_completed_todo_dates(text) if start <= d <= end]
+    if todo_dates:
+        return min(todo_dates).isoformat()
+    dc = read_frontmatter_date(text, "date created")
+    if dc and start <= dc <= end:
+        return dc.isoformat()
+    return None
+
+
 def infer_area_from_tag(text: str) -> str | None:
     """Extract the canonical area from the first #업무/ tag found in the note."""
     m = re.search(r"#업무/([^\s#/]+)(?:/([^\s#/]+))?", text)
@@ -127,9 +157,16 @@ def infer_area_from_tag(text: str) -> str | None:
     if alias is not None:
         return alias
 
-    # Special case: #업무/행정/{area}/... — use second segment
-    if first == "행정" and second:
-        # Normalize second segment (e.g., 교수업적평가 → 교수업적)
+    # Special case: #업무/학사/{area}/... or #업무/행정/{area}/... — use second segment
+    if first in ("학사", "행정") and second:
+        # Direct match
+        if second in CATEGORY_MAP:
+            return second
+        # Alias match
+        alias2 = TAG_ALIAS.get(second)
+        if alias2 is not None:
+            return alias2
+        # Prefix match (e.g., 교수업적평가 → 교수업적)
         for area in CATEGORY_MAP:
             if second.startswith(area):
                 return area
@@ -149,8 +186,8 @@ def collect_10areas(vault: Path, start: date, end: date) -> list[dict]:
             text = md.read_text(encoding="utf-8", errors="ignore")
             if "date created:" not in text:
                 continue  # Skip attachment files with no frontmatter
-            dc = read_frontmatter_date(text, "date created")
-            if dc and start <= dc <= end:
+            matched = matched_date_in_range(text, start, end)
+            if matched:
                 results.append(
                     {
                         "path": str(md),
@@ -158,7 +195,7 @@ def collect_10areas(vault: Path, start: date, end: date) -> list[dict]:
                         "category": CATEGORY_MAP.get(area, "기타"),
                         "source": "10_Areas",
                         "title": extract_title(text, md),
-                        "date_created": dc.isoformat(),
+                        "matched_date": matched,
                         "tag": first_tag(text),
                     }
                 )
@@ -174,10 +211,10 @@ def collect_14changes(vault: Path, start: date, end: date) -> list[dict]:
             continue
         for md in sub_path.rglob("*.md"):
             text = md.read_text(encoding="utf-8", errors="ignore")
-            if "date created:" not in text:
+            if not text.startswith("---"):
                 continue
-            dc = read_frontmatter_date(text, "date created")
-            if dc and start <= dc <= end:
+            matched = matched_date_in_range(text, start, end)
+            if matched:
                 area = infer_area_from_tag(text)
                 results.append(
                     {
@@ -186,7 +223,7 @@ def collect_14changes(vault: Path, start: date, end: date) -> list[dict]:
                         "category": CATEGORY_MAP.get(area or "", "기타"),
                         "source": f"14_Changes/{sub}",
                         "title": extract_title(text, md),
-                        "date_created": dc.isoformat(),
+                        "matched_date": matched,
                         "tag": first_tag(text),
                     }
                 )
@@ -208,7 +245,7 @@ def main() -> int:
     vault = Path(args.vault).resolve()
 
     notes = collect_10areas(vault, start, end) + collect_14changes(vault, start, end)
-    notes.sort(key=lambda n: (n["category"], n["area"], n["date_created"]))
+    notes.sort(key=lambda n: (n["category"], n["area"], n["matched_date"]))
 
     print(
         json.dumps(

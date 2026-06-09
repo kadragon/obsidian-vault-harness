@@ -13,17 +13,18 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | #3 Normalize tags (form) | `validate-tags.sh` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #3 Normalize tags (semantic) | `hookify.tag-validator.local.md` delegation reminder | Hookify-enforced (enabled) |
 | #4 Folder rules | `check-folder-rules.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
-| #2 Task due dates | `check-todo-due-date.py` PostToolUse hook (mechanical) | Shell-enforced |
+| #2 Task date fields | `check-todo-due-date.py` PostToolUse hook (mechanical) | Shell-enforced |
 | #5 Inbox (01_Inbox) via skill | AGENTS.md delegation rule | Doc-enforced |
 
-## Due Date Validation Hook
+## Todo Date Fields Validation Hook
 
 ### Active: `check-todo-due-date.py` (mechanical)
 
 `.claude/hooks/check-todo-due-date.py`, registered in `settings.json` as `PostToolUse` on `Write|Edit`. Invoked via `$CLAUDE_PROJECT_DIR`-anchored path so CWD at hook fire time is irrelevant. Checks:
 
 - Target: 모든 `.md` 파일 (templates/docs/harness/archive 제외)
-- 조건: `- [ ]` 체크박스에 `📅` 없으면 경고 (`hookSpecificOutput` JSON format)
+- `- [ ]` 체크박스: `➕ YYYY-MM-DD` (추가일) + `📅 YYYY-MM-DD` (마감일) 필요
+- `- [x]` 완료 체크박스: 위 두 필드 + `✅ YYYY-MM-DD` (완료일) 필요
 - Warning-only (does not block). Zero token cost.
 
 `validate-due-date.sh` (bash, `settings.local.json`)는 2026-05-27 retired — PS hook으로 통합 후 `check-todo-due-date.ps1` → `.py` 재작성 (2026-06, 인코딩 안정성).
