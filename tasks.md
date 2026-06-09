@@ -2,12 +2,11 @@
 
 ## Review Backlog
 
-### PR #3 — [HARNESS] Add settings, hooks, docs, and skill updates (2026-05-27)
+### PR #5 — [HARNESS] Improve due-date hook validation and weekly notes collection (2026-06-09)
 
-- [x] [debt] `AGENTS.md` workflow gate paragraph has no heading — easy to miss; consider `## Workflow Gates` section (source: review) — `AGENTS.md`
-- [x] [debt] Hook gap: `check-todo-due-date.ps1` only fires on `Write`, not `Edit` for existing notes (source: review) — already fixed in settings.json (`"matcher": "Write|Edit"`)
-- [x] [constraint] `.agents/skills` text file (mode 100644) deleted in PR #4 — `.agents/` dir removed; symlink approach abandoned (Developer Mode OFF, skills resolved globally) (source: pr-review-toolkit, codex)
+- [ ] [debt] `check-template.py` skip list uses backslash substrings without path normalization — fix same as `check-todo-due-date.py` in this PR (source: review) — `check-template.py:16`
+- [ ] [debt] `validate-tags.sh` python3 PATH guard absent — add `command -v python3` guard or migrate to script file (source: review) — `validate-tags.sh:298`
+- [ ] [doc] hookify `tag-validator` loop-prevention mechanism not documented — clarify why agent re-write loop cannot occur (source: review) — `.claude/hookify.tag-validator.local.md:2`
+- [ ] [debt] `.agents/skills` symlink reintroduced without explanation — confirm Developer Mode status; remove if still OFF (source: review) — `.agents/skills`
+- [ ] [debt] `new_work_path.py` `find_duplicates` full rglob on every inbox run — add docstring noting future scaling concern (source: review) — `new_work_path.py:46`
 
-### PR #4 — [HARNESS] Add eval-criteria.md references to delegation docs (2026-05-28)
-
-- [ ] [doc] Add evaluator-pass gate to `delegation.md` routing table — Background Gate row: `Note created by agent` | `evaluator pass (see docs/eval-criteria.md)` | `note path` (source: pr-review-toolkit)

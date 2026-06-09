@@ -1,6 +1,6 @@
 ---
 name: tag-validator
-enabled: false
+enabled: true
 event: file
 conditions:
   - field: file_path
