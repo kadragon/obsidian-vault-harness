@@ -5,8 +5,8 @@
 ## 먼저 확인할 파일
 
 - `AGENTS.md`
-- `19_Reference/_Wiki/workflow.md`
-- `19_Reference/_Wiki/contracts.md`
+- `_Wiki/workflow.md`
+- `_Wiki/contracts.md`
 
 세 파일을 기준으로 레이어 역할과 문서 계약을 맞춘다.
 
@@ -45,7 +45,7 @@
 
 - 관련 topic, entity, synthesis 페이지가 이미 있으면 갱신한다.
 - 없고 재사용 가치가 분명하면 새 page를 만든다.
-- 새 page는 `19_Reference/_Wiki/contracts.md`의 섹션 계약을 따른다.
+- 새 page는 `_Wiki/contracts.md`의 섹션 계약을 따른다.
 
 ### 4. 활성 노트 연결
 
@@ -54,8 +54,8 @@
 
 ### 5. 색인과 로그 갱신
 
-- `19_Reference/_Wiki/index.md`에 새 진입점이 필요하면 추가한다.
-- `19_Reference/_Wiki/log.md`에 `## [YYYY-MM-DD] ingest | 제목` 형식으로 기록한다.
+- `_Wiki/index.md`에 새 진입점이 필요하면 추가한다.
+- `_Wiki/log.md`에 `## [YYYY-MM-DD] ingest | 제목` 형식으로 기록한다.
 
 ### 6. 원본 파일 삭제
 

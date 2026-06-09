@@ -34,9 +34,10 @@ FILE_PATH_LC=$(echo "$FILE_PATH" | tr 'A-Z' 'a-z')
 VAULT_ROOT_LC=$(echo "$VAULT_ROOT" | tr 'A-Z' 'a-z')
 [[ "$FILE_PATH_LC" != "$VAULT_ROOT_LC"/* ]] && exit 0
 
-# Skip .claude/ directory, templates, and non-note files
+# Skip harness dirs, templates, and non-note files
 [[ "$FILE_PATH" == *"/.claude/"* ]] && exit 0
 [[ "$FILE_PATH" == *"/99_Template/"* ]] && exit 0
+[[ "$FILE_PATH" == *"/docs/"* ]] && exit 0
 
 # Check if file exists
 [[ ! -f "$FILE_PATH" ]] && exit 0
@@ -57,14 +58,14 @@ FORBIDDEN_PREFIXES=(
 VIOLATIONS=""
 
 for PREFIX in "${FORBIDDEN_PREFIXES[@]}"; do
-  FOUND=$(grep -o "${PREFIX}[^ 	]*" "$FILE_PATH" 2>/dev/null)
+  FOUND=$(grep -o "${PREFIX}[^ 	\"]*" "$FILE_PATH" 2>/dev/null)
   if [[ -n "$FOUND" ]]; then
     VIOLATIONS="${VIOLATIONS}\n  - ${FOUND}"
   fi
 done
 
 # Check parentheses in #업무 tags
-PAREN_FOUND=$(grep -oE '#업무/[^ 	]*\(' "$FILE_PATH" 2>/dev/null)
+PAREN_FOUND=$(grep -oE '#업무/[^ 	"]*\(' "$FILE_PATH" 2>/dev/null)
 if [[ -n "$PAREN_FOUND" ]]; then
   VIOLATIONS="${VIOLATIONS}\n  - 괄호 사용: ${PAREN_FOUND}"
 fi
@@ -72,7 +73,7 @@ fi
 # Check allowed areas
 ALLOWED_AREAS="수업성적|홈페이지|일반서무|개발공통|장학|전임교원공채|시설물이용|졸업|코러스|등록|교육연구학생지도|기타|예산관리|교직|교수업적|수강신청|구전자문서|학적"
 
-UNKNOWN_AREAS=$(grep -oE '#업무/[^/ 	]+' "$FILE_PATH" 2>/dev/null | grep -vE "^#업무/(${ALLOWED_AREAS})$" | grep -v '#업무/{area}' | sort -u)
+UNKNOWN_AREAS=$(grep -oE '#업무/[^/ 	"]+' "$FILE_PATH" 2>/dev/null | grep -vE "^#업무/(${ALLOWED_AREAS})$" | grep -v '#업무/{area}' | sort -u)
 if [[ -n "$UNKNOWN_AREAS" ]]; then
   VIOLATIONS="${VIOLATIONS}\n  - 미등록 area: ${UNKNOWN_AREAS}"
 fi
@@ -84,10 +85,8 @@ if [[ -n "$FRONTMATTER_DEPT" ]]; then
   VIOLATIONS="${VIOLATIONS}\n  - #부서 태그가 frontmatter에 있음 (본문으로 이동 필요)"
 fi
 
-# Output violations if any
+# Output violations if any — hookSpecificOutput JSON so Claude sees the warning
 if [[ -n "$VIOLATIONS" ]]; then
-  echo "[태그 검증 경고] $(basename "$FILE_PATH")"
-  echo -e "위반 사항:${VIOLATIONS}"
-  echo ""
-  echo "tag-validator 에이전트를 실행하여 태그를 정규화하세요."
+  MSG="[태그 검증 경고] $(basename "$FILE_PATH")"$'\n'"위반 사항:$(printf '%b' "$VIOLATIONS")"$'\n'"tag-validator 에이전트를 실행하여 태그를 정규화하세요."
+  python3 -c "import json,sys; print(json.dumps({'hookSpecificOutput':{'hookEventName':'PostToolUse','additionalContext':sys.argv[1]}}))" "$MSG"
 fi

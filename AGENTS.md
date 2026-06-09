@@ -22,7 +22,7 @@ XML, Java, SQL, and procedure content comes from user-provided materials or exis
 
 1. **Existing notes are immutable** — do not modify existing notes unless the user explicitly requests it.
 2. **Follow templates** — new notes must use the matching template from `99_Template/`. Internal links use plain `[[노트명]]`; never `![[...]]` embeds unless explicitly requested.
-3. **Normalize tags** — `#업무/` and `#부서/` tags follow `tag-normalizer` skill rules. When uncertain, delegate to `tag-validator`. Mechanically enforced via `validate-tags.sh` PostToolUse hook.
+3. **Normalize tags** — `#업무/` and `#부서/` tags follow `tag-normalize` skill rules. When uncertain, delegate to `tag-validator`. Mechanically enforced via `validate-tags.sh` PostToolUse hook.
 4. **Follow folder rules** — no loose `.md` files in `12_Projects/` (folders only); no file creation in `90_Archive/`; `10_Areas/` depth max 2 levels (attachments → `YYYYMM_{slug}/` folder, slug ≤ 20 chars, inner file `YYYYMM_{summary}.md`, summary ≤ 60 chars). See `docs/conventions.md` → `10_Areas/ Depth Rules`.
 5. **Inbox via skill** — all `01_Inbox/` processing (action + reference) must use the `inbox-process` skill.
 

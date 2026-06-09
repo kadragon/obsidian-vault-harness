@@ -1,6 +1,10 @@
 {
   "enabledPlugins": {
-    "serena@claude-plugins-official": false
+    "serena@claude-plugins-official": false,
+    "playwright@claude-plugins-official": false,
+    "typescript-lsp@claude-plugins-official": false,
+    "pyright-lsp@claude-plugins-official": false,
+    "pr-review-toolkit@claude-plugins-official": false
   },
   "hooks": {
     "PostToolUse": [
@@ -9,9 +13,28 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -NonInteractive -File 'C:\\dev\\ObsidianVault\\.claude\\hooks\\check-todo-due-date.ps1'",
-            "shell": "powershell",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-todo-due-date.py\"",
             "statusMessage": "할일 마감일 검사 중..."
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/validate-tags.sh\"",
+            "statusMessage": "태그 검증 중..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-template.py\"",
+            "statusMessage": "템플릿 검사 중..."
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-folder-rules.py\"",
+            "statusMessage": "폴더 규칙 검사 중..."
           }
         ]
       }

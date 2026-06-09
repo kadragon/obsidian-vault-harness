@@ -28,6 +28,7 @@ If any trigger applies, delegate first — do not proceed without it.
 | Status open→closed sync needed | `status-sync` skill | — |
 | Syncthing conflict files present | `syncthing-conflict-cleanup` skill | — |
 | `.hwpx` 문서 작업 | `toolkit:hwpx` skill | File path, operation type |
+| Note created by agent | evaluator pass (see `docs/eval-criteria.md`) | note path |
 
 ### Escalation
 
@@ -58,7 +59,7 @@ If any trigger applies, delegate first — do not proceed without it.
 ### tag-validator
 - Required: note content or path
 - Required: mode — `suggest` (create tags) or `validate` (check existing tags)
-- Reference: `tag-normalizer` skill, `docs/eval-criteria.md`
+- Reference: `tag-normalize` skill, `docs/eval-criteria.md`
 
 ### obsidian-operator
 - Required: operation type (`create` | `open` | `append` | `prepend` | `set-property`)

@@ -42,7 +42,7 @@ change_type: incident | improvement   # only when type: change
 ### `#업무/` tags
 - Classify work function / menu.
 - Hierarchy: `#업무/{대분류}/{소분류}` — e.g. `#업무/수강신청`, `#업무/학적/생성`
-- Detailed rules → `tag-normalizer` skill
+- Detailed rules → `tag-normalize` skill
 
 ### `#부서/` tags
 - Identify requesting or related department.
@@ -50,7 +50,7 @@ change_type: incident | improvement   # only when type: change
 - When uncertain, delegate to `tag-validator` agent
 
 ### Tag authoring rules
-- Always check `tag-normalizer` skill rules before writing tags on a new note.
+- Always check `tag-normalize` skill rules before writing tags on a new note.
 - Never create a tag that doesn't exist without confirmation from `tag-validator` first.
 - Review unresolved manual-check items in `plan.md` periodically.
 
