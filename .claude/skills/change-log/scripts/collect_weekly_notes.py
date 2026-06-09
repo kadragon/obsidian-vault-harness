@@ -122,8 +122,8 @@ def find_completed_todo_dates(text: str) -> list[date]:
         d = parse_date_value(m.group(1))
         if d is not None:
             results.append(d)
-    # Fallback: checked todo with 📅 but no ✅
-    for m in re.finditer(r"^- \[x\][^\n]*📅\s*(\d{4}-\d{2}-\d{2})(?![^\n]*✅)", text, re.MULTILINE):
+    # Fallback: checked todo with 📅 but no ✅ anywhere on the line
+    for m in re.finditer(r"^- \[x\](?![^\n]*✅)[^\n]*📅\s*(\d{4}-\d{2}-\d{2})", text, re.MULTILINE):
         d = parse_date_value(m.group(1))
         if d is not None:
             results.append(d)
@@ -133,7 +133,7 @@ def find_completed_todo_dates(text: str) -> list[date]:
 def matched_date_in_range(text: str, start: date, end: date) -> str | None:
     todo_dates = [d for d in find_completed_todo_dates(text) if start <= d <= end]
     if todo_dates:
-        return min(todo_dates).isoformat()
+        return min(todo_dates).isoformat()  # earliest done date → note enters the week it first completed
     dc = read_frontmatter_date(text, "date created")
     if dc and start <= dc <= end:
         return dc.isoformat()

@@ -42,7 +42,7 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 
 Skips: `.claude/`, `99_Template/`, `docs/` (harness docs contain tag examples that would false-positive).
 
-Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-todo-due-date.ps1`, so warnings appear in Claude's tool-result context. Warning-only (does not block). Zero token cost.
+Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-todo-due-date.ps1`, so warnings appear in Claude's tool-result context. Warning-only (does not block). Zero token cost (this hook; hookify semantic layer has advisory token cost when triggered — see below).
 
 ### Active: `qmd-update.sh` (mechanical — machine-local)
 
