@@ -114,8 +114,8 @@ $report = @"
 [WEEK_START~WEEK_END]
 ...보고서 전문...
 "@
-Set-Content -Path "C:\Dev\ObsidianVault\.claude\change-log-report.txt" -Encoding UTF8 -Value $report
-Get-Content "C:\Dev\ObsidianVault\.claude\change-log-report.txt" -Encoding UTF8 -Raw | Set-Clipboard
+Set-Content -Path ".\.claude\change-log-report.txt" -Encoding UTF8 -Value $report
+Get-Content ".\.claude\change-log-report.txt" -Encoding UTF8 -Raw | Set-Clipboard
 ```
 
 위 두 명령을 단일 PowerShell tool 호출로 실행한다 (파일 저장 + 클립보드 복사 한 번에).
