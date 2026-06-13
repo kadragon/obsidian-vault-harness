@@ -30,7 +30,7 @@ description: "This skill should be used when the user asks to process 01_Inbox/ 
 - **`.txt` 파일을 생성하지 않는다** — 임시 파일 우회는 불필요한 흔적을 남긴다.
 - 텍스트 내용을 바로 분석하여 action/reference 분류한다 (`references/dispatch-guide.md` §분류 힌트 참조).
 - action인 경우 → `inbox-action-worker`를 호출한다. 호출 프롬프트 구조는 `references/dispatch-guide.md` §인라인 텍스트 Action 워커 참조.
-- reference인 경우 → `inbox-reference-worker`를 호출한다.
+- reference인 경우 → `inbox-reference-worker`를 호출한다. 호출 프롬프트 구조는 `references/dispatch-guide.md` §인라인 텍스트 Reference 워커 참조.
 - 처리 완료 후 원본 삭제 불필요 (파일이 없으므로).
 - 이 경우 1~5단계를 건너뛰고 곧바로 워커 디스패치로 이동한다.
 
