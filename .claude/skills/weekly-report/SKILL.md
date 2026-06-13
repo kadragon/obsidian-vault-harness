@@ -35,19 +35,7 @@ description: |
 아래 세 경로에서 활성 노트를 찾는다. 디렉토리가 없으면 해당 경로를 건너뛰고 사용자에게 알린다.
 
 ```bash
-VAULT=/Users/kadragon/ObsidianVault
-
-# 프로젝트 노트 (12_Projects/ 전체 — 연도·연도접두·프로젝트명 폴더 모두 포함)
-grep -rlE "^status:\s*\"?(open|active|in-progress)\"?" \
-  "$VAULT/12_Projects/" 2>/dev/null
-
-# 업무사안 노트 (10_Areas/)
-grep -rlE "^status:\s*\"?(open|active|in-progress)\"?" \
-  "$VAULT/10_Areas/" 2>/dev/null
-
-# 변경사안 노트 (14_Changes/ — 인시던트·개선)
-grep -rlE "^status:\s*\"?(open|in-progress)\"?" \
-  "$VAULT/14_Changes/" 2>/dev/null
+bash .claude/skills/weekly-report/scripts/collect_active_notes.sh .
 ```
 
 각 노트에서 Read로 추출:

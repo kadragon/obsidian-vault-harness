@@ -3,7 +3,7 @@ name: inbox-process
 description: "This skill should be used when the user asks to process 01_Inbox/ — 문서를 분석하여 '업무사안(action)'으로 다룰지 '참고자료(reference)'로 정리할지 판단한 뒤, 각각 10_Areas/{area}/ 업무사안 노트 또는 19_Reference/_Sources·_Wiki/에 반영한다. 트리거 문구: 'inbox 처리', 'inbox 정리', 'inbox 비워줘', '01_Inbox 처리', '공문 처리', '공문 읽어줘', '받은 문서 정리', '받은 자료 정리', '수집함 처리', 'InfoBox 처리', '문서 정리해줘', '자료 정리해줘', '위키에 반영해줘'. inbox·공문·받은 문서·수집함·참고자료 처리 요청이면 '01_Inbox'를 명시적으로 언급하지 않아도 이 스킬이 해당된다."
 ---
 
-# Inbox Processor — Orchestrator
+# Inbox 처리 오케스트레이터
 
 `01_Inbox/` 처리를 오케스트레이션하는 스킬. **실제 파일 처리는 두 서브에이전트에 위임**한다:
 
@@ -22,6 +22,17 @@ description: "This skill should be used when the user asks to process 01_Inbox/ 
 ```
 
 ## 처리 흐름
+
+### 사전 확인: 인라인 텍스트 입력
+
+사용자가 **파일 없이 텍스트를 직접 붙여넣거나 제공**한 경우 (공문 내용, 메모, 업무 요청 등):
+
+- **`.txt` 파일을 생성하지 않는다** — 임시 파일 우회는 불필요한 흔적을 남긴다.
+- 텍스트 내용을 바로 분석하여 action/reference 분류한다 (`references/dispatch-guide.md` §분류 힌트 참조).
+- action인 경우 → `inbox-action-worker`를 호출한다. 호출 프롬프트 구조는 `references/dispatch-guide.md` §인라인 텍스트 Action 워커 참조.
+- reference인 경우 → `inbox-reference-worker`를 호출한다.
+- 처리 완료 후 원본 삭제 불필요 (파일이 없으므로).
+- 이 경우 1~5단계를 건너뛰고 곧바로 워커 디스패치로 이동한다.
 
 ### 0단계: HWP 사전 변환
 
@@ -107,6 +118,7 @@ Glob으로 세 영역을 각각 스캔:
 
 ## 트리거 해석
 
+- **사용자가 텍스트를 직접 붙여넣은 경우** → §사전 확인: 인라인 텍스트 입력으로 처리. `.txt` 파일 생성 금지.
 - 사용자가 파일명을 명시하면 해당 영역의 갈래만 디스패치.
 - "action만", "reference만", "공문만", "자료만" → 해당 갈래만 실행.
 - "공문 처리해줘" → action 중심, "수집함·InfoBox 정리해줘" → reference 중심 (기존 호칭 호환).

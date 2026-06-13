@@ -48,15 +48,7 @@ Analyze 통합학사시스템 errors and produce a structured incident note.
 
 ### Step 3: 근본 원인 진단
 
-에러 타입별 일반적 원인:
-
-| 에러 타입 | 주요 원인 |
-|----------|----------|
-| `SQLIntegrityConstraintViolation` | PK 중복, UNIQUE 제약 위반 -- 데이터 변환 로직 또는 키 생성 로직 확인 |
-| `NullPointerException` | 조회 결과 없음 상태에서 접근 시도 |
-| `ArrayIndexOutOfBounds` | 데이터셋 크기 불일치 |
-| `SQLDataException` | 데이터 타입 불일치, 값 범위 초과 |
-| `Timeout` | 쿼리 성능 문제 -- 실행 계획 확인 필요 |
+에러 타입별 주요 원인·확인 포인트·통합학사시스템 반복 패턴 → `references/error-types.md`
 
 진단은 로그 근거 기반으로 한다. 추측일 경우 "추정"으로 명시한다.
 
@@ -116,3 +108,9 @@ python3 .claude/skills/incident-analyze/scripts/new_incident_path.py {YYYY-MM-DD
 - 유사 과거 사례 유무
 - 권장 처리 방안
 - 추가 확인이 필요한 사항
+
+---
+
+## 참고 자료
+
+- **`references/error-types.md`** — 에러 타입별 진단 가이드, 통합학사시스템 반복 패턴

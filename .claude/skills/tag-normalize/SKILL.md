@@ -83,8 +83,8 @@ printf '%s\n' '#업무/공통/시스템/권한관리' '#부서/학사관리과/�
 python3 .claude/skills/tag-normalize/scripts/validate_tag.py --json '<tag>'
 ```
 
-When the script returns `[FIX]`, use the suggested `→` value.
-Exception: `행정주사` → script outputs `팀장`, but manually replace with `{업무}팀장` when the actual team title is known (the script has no business context).
+스크립트 `[FIX]` 출력: 제안된 `→` 값을 적용한다.
+예외: `행정주사` → 스크립트 출력 `팀장`; 실제 업무팀장 직함 파악 시 `{업무}팀장`으로 교체 (스크립트는 업무 맥락 미보유).
 
 ---
 

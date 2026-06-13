@@ -10,8 +10,11 @@
 !.claude/**
 .claude/change-log-report.txt
 .claude/.cache/
+.claude/hooks/**/__pycache__/
 .claude/skills/**/__pycache__/
 !.agents/
 !.agents/**
+!agents/
+!agents/**
 !docs/
 !docs/**
