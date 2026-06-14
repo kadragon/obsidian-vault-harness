@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-import json, sys, re, pathlib
+import json, sys, re, pathlib, datetime
+
+WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"]
 
 try:
     d = json.loads(sys.stdin.read())
@@ -22,6 +24,19 @@ if not p.exists():
 def has_dated(line, emoji):
     return bool(re.search(re.escape(emoji) + r"\s*\d{4}-\d{2}-\d{2}", line))
 
+def due_date_is_weekend(line):
+    m = re.search(r"📅\s*(\d{4}-\d{2}-\d{2})", line)
+    if not m:
+        return None
+    try:
+        d = datetime.date.fromisoformat(m.group(1))
+        wd = d.weekday()
+        if wd >= 5:
+            return (m.group(1), WEEKDAY_KO[wd])
+    except ValueError:
+        pass
+    return None
+
 warnings = []
 for line in p.read_text(encoding="utf-8").splitlines():
     is_open = bool(re.search(r"- \[ \]", line))
@@ -39,6 +54,11 @@ for line in p.read_text(encoding="utf-8").splitlines():
 
     if missing:
         warnings.append(f"  {line.strip()}\n    → 필요: {', '.join(missing)}")
+
+    weekend = due_date_is_weekend(line)
+    if weekend:
+        date_str, day_ko = weekend
+        warnings.append(f"  {line.strip()}\n    → 마감일 {date_str}({day_ko})은 휴일(주말). 평일로 변경 필요.")
 
 if warnings:
     msg = "[WARNING] 할일 날짜 누락:\n" + "\n".join(warnings)

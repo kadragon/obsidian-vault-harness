@@ -144,7 +144,7 @@ Read: .claude/skills/tag-normalize/skill.md
 
 ## 협업
 
-- **vault-orchestrate**: 노트 생성 후 suggest 모드로 호출하여 태그 작성 위임
+- **오케스트레이터(main loop)**: 노트 생성 후 suggest 모드로 호출하여 태그 작성 위임
 - **incident-analyst / improvement-planner**: 노트 생성 후 태그 작성을 이 에이전트에 위임
 - **PostToolUse hook**: validate 모드로 호출하여 태그 검증
 - 규칙 참조: `.claude/skills/tag-normalize/skill.md`

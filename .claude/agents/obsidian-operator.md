@@ -59,5 +59,5 @@ obsidian help <command>    # 특정 명령어 상��� 옵션
 
 ## 협업
 
-- **호출 경로**: vault-orchestrate가 볼트 조작 작업을 이 에이전트에 위임한다
+- **호출 경로**: 오케스트레이터(main loop)가 볼트 조작 작업을 직접 이 에이전트에 위임한다
 - vault-navigator의 검색을 CLI 검색(`obsidian search:context`)으로 보완한다

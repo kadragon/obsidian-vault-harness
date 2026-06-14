@@ -13,7 +13,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-todo-due-date.py\"",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-todo-due-date.py\"",
             "statusMessage": "할일 마감일 검사 중..."
           },
           {
@@ -28,12 +28,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-template.py\"",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-template.py\"",
             "statusMessage": "템플릿 검사 중..."
           },
           {
             "type": "command",
-            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-folder-rules.py\"",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-folder-rules.py\"",
             "statusMessage": "폴더 규칙 검사 중..."
           }
         ]
