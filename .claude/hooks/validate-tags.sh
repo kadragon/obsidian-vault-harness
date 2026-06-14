@@ -5,6 +5,8 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VAULT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+command -v python3 &>/dev/null || exit 0
+
 # Read JSON from stdin
 INPUT=$(cat)
 

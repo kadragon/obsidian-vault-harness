@@ -4,7 +4,9 @@ Vault operational cheat sheet. No build/deploy — vault is notes-only.
 
 ## Vault Location
 
-`C:\dev\ObsidianVault` — synced via Syncthing. Obsidian opens this directory.
+Syncthing으로 다중 기기 동기화. OS별 경로:
+- **macOS**: `/Users/kadragon/ObsidianVault`
+- **Windows**: `C:\dev\ObsidianVault`
 
 ## Common Operations
 
@@ -74,14 +76,15 @@ Scope: 10_Areas/ → 90_Archive/
 | Skill | Trigger phrase | Entry point |
 |-------|---------------|-------------|
 | `inbox-process` | inbox 처리, 공문 처리 | `01_Inbox/` scan |
-| `incident-analyze` | 에러 분석, 오류 처리 | Error log paste |
-| `improvement-plan` | 개선 계획, 쿼리 수정 | Change description |
+| `incident-analyze` | 에러 분석, 오류 처리 | → `incident-analyst` agent |
+| `improvement-plan` | 개선 계획, 쿼리 수정 | → `improvement-planner` agent |
 | `weekly-report` | 주간업무회의 자료 | Vault scan |
 | `change-log` | 기능 개선 내역 | Vault scan (past week) |
 | `status-sync` | status 동기화 | Vault scan |
 | `syncthing-conflict-cleanup` | conflict 파일 정리 | Vault scan |
 | `vault-cleanup` | 아카이브 정리 | Vault scan |
-| `vault-orchestrate` | 볼트 작업 (복합) | Routes to right skill |
+
+> 복합 볼트 작업(여러 스킬/에이전트 연계)은 `docs/delegation.md` § Multi-step Chains 참조.
 
 ## Agent Reference
 
@@ -125,13 +128,20 @@ Scope: 10_Areas/ → 90_Archive/
 
 ## Harness Maintenance
 
+Plugin: `kadragon/dev-tools` (versioned cache — locate current scripts per OS below).
+
+**macOS (zsh/bash):**
 ```bash
-# Validate harness structure
-bash /c/Users/KNUE/.claude/plugins/cache/kadragon/toolkit/1.13.0/skills/harness-init/scripts/validate-harness.sh
+SCRIPTS=$(find ~/.claude/plugins/cache/kadragon/dev-tools -name "validate-harness.sh" | sort -V | tail -1 | xargs dirname)
+bash "$SCRIPTS/validate-harness.sh"
+bash "$SCRIPTS/symlink-guard.sh"
+python "$SCRIPTS/reconcile-harness.py"
+```
 
-# Repair .agents/skills symlink
-bash /c/Users/KNUE/.claude/plugins/cache/kadragon/toolkit/1.13.0/skills/harness-init/scripts/symlink-guard.sh
-
-# Reconcile backlog with completed tasks
-python /c/Users/KNUE/.claude/plugins/cache/kadragon/toolkit/1.13.0/skills/harness-init/scripts/reconcile-harness.py
+**Windows (PowerShell):**
+```powershell
+$SCRIPTS = Get-ChildItem "$env:USERPROFILE\.claude\plugins\cache\kadragon\dev-tools" -Recurse -Filter "validate-harness.sh" | Sort-Object FullName | Select-Object -Last 1 | Split-Path
+bash "$SCRIPTS/validate-harness.sh"
+bash "$SCRIPTS/symlink-guard.sh"
+python "$SCRIPTS/reconcile-harness.py"
 ```

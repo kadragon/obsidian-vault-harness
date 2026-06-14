@@ -12,11 +12,13 @@ fp = (d.get("tool_input") or {}).get("file_path", "")
 if not fp or not fp.endswith(".md"):
     sys.exit(0)
 
+fp_norm = fp.replace("\\", "/")
+
 # Skip harness/meta dirs and non-note paths
-skip = ["99_Template", "\\docs\\", ".claude\\", "90_Archive",
-        "_Wiki", "19_Reference\\", "01_Inbox\\", "\\_work",
+skip = ["99_Template", "/docs/", "/.claude/", "90_Archive",
+        "_Wiki", "/19_Reference/", "/01_Inbox/", "/_work",
         "backlog.md", "tasks.md"]
-if any(s in fp for s in skip):
+if any(s in fp_norm for s in skip):
     sys.exit(0)
 
 p = pathlib.Path(fp)
