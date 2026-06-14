@@ -18,3 +18,7 @@
 !agents/**
 !docs/
 !docs/**
+!.gitmodules
+!19_Reference/
+!19_Reference/knue-policy-hub
+!19_Reference/knue-policy-hub/**

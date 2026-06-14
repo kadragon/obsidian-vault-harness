@@ -1,0 +1,3 @@
+[submodule "19_Reference/knue-policy-hub"]
+	path = 19_Reference/knue-policy-hub
+	url = https://github.com/kadragon/knue-policy-hub
