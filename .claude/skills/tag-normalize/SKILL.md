@@ -1,6 +1,6 @@
 ---
 name: tag-normalize
-description: "This skill should be used when the user asks to normalize, validate, suggest, or check #업무 or #부서 tags in vault notes. Trigger phrases: 태그 정규화, 태그 검증, 태그 추천, 태그 확인, tag normalize, tag validate."
+description: "Workflow reference for tag-validator agent. Do NOT invoke directly — use the tag-validator agent instead. Contains normalization rules, mapping tables, and validation logic for #업무 and #부서 tags."
 ---
 
 # Tag Normalizer — 태그 정규화 규칙

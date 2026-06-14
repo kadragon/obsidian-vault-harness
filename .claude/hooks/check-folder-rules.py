@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # PostToolUse hook: GP#4 folder-path validation
-# Write 후 세 가지 폴더 규칙 검사 (path-only, 파일 읽기 불필요):
+# Write 후 네 가지 폴더 규칙 검사 (path-only, 파일 읽기 불필요):
 #   1. 12_Projects/ 직접 하위 .md 금지 (폴더만 허용)
 #   2. 90_Archive/ 파일 생성 금지
 #   3. 10_Areas/ 깊이·slug·summary 길이 제한
-import json, sys, re, pathlib
+#   4. 14_Changes/incident/ 파일명 단일 명명규칙 강제
+import json, sys, re, pathlib, unicodedata
 
 try:
     d = json.loads(sys.stdin.read())
@@ -56,6 +57,18 @@ if "/10_Areas/" in fp_norm:
         if len(summary) > 60:
             violations.append(
                 f"10_Areas/ 파일명(summary) 60자 초과: {len(summary)}자 (GP#4)")
+
+# Rule 4: 14_Changes/incident/ — single canonical filename pattern
+#   '통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}.md'
+#   과거 드리프트(Error_*, '오류 처리 *', '_통합학사…') 재발 차단.
+#   경로/순번은 incident-analyze 스킬의 scripts/new_incident_path.py가 생성한다.
+if "/14_Changes/incident/" in fp_norm:
+    name = unicodedata.normalize("NFC", pathlib.Path(fp).name)
+    if not re.match(r'^통합학사시스템 오류 처리 \d{4}-\d{2}-\d{2}_\d+\.md$', name):
+        violations.append(
+            "14_Changes/incident/ 파일명 규칙 위반 — "
+            "'통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}.md' 형식 필수. "
+            "new_incident_path.py로 경로를 생성할 것 (명명규칙 단일화)")
 
 if violations:
     fname = pathlib.Path(fp).name

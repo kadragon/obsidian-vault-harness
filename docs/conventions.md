@@ -74,7 +74,15 @@ change_type: incident | improvement   # only when type: change
 **현재 생성된 MOC:**
 
 Operational MOC (라이브 대시보드 포함):
-- [[_Wiki/topics/수업성적-운영-MOC]]: 수업성적 (파일럿, 2026-05-01)
+- [[_Wiki/topics/수업성적-운영-MOC]]: 수업성적
+- [[_Wiki/topics/장학-운영-MOC]]: 장학
+- [[_Wiki/topics/시설물이용-운영-MOC]]: 시설물이용
+- [[_Wiki/topics/교육연구학생지도-운영-MOC]]: 교육연구학생지도
+- [[_Wiki/topics/전임교원공채-운영-MOC]]: 전임교원공채
+- [[_Wiki/topics/개발공통-운영-MOC]]: 개발공통
+- [[_Wiki/topics/졸업-운영-MOC]]: 졸업
+- [[_Wiki/topics/예산관리-운영-MOC]]: 예산관리
+- [[_Wiki/topics/교직-운영-MOC]]: 교직
 
 Topic MOC (정적 자료 인덱스, `_Wiki/topics/`):
 - [[_Wiki/topics/규정-MOC]]: 규정·지침·법령

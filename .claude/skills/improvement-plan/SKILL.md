@@ -1,6 +1,6 @@
 ---
 name: improvement-plan
-description: "This skill should be used when the user asks to plan improvements to 통합학사시스템 — including SQL 쿼리 최적화, 프로시저 수정, UI 변경, 기능 추가, 성능 개선 — and create structured improvement notes. Triggers: 개선, 수정, 변경, 최적화, 쿼리 수정, 기능 추가, 프로시저 변경."
+description: "Workflow reference for improvement-planner agent. Do NOT invoke directly — use the improvement-planner agent instead. Contains step-by-step workflow for planning and documenting 통합학사시스템 improvements."
 ---
 
 # Improvement Planning
