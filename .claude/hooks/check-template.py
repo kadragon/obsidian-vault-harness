@@ -15,8 +15,8 @@ if not fp or not fp.endswith(".md"):
 fp_norm = fp.replace("\\", "/")
 
 # Skip harness/meta dirs and non-note paths
-skip = ["99_Template", "/docs/", "/.claude/", "90_Archive",
-        "_Wiki", "/19_Reference/", "/01_Inbox/", "/_work",
+skip = ["/99_Template/", "/docs/", "/.claude/", "/90_Archive/",
+        "/_Wiki/", "/19_Reference/", "/01_Inbox/", "/_work",
         "backlog.md", "tasks.md"]
 if any(s in fp_norm for s in skip):
     sys.exit(0)
@@ -38,14 +38,14 @@ if re.search(r'!\[\[', text):
 
 # Check 2: missing type: frontmatter — only for note-bearing folders
 note_folders = ["10_Areas", "12_Projects", "13_Routines", "14_Changes", "20_Training"]
-if any(f in fp for f in note_folders):
+if any(f in fp_norm for f in note_folders):
     fm_match = re.match(r'^---\s*\n(.*?)\n---', text, re.DOTALL)
     if fm_match:
         fm = fm_match.group(1)
         if not re.search(r'^type:\s*\S', fm, re.MULTILINE):
             violations.append("frontmatter에 type: 없음 — 99_Template/ 해당 템플릿 사용 필요 (GP#2)")
         # Check 3: incident notes require change_type + status (_인시던트 템플릿)
-        if "/14_Changes/incident/" in fp.replace("\\", "/"):
+        if "/14_Changes/incident/" in fp_norm:
             if not re.search(r'^change_type:\s*incident', fm, re.MULTILINE):
                 violations.append("incident frontmatter에 'change_type: incident' 없음 (_인시던트 템플릿 사용)")
             if not re.search(r'^status:\s*\S', fm, re.MULTILINE):

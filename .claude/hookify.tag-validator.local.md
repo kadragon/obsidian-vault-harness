@@ -21,5 +21,4 @@ Agent(tag-validator, mode=validate, target=<작성한 파일 경로>)
 
 직접 검증하지 말 것 — 반드시 에이전트에 위임할 것.
 
-> **루프 방지:** `tag-validator`가 파일을 수정해도 이 hook이 재귀 호출되지 않는다.
-> PostToolUse hook은 Claude의 tool call에만 반응하며, 에이전트 내부 Edit도 동일하게 hook을 트리거하지만 `tag-validator`는 수정 후 즉시 종료(추가 write 없음)하므로 무한 루프가 발생하지 않는다.
+> **루프 방지:** `tag-validator`의 Edit도 이 hook을 재트리거한다. 안전한 이유는 **멱등성(idempotence)**: 태그가 이미 정규화된 상태라면 두 번째 실행에서 위반이 없어 에이전트를 재호출하지 않는다. 단, normalization이 매 실행마다 파일을 변경한다면 루프가 발생할 수 있으므로, 수정 후 재검증 결과가 "위반 없음"이어야 한다.

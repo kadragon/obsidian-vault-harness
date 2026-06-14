@@ -5,7 +5,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VAULT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-command -v python3 &>/dev/null || exit 0
+command -v python3 &>/dev/null || { echo 'validate-tags: python3 not found — tag validation skipped' >&2; exit 0; }
 
 # Read JSON from stdin
 INPUT=$(cat)

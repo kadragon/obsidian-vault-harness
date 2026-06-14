@@ -135,7 +135,7 @@ Plugin: `kadragon/dev-tools` (versioned cache — locate current scripts per OS 
 SCRIPTS=$(find ~/.claude/plugins/cache/kadragon/dev-tools -name "validate-harness.sh" | sort -V | tail -1 | xargs dirname)
 bash "$SCRIPTS/validate-harness.sh"
 bash "$SCRIPTS/symlink-guard.sh"
-python "$SCRIPTS/reconcile-harness.py"
+python3 "$SCRIPTS/reconcile-harness.py"
 ```
 
 **Windows (PowerShell):**
@@ -143,5 +143,5 @@ python "$SCRIPTS/reconcile-harness.py"
 $SCRIPTS = Get-ChildItem "$env:USERPROFILE\.claude\plugins\cache\kadragon\dev-tools" -Recurse -Filter "validate-harness.sh" | Sort-Object FullName | Select-Object -Last 1 | Split-Path
 bash "$SCRIPTS/validate-harness.sh"
 bash "$SCRIPTS/symlink-guard.sh"
-python "$SCRIPTS/reconcile-harness.py"
+python3 "$SCRIPTS/reconcile-harness.py"
 ```
