@@ -22,7 +22,6 @@ If any trigger applies, delegate first — do not proceed without it.
 | Trigger | Delegate to | Context to pass |
 |---------|------------|----------------|
 | Past cases / similar notes needed | `vault-navigator` | Keywords, work domain |
-| Complex multi-step vault task | `vault-orchestrate` skill | Full task goal |
 | Periodic vault cleanup | `vault-cleanup` skill | — |
 | Weekly system change report needed | `change-log` skill | Date range (default: past week) |
 | Status open→closed sync needed | `status-sync` skill | — |
@@ -71,6 +70,19 @@ If any trigger applies, delegate first — do not proceed without it.
 - Required: training name, date (or note path)
 - Optional: content summary, quality evaluation requested
 - Reference: `99_Template/_교육.md`, `docs/eval-criteria.md`
+
+## Multi-step Chains
+
+Single-step routing handles most requests. For compound requests, chain agents sequentially — pass previous output as context to the next.
+
+| Request shape | Chain |
+|---------------|-------|
+| 에러 분석 + "개선 방안도 정리해줘" | `incident-analyst` → `improvement-planner` (pass incident note path) |
+| "비슷한 에러 찾고 인시던트 노트 만들어줘" | `vault-navigator` → `incident-analyst` (pass search results) |
+| "과거 사례 참고해서 개선안 작성해줘" | `vault-navigator` → `improvement-planner` (pass search results) |
+| "정리해서 MOC에 반영해줘" / "synthesis 만들어줘" | `vault-navigator` → `obsidian-operator` (pass note paths) |
+
+Pattern: collect prior agent's output (note path, summary) → inject into next agent's prompt explicitly.
 
 ## Delegation Principles
 
