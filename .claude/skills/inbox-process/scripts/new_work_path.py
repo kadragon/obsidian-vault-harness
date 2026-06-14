@@ -44,7 +44,12 @@ def sanitize_title(title: str) -> str:
 
 
 def find_duplicates(vault: Path, doc_number: str) -> list[str]:
-    """Search 10_Areas/**/*.md for doc_number. Returns matching relative paths."""
+    """Search 10_Areas/**/*.md for doc_number. Returns matching relative paths.
+
+    Note: performs a full rglob on every call — acceptable for current vault size
+    (~hundreds of notes) but will degrade at 10k+ notes. If inbox runs slow,
+    consider a pre-built doc-number index.
+    """
     areas_dir = vault / "10_Areas"
     if not areas_dir.exists():
         return []
