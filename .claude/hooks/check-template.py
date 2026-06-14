@@ -42,6 +42,12 @@ if any(f in fp for f in note_folders):
         fm = fm_match.group(1)
         if not re.search(r'^type:\s*\S', fm, re.MULTILINE):
             violations.append("frontmatter에 type: 없음 — 99_Template/ 해당 템플릿 사용 필요 (GP#2)")
+        # Check 3: incident notes require change_type + status (_인시던트 템플릿)
+        if "/14_Changes/incident/" in fp.replace("\\", "/"):
+            if not re.search(r'^change_type:\s*incident', fm, re.MULTILINE):
+                violations.append("incident frontmatter에 'change_type: incident' 없음 (_인시던트 템플릿 사용)")
+            if not re.search(r'^status:\s*\S', fm, re.MULTILINE):
+                violations.append("incident frontmatter에 'status:' 없음 (_인시던트 템플릿 사용)")
     else:
         violations.append("frontmatter 없음 — 99_Template/ 해당 템플릿 사용 필요 (GP#2)")
 

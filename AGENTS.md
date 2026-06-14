@@ -11,11 +11,14 @@ XML, Java, SQL, and procedure content comes from user-provided materials or exis
 | `docs/conventions.md` | Writing filenames, tags, frontmatter, **or MOC creation rules** |
 | `docs/workflows.md` | Processing Inbox, creating incident/improvement notes, **or updating domain MOCs** |
 | `docs/delegation.md` | Deciding which agent/skill to use |
-| `docs/eval-criteria.md` | Evaluating note quality (frontmatter, tags, template, wikilinks) |
+| `docs/eval-criteria.md` | Evaluating note quality after creation — all agent context manifests reference this as the evaluation rubric |
 | `docs/enforcement.md` | Enforcement layer status and how to strengthen it |
+| `docs/runbook.md` | Diagnosing hook failures, checking skill trigger phrases, or looking up agent capabilities |
 | `_Wiki/README.md` | Understanding the wiki layer structure (index·log·MOC·entities·topics·syntheses) |
-| `_Wiki/workflow.md` | Cross-skill process flow — when multiple skills must chain |
+| `_Wiki/workflow.md` | Cross-skill process flow **and search priority** (qmd → rg → index.md) — read before vault search or multi-skill chains |
 | `_Wiki/contracts.md` | Source note / wiki page / synthesis / **operational MOC** document contracts |
+| `_Wiki/index.md` | Vault topic map — starting point for exploring existing wiki pages |
+| `_Wiki/log.md` | Append-only ingest/event log — write here after note creation or closure |
 | `docs/migration-flat-areas.md` | One-time migration guide for flat `10_Areas/` notes (reference only) |
 
 ## Golden Principles
@@ -43,7 +46,6 @@ Never perform these directly without the designated agent/skill:
 | `01_Inbox/` document processing (공문·참고자료 모두) | `inbox-process` skill |
 | Training note cleanup | `training-note-manager` agent |
 | Obsidian note create/edit/open | `obsidian-operator` agent |
-| **Vault work (single entry point — unsure which skill to use, or multi-step)** | **`vault-orchestrate` skill** — routes to the right agent/skill automatically |
 | Vault cleanup (Archive) | `vault-cleanup` skill |
 | Status open→closed sync | `status-sync` skill |
 | Syncthing conflict files | `syncthing-conflict-cleanup` skill |
@@ -54,6 +56,10 @@ Never perform these directly without the designated agent/skill:
 | Domain MOC 노트 생성·등록 | `obsidian-operator` agent |
 
 Full context manifest → `docs/delegation.md`
+
+## Search Priority
+
+Vault search order: `qmd` (semantic) → `rg`/grep (keyword) → `_Wiki/index.md` (topic map). Delegate to `vault-navigator` when scope is unclear or requires semantic matching. `qmd` index auto-refreshes via PostToolUse hook after every write.
 
 ## Branching
 

@@ -1,6 +1,6 @@
 ---
 name: incident-analyze
-description: "This skill should be used when the user asks to analyze an error log, diagnose an incident, or create an incident note for the 통합학사시스템. Triggers: 에러, 오류, 장애, exception, SQLIntegrityConstraintViolation, NullPointerException, 프로시저 에러 — or when the user pastes a raw error log containing PARAMETER_INFO, ERR_INFO, or a stack trace."
+description: "Workflow reference for incident-analyst agent. Do NOT invoke directly — use the incident-analyst agent instead. Contains step-by-step workflow for parsing error logs and creating incident notes for 통합학사시스템."
 ---
 
 # Incident Analysis
@@ -67,6 +67,8 @@ python3 .claude/skills/incident-analyze/scripts/new_incident_path.py {YYYY-MM-DD
 출력 예: `/Users/.../14_Changes/incident/2026/상반기/통합학사시스템 오류 처리 2026-04-10_3.md`
 
 스크립트가 하는 일: 발생월 1~6 → `상반기` / 7~12 → `하반기`, 같은 날짜의 기존 파일을 NFC 정규화 후 스캔해 최대 순번 + 1. 파일은 생성하지 않고 경로만 반환한다.
+
+파일명 `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}.md`은 **단일 명명규칙으로 mechanical 강제**된다 (`check-folder-rules.py` Rule 4, PostToolUse Write). 다른 형식(`Error_*`, `오류 처리 *` 등)으로 생성 시 경고. 반드시 위 스크립트 출력 경로를 사용할 것.
 
 #### 중복 방지
 

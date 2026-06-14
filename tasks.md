@@ -10,3 +10,10 @@
 - [ ] [debt] `.agents/skills` symlink reintroduced without explanation — confirm Developer Mode status; remove if still OFF (source: review) — `.agents/skills`
 - [ ] [debt] `new_work_path.py` `find_duplicates` full rglob on every inbox run — add docstring noting future scaling concern (source: review) — `new_work_path.py:46`
 
+### PR #6 — [HARNESS] update hooks, remove vault-orchestrate, sync docs (2026-06-14)
+
+- [ ] [doc] Remove stale `vault-orchestrate` callout from `.claude/agents/obsidian-operator.md:62` — update invocation chain to direct orchestrator → obsidian-operator (source: pr-review-toolkit, agy, codex)
+- [ ] [doc] Remove stale `vault-orchestrate` callout from `.claude/agents/tag-validator.md:147` — update to reflect direct delegation chain (source: pr-review-toolkit, agy, codex)
+- [ ] [doc] Remove dangling `vault-orchestrate` row from `docs/runbook.md:84` — add note pointing to `docs/delegation.md` § Multi-step Chains (source: pr-review-toolkit, agy, codex)
+- [ ] [doc] Remove `vault-orchestrate` from skill list in `_Wiki/topics/harness-engineering.md:59` (source: pr-review-toolkit)
+- [ ] [doc] Align `docs/runbook.md` incident/improvement routing from "skill" to "agent" per updated skill metadata in `incident-analyze` and `improvement-plan` (source: codex)

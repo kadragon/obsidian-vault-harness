@@ -1,6 +1,6 @@
 ---
 name: training-manage
-description: "This skill should be used when the user asks to assess, standardize, refactor, or create training/education notes in 20_Training (e.g., '교육 정리', '교육 노트 개선', '연수 기록 정리', '20_Training 정리', '교육 템플릿 적용', '교육 노트 만들어줘')."
+description: "Workflow reference for training-note-manager agent. Do NOT invoke directly — use the training-note-manager agent instead. Contains assessment, standardization, and creation modes for 20_Training notes."
 ---
 
 # Training Note Management
