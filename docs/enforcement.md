@@ -63,7 +63,7 @@ Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-to
 `.claude/hooks/check-template.py`, registered in `settings.json` as `PostToolUse` on `Write`. Checks:
 
 - `![[...]]` embed anywhere in file → warn (GP#2: embeds forbidden unless explicitly requested)
-- Missing `type:` frontmatter in note-bearing folders (`10_Areas`, `12_Projects`, `13_Routines`, `14_Changes`, `20_Training`) → warn (GP#2: use template from `99_Template/`)
+- Missing `type:` frontmatter in note-bearing folders (`10_Areas`, `12_Projects`, `11_Routines`, `14_Changes`, `20_Training`) → warn (GP#2: use template from `99_Template/`)
 
 Skips: `99_Template`, `docs`, `.claude`, `90_Archive`, `_Wiki`, `19_Reference`, `01_Inbox`, `_work`, `backlog.md`, `tasks.md`. Warning-only, exit 0.
 
