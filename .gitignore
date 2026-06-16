@@ -14,8 +14,10 @@
 .claude/skills/**/__pycache__/
 !.agents/
 !.agents/**
+.agents/~syncthing~*
 !agents/
 !agents/**
+agents/~syncthing~*
 !docs/
 !docs/**
 !.gitmodules

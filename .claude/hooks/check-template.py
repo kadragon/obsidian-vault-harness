@@ -37,7 +37,7 @@ if re.search(r'!\[\[', text):
     violations.append("![[...]] embed 사용 — 명시적 요청 없으면 embed 금지 (GP#2)")
 
 # Check 2: missing type: frontmatter — only for note-bearing folders
-note_folders = ["10_Areas", "12_Projects", "13_Routines", "14_Changes", "20_Training"]
+note_folders = ["10_Areas", "12_Projects", "11_Routines", "14_Changes", "20_Training"]
 if any(f in fp_norm for f in note_folders):
     fm_match = re.match(r'^---\s*\n(.*?)\n---', text, re.DOTALL)
     if fm_match:
