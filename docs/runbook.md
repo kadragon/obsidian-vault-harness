@@ -8,6 +8,17 @@ Syncthing으로 다중 기기 동기화. OS별 경로:
 - **macOS**: `/Users/kadragon/ObsidianVault`
 - **Windows**: `C:\dev\ObsidianVault`
 
+## Environment
+
+### Image-PDF OCR (scanned reference PDFs)
+
+이미지(스캔) PDF는 Read/`pdftotext`로 텍스트가 안 나온다. OCR로 추출한다.
+
+- **도구**: PyMuPDF(`fitz`) + Tesseract 5.x. `pdftoppm` 불필요.
+- **스크립트**: `python .claude/skills/inbox-process/scripts/ocr_pdf.py "<pdf>" --pages 1-5` (페이지당 수 초; 대용량은 범위 샘플)
+- **언어 데이터**: `kor`+`eng` → `%TESSDATA_PREFIX%` (`~/tessdata/`). 사용자 env에 영구 등록됨.
+- **재구축** (새 머신): `winget install UB-Mannheim.TesseractOCR` → `kor.traineddata`(tessdata_best)를 쓰기 가능 디렉터리에 두고 `TESSDATA_PREFIX` 지정 + Tesseract를 PATH에. Program Files tessdata는 쓰기 권한 없음 — 홈에 둘 것.
+
 ## Common Operations
 
 ### Process Inbox

@@ -13,7 +13,7 @@ if not fp or not fp.endswith(".md"):
     sys.exit(0)
 
 fp_norm = fp.replace("\\", "/")
-skip = ["99_Template", "/docs/", "/.claude/", "90_Archive", "backlog.md", "tasks.md"]
+skip = ["99_Template", "/docs/", "/.claude/", "90_Archive", "20_Training", "backlog.md", "tasks.md"]
 if any(s in fp_norm for s in skip):
     sys.exit(0)
 
