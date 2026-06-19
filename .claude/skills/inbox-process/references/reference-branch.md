@@ -76,6 +76,7 @@
 ## 파일 형식 주의
 
 - `.pdf`: Read 도구로 직접 읽는다. 10페이지 초과는 `pages: "1-5"`로 먼저 앞부분만 확인.
+- **이미지 기반 `.pdf`** (스캔본 — Read가 텍스트를 거의 못 뽑는 경우): 미파싱으로 포기하지 말고 `scripts/ocr_pdf.py`로 OCR한다. 예: `python .claude/skills/inbox-process/scripts/ocr_pdf.py "<경로>" --pages 1-5`. 대용량은 `--pages`로 앞부분 샘플 후 필요 범위만 추가 OCR (페이지당 수 초 소요). OCR 결과는 표·순서가 다소 흐트러질 수 있으니 핵심 사실 위주로 정리한다. Tesseract+kor 데이터는 이 머신에 이미 설치됨(`TESSDATA_PREFIX` 영구 등록).
 - `.txt`, `.md`: Read 도구로 읽는다.
 - `.hwp`, `.hwpx`, `.xlsx`, `.docx`: 내용 직접 파싱 불가. 파일명·사용자 설명·주변 맥락으로 판단. 필요하면 사용자에게 핵심 내용을 묻는다.
 - `.pdf` 중 Handysoft 포맷은 `scripts/extract_handysoft_pdf.py`로 추출 후 읽을 수 있다(action-branch와 동일).
