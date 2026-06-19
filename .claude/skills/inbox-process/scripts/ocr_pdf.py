@@ -39,26 +39,37 @@ def _ensure_tess_env() -> None:
 def _parse_pages(spec: str, count: int) -> range:
     if not spec:
         return range(count)
-    if "-" in spec:
-        a, b = spec.split("-", 1)
-        start = int(a) - 1
-        end = int(b)
-    else:
-        start = int(spec) - 1
-        end = start + 1
-    return range(max(0, start), min(count, end))
+    try:
+        if "-" in spec:
+            a, b = spec.split("-", 1)
+            start = int(a) - 1 if a.strip() else 0
+            end = int(b) if b.strip() else count
+        else:
+            start = int(spec) - 1
+            end = start + 1
+    except ValueError:
+        raise ValueError(
+            f"invalid page range {spec!r}: expected forms like '3', '1-5', '2-', '-4'"
+        )
+    start = max(0, start)
+    end = min(count, end)
+    if start >= end:
+        raise ValueError(
+            f"page range {spec!r} is empty or out of bounds for a {count}-page document"
+        )
+    return range(start, end)
 
 
 def ocr(src: str, pages: str, lang: str, dpi: int) -> str:
     import fitz  # PyMuPDF
 
     _ensure_tess_env()
-    doc = fitz.open(src)
-    out = []
-    for i in _parse_pages(pages, doc.page_count):
-        page = doc[i]
-        tp = page.get_textpage_ocr(language=lang, dpi=dpi, full=True)
-        out.append(page.get_text(textpage=tp))
+    with fitz.open(src) as doc:
+        out = []
+        for i in _parse_pages(pages, doc.page_count):
+            page = doc[i]
+            tp = page.get_textpage_ocr(language=lang, dpi=dpi, full=True)
+            out.append(page.get_text(textpage=tp))
     return "\f".join(out)
 
 
@@ -67,7 +78,7 @@ def main() -> int:
     ap.add_argument("source", help="path to the PDF")
     ap.add_argument("--pages", default="", help="page range, e.g. 1-5 or 3 (1-based)")
     ap.add_argument("--lang", default="kor+eng", help="Tesseract languages")
-    ap.add_argument("--dpi", type=int, default=200, help="render DPI for OCR")
+    ap.add_argument("--dpi", type=int, default=300, help="render DPI for OCR")
     args = ap.parse_args()
 
     if not Path(args.source).is_file():
@@ -75,6 +86,9 @@ def main() -> int:
         return 1
     try:
         text = ocr(args.source, args.pages, args.lang, args.dpi)
+    except ValueError as e:  # usage error (bad --pages), not an OCR failure
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 2
     except Exception as e:  # noqa: BLE001 - surface any failure to caller
         print(f"ERROR: OCR failed: {e}", file=sys.stderr)
         return 1
