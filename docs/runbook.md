@@ -89,6 +89,7 @@ Scope: 10_Areas/ → 90_Archive/
 | `inbox-process` | inbox 처리, 공문 처리 | `01_Inbox/` scan |
 | `incident-analyze` | 에러 분석, 오류 처리 | → `incident-analyst` agent |
 | `improvement-plan` | 개선 계획, 쿼리 수정 | → `improvement-planner` agent |
+| `draft-gongmun` | 공문 작성, 결과 안내 공문 | 개선 노트 → 공문 본문 |
 | `weekly-report` | 주간업무회의 자료 | Vault scan |
 | `change-log` | 기능 개선 내역 | Vault scan (past week) |
 | `status-sync` | status 동기화 | Vault scan |

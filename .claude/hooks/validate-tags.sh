@@ -53,7 +53,6 @@ CLEANED=$(awk '/^[[:space:]]*```/{f=!f; next} !f' "$FILE_PATH" | sed 's/`[^`]*`/
 FORBIDDEN_PREFIXES=(
   '#업무/인트라넷/'
   '#업무/부속/'
-  '#업무/행정/'
   '#업무/학사/'
   '#업무/공통/'
   '#업무/시스템/'
@@ -77,12 +76,36 @@ if [[ -n "$PAREN_FOUND" ]]; then
   VIOLATIONS="${VIOLATIONS}\n  - 괄호 사용: ${PAREN_FOUND}"
 fi
 
-# Check allowed areas
-ALLOWED_AREAS="수업성적|홈페이지|일반서무|개발공통|장학|전임교원공채|시설물이용|졸업|코러스|등록|교육연구학생지도|기타|예산관리|교직|교수업적|수강신청|구전자문서|학적"
+# Check allowed areas — derived at RUNTIME from 10_Areas/ subfolder names.
+# Source of truth: "#업무/ 태그 = 10_Areas 폴더명 그대로" (문서 유형 불문).
+# Degrade gracefully: if 10_Areas/ cannot be located, skip this check (never block writes).
+AREAS_DIR=""
+for _candidate in "${CLAUDE_PROJECT_DIR:+$CLAUDE_PROJECT_DIR/10_Areas}" "$VAULT_ROOT/10_Areas"; do
+  if [[ -n "$_candidate" && -d "$_candidate" ]]; then
+    AREAS_DIR="$_candidate"
+    break
+  fi
+done
 
-UNKNOWN_AREAS=$(grep -oE '#업무/[^/ 	"]+' <<< "$CLEANED" 2>/dev/null | grep -vE "^#업무/(${ALLOWED_AREAS})$" | grep -v '#업무/{area}' | sort -u)
-if [[ -n "$UNKNOWN_AREAS" ]]; then
-  VIOLATIONS="${VIOLATIONS}\n  - 미등록 area: ${UNKNOWN_AREAS}"
+if [[ -n "$AREAS_DIR" ]]; then
+  # NFC-normalize folder names: macOS returns filenames in NFD, but typed tags
+  # are NFC — without this the two never match and every note is false-flagged.
+  ALLOWED_AREAS=$(python3 -c "
+import os, sys, unicodedata
+try:
+    d = sys.argv[1]
+    names = [unicodedata.normalize('NFC', n) for n in os.listdir(d)
+             if os.path.isdir(os.path.join(d, n))]
+except OSError:
+    names = []
+print('|'.join(names))
+" "$AREAS_DIR" 2>/dev/null)
+  if [[ -n "$ALLOWED_AREAS" ]]; then
+    UNKNOWN_AREAS=$(grep -oE '#업무/[^/ 	"]+' <<< "$CLEANED" 2>/dev/null | grep -vE "^#업무/(${ALLOWED_AREAS})$" | grep -v '#업무/{area}' | sort -u)
+    if [[ -n "$UNKNOWN_AREAS" ]]; then
+      VIOLATIONS="${VIOLATIONS}\n  - 미등록 area: ${UNKNOWN_AREAS}"
+    fi
+  fi
 fi
 
 # --- #부서 tag validation ---
