@@ -4,8 +4,8 @@
 
 | Note type | Pattern | Example |
 |-----------|---------|---------|
-| Incident | `YYYYMM_{시스템명} 오류 처리 {date}` | `202604_통합학사시스템 오류 처리 2026-04-10` |
-| Improvement | `YYYYMM_{title}` | `202604_대학 검색 팝업 조회 기능 개선` |
+| Incident | `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}` (generator: `incident-analyze` 스킬 `new_incident_path.py`) | `통합학사시스템 오류 처리 2026-04-10_1` |
+| Improvement | `{제목}` — `14_Changes/improvement/{YYYY}/{반기}/` 디렉터리로 분류 (generator: `improvement-plan` 스킬 `new_improvement_path.py`) | `대학 검색 팝업 조회 기능 개선` |
 | Work matter | `YYYYMM_{summary}` | `202604_학점교류 신청서류 간소화` |
 | Training | `YYYY-MM-DD {name}` | `2026-04-10 정보보안 교육` |
 | Project | `{identifier}` (folder name) | `2026_과업심의_API분리` |
@@ -32,7 +32,7 @@ All notes follow the template frontmatter:
 ```yaml
 ---
 type: work | change | project | training | routine | reference
-status: open | in-progress | done | hold | active
+status: open | in-progress | hold | closed | active   # closed = terminal (status-sync 스킬이 기록). 'done'/'resolved'는 비표준 — 사용 금지
 change_type: incident | improvement   # only when type: change
 ---
 ```

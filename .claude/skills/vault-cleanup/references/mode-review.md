@@ -77,9 +77,25 @@ Agent(
 
 **삭제는 사용자 확인 후에만 실행한다.** 절대 자동 삭제하지 않는다.
 
-### Step 4: 사용자 승인 시 삭제 실행
+### Step 4: 사용자 승인 시 삭제 실행 (.trash 이동)
 
-사용자가 승인하면 `find` + `rm -rf`로 해당 폴더를 삭제한다. 빈 디렉토리도 함께 정리한다:
+**`rm -rf` 금지.** 볼트 노트는 git-ignore 대상이라 hard delete는 복구 불가하다. 삭제는 `reorg_archive.py purge`로 위임하면 `<볼트>/.trash/<타임스탬프>/`로 **이동**(복구 가능)한다. dry-run이 기본이며 `--apply`로 실제 실행한다.
+
+승인된 삭제 후보 폴더마다:
+
+```bash
+# dry-run (기본) — 무엇이 어디로 갈지 확인
+python3 .claude/skills/vault-cleanup/scripts/reorg_archive.py purge \
+  "90_Archive/.../삭제대상폴더" "$(git -C . rev-parse --show-toplevel)"
+
+# 승인 후 실제 이동
+python3 .claude/skills/vault-cleanup/scripts/reorg_archive.py purge \
+  "90_Archive/.../삭제대상폴더" "$(git -C . rev-parse --show-toplevel)" --apply
+```
+
+스크립트는 볼트 밖 경로·볼트 루트·`.trash` 자체는 거부한다. 사용자가 `.trash`를 확인 후 직접 비운다.
+
+빈 디렉토리 정리만 `find`로 수행한다 (디렉토리는 노트가 아니므로 trash 불필요):
 
 ```bash
 find 90_Archive -type d -empty -delete

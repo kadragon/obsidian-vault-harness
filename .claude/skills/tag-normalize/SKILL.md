@@ -29,9 +29,9 @@ Full mapping tables (area list, 부서명 매핑, 직급 분류, conversion exam
 
 Do not insert these prefixes before the area segment:
 
-`인트라넷/`, `부속/`, `행정/`, `학사/`, `공통/`, `시스템/`
+`인트라넷/`, `부속/`, `학사/`, `공통/`, `시스템/`
 
-Tags are based on **business domain**, not system module name (부속, 인트라넷), user type (학생서비스, 교수서비스), or high-level classification (학사, 공통).
+Tags are based on **business domain**, not system module name (부속, 인트라넷), user type (학생서비스, 교수서비스), or high-level classification (학사, 공통). Note: `행정` IS a valid area (10_Areas/행정) — do not forbid it. The authoritative forbidden set is `FORBIDDEN_PREFIXES` in `scripts/validate_tag.py`.
 
 ### Special Character Rules
 
@@ -106,11 +106,11 @@ If an entity note exists, apply its canonical name as the `#업무` area/subarea
 
 ### `#업무`
 
-1. Is the 1st segment after `#업무/` one of the 18 allowed areas? (→ `references/tag-rules.md`)
-2. Are forbidden prefixes (`인트라넷/`, `부속/`, `행정/`, `학사/`, `공통/`, `시스템/`) absent?
+1. Is the 1st segment after `#업무/` one of the allowed areas? (the `10_Areas/` folders, listed in `references/tag-rules.md`)
+2. Are forbidden prefixes (`인트라넷/`, `부속/`, `학사/`, `공통/`, `시스템/`) absent?
 3. Are special characters `()`, spaces, `&`, `+` absent?
 4. Is the area appropriate? (e.g., 공결신청 → 수업성적, 호실예약 → 시설물이용)
-5. If `기타` is used, does it truly not fit any of the other 17 areas?
+5. If `기타` is used, does it truly not fit any other area?
 
 ### `#부서`
 

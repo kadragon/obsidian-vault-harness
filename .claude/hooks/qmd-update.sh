@@ -34,6 +34,12 @@ fi
 [[ "$FILE_PATH" == *"/.claude/"* ]] && exit 0
 [[ "$FILE_PATH" == *"/99_Template/"* ]] && exit 0
 
+# Skip if qmd binary is absent
+if ! command -v qmd &>/dev/null; then
+    echo "qmd not found; semantic index not updated" >&2
+    exit 0
+fi
+
 # Run QMD update in background (incremental, fast)
 (qmd update --quiet && qmd embed --quiet) &>/dev/null &
 

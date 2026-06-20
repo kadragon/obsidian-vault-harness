@@ -26,7 +26,8 @@ If any trigger applies, delegate first — do not proceed without it.
 | Weekly system change report needed | `change-log` skill | Date range (default: past week) |
 | Status open→closed sync needed | `status-sync` skill | — |
 | Syncthing conflict files present | `syncthing-conflict-cleanup` skill | — |
-| `.hwpx` 문서 작업 | `toolkit:hwpx` skill | File path, operation type |
+| `.hwpx` 문서 작업 | `productivity:hwpx` skill | File path, operation type |
+| 개선 완료/결과 안내 공문 초안 작성 | `draft-gongmun` skill | 개선 노트 경로 |
 | Note created by agent | evaluator pass (see `docs/eval-criteria.md`) | note path |
 
 ### Escalation

@@ -23,9 +23,8 @@ Syncthing이 충돌을 감지하면 원본 파일 옆에
 ## 실행 흐름
 
 1. 사용자 요청에서 모드를 확정한다 (명시 없으면 전체 시퀀스 제안).
-2. 볼트 루트로 이동: `cd C:/dev/ObsidianVault`
-3. 해당 모드의 references 파일을 Read로 읽어 절차를 따른다.
-4. 결과를 「보고 형식」으로 요약한다.
+2. 해당 모드의 references 파일을 Read로 읽어 절차를 따른다. (스크립트가 볼트 루트를 자동 탐지하므로 `cd` 불필요 — 어느 cwd/OS에서도 동작.)
+3. 결과를 「보고 형식」으로 요약한다.
 
 ## 결정론적 헬퍼 스크립트
 
@@ -52,7 +51,7 @@ python3 .claude/skills/syncthing-conflict-cleanup/scripts/conflict_cleanup.py re
 
 ## 안전 규칙
 
-1. **삭제·교체는 사용자 승인 없이 절대 실행하지 않는다.** purge도 dry-run 먼저.
+1. **삭제·교체는 사용자 승인 없이 절대 실행하지 않는다.** purge도 dry-run 먼저. 모든 삭제는 hard delete가 아니라 `<볼트>/.trash/<타임스탬프>/`로 이동(복구 가능); 사용자가 확인 후 `.trash`를 직접 비운다.
 2. 작업 대상은 파일명에 `.sync-conflict-` 토큰을 포함한 파일로만 한정한다.
    원본 파일은 `replace` 시에만 conflict로 교체되며, 그 외엔 건드리지 않는다.
 3. `90_Archive/` 내부 conflict는 스캔엔 포함되지만 처리는 사용자 명시 동의 필요.

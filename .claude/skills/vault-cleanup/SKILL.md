@@ -1,6 +1,6 @@
 ---
 name: vault-cleanup
-description: "This skill should be used when the user asks to clean up, reorganize, or archive notes in the Obsidian vault — including 90_Archive document value review, duplicate removal, folder structure normalization ({area}/YYYY/YYYYMM_문서명/), category tag preservation, and archiving stale work notes from 10_Areas to 90_Archive. Korean triggers: '아카이브 정리', '문서 점검', '가치 없는 문서', '중복 정리', '폴더 구조 통일', '오래된 노트 정리', '볼트 청소', 'cleanup', '정리해줘'(아카이브 맥락)."
+description: "This skill should be used when the user asks to clean up, reorganize, or archive notes in the Obsidian vault — including 90_Archive document value review, duplicate removal, folder structure normalization ({area}/YYYY/YYYYMM_문서명/), category tag preservation, and archiving stale work notes from 10_Areas to 90_Archive. Korean triggers: '아카이브 정리', '문서 점검', '가치 없는 문서', '중복 정리', '시맨틱 중복', '비슷한 노트', 'deadlink', '폴더 구조 통일', '오래된 노트 정리', '볼트 청소', 'cleanup'. NOT for status flips on completed work (→ status-sync) or .sync-conflict files (→ syncthing-conflict-cleanup)."
 ---
 
 # Vault Cleanup
@@ -59,6 +59,7 @@ python3 .claude/skills/vault-cleanup/scripts/reorg_archive.py \
 1. **삭제/이동 전 항상 목록을 먼저 보여주고 사용자 승인을 받는다.**
 2. DRY RUN으로 먼저 결과를 보여주고, 실제 실행은 별도 단계.
 3. `90_Archive` 내 파일만 삭제한다 (`10_Areas`, `14_Changes` 등은 삭제 대상 아님).
+   **삭제는 `rm -rf`가 아니라 `reorg_archive.py purge`로 `<볼트>/.trash/`에 이동**한다 (노트는 git-ignore라 hard delete 복구 불가). 사용자가 `.trash`를 확인 후 직접 비운다.
 4. 빈 폴더는 작업 완료 후 자동 정리.
 5. 작업용 임시 Python 스크립트는 작업 종료 후 삭제한다.
 

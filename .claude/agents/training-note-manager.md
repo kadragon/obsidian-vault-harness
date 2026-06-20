@@ -18,7 +18,7 @@ model: sonnet
 ## 스킬 참조
 
 작업 수행 시 반드시 스킬 파일을 Read로 읽고 상세 워크플로우를 따른다:
-- `.claude/skills/training-manage/skill.md`
+- `.claude/skills/training-manage/SKILL.md`
 
 ## 작업 원칙
 

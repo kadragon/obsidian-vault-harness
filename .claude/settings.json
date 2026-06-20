@@ -13,17 +13,17 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/validate-tags.sh\"",
             "statusMessage": "태그 검증 중..."
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-template.py\"",
+            "statusMessage": "템플릿 검사 중..."
           }
         ]
       },
       {
         "matcher": "Write",
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-template.py\"",
-            "statusMessage": "템플릿 검사 중..."
-          },
           {
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-folder-rules.py\"",

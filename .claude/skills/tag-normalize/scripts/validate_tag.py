@@ -15,18 +15,45 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
+import unicodedata
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 
-ALLOWED_AREAS = {
-    "수업성적", "홈페이지", "일반서무", "개발공통", "장학",
-    "전임교원공채", "시설물이용", "졸업", "코러스", "등록",
-    "교육연구학생지도", "기타", "예산관리", "교직", "교수업적",
-    "수강신청", "구전자문서", "학적",
-}
 
-FORBIDDEN_PREFIXES = ("인트라넷/", "부속/", "행정/", "학사/", "공통/", "시스템/")
+def _discover_allowed_areas() -> set[str] | None:
+    """Derive the allowed `#업무/{area}` set at runtime from 10_Areas/ folder names.
+
+    Source of truth: "#업무/ 태그 = 10_Areas 폴더명 그대로" (문서 유형 불문).
+    Resolve the vault robustly via $CLAUDE_PROJECT_DIR, else walk up from this
+    script's location. Return None if 10_Areas/ cannot be located/read so the
+    caller can degrade gracefully (skip the unknown-area check rather than fail).
+    """
+    candidates: list[Path] = []
+    env = os.environ.get("CLAUDE_PROJECT_DIR")
+    if env:
+        candidates.append(Path(env) / "10_Areas")
+    here = Path(__file__).resolve()
+    candidates.extend(parent / "10_Areas" for parent in here.parents)
+    for areas in candidates:
+        try:
+            if areas.is_dir():
+                # NFC-normalize: macOS lists filenames in NFD; tags are NFC.
+                names = {unicodedata.normalize("NFC", p.name)
+                         for p in areas.iterdir() if p.is_dir()}
+                if names:
+                    return names
+        except OSError:
+            continue
+    return None
+
+
+# None ⇒ 10_Areas/ unavailable ⇒ unknown-area check is skipped (graceful degrade).
+ALLOWED_AREAS = _discover_allowed_areas()
+
+FORBIDDEN_PREFIXES = ("인트라넷/", "부속/", "학사/", "공통/", "시스템/")
 
 # Specific forbidden-prefix rewrites that map to a real area
 PREFIX_REWRITES = [
@@ -107,9 +134,9 @@ def normalize_upmu(tag: str) -> Result:
         issues.append("malformed: must start with '#업무/'")
         return Result(tag, normalized, False, issues)
 
-    area = parts[1]
-    if area not in ALLOWED_AREAS:
-        issues.append(f"unknown area '{area}' (not in 18 allowed)")
+    area = unicodedata.normalize("NFC", parts[1])
+    if ALLOWED_AREAS is not None and area not in ALLOWED_AREAS:
+        issues.append(f"unknown area '{area}' (not a 10_Areas/ folder)")
         return Result(tag, normalized, False, issues)
 
     valid = not issues

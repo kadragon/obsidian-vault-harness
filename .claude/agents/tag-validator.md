@@ -22,7 +22,7 @@ model: haiku
 ## Step 1: 규칙 로드
 
 ```
-Read: .claude/skills/tag-normalize/skill.md
+Read: .claude/skills/tag-normalize/SKILL.md
 ```
 
 ## Suggest 모드 -- 태그 제안 및 작성
@@ -96,8 +96,8 @@ Read: .claude/skills/tag-normalize/skill.md
 
 ### Step 3v: `#업무` 태그 검증
 
-1. **금지 접두어 검사**: `인트라넷/`, `부속/`, `행정/`, `학사/`, `공통/`, `시스템/` 이 area 앞에 있는가?
-2. **허용 area 검사**: 1단계가 18개 허용 area 중 하나인가?
+1. **금지 접두어 검사**: `인트라넷/`, `부속/`, `학사/`, `공통/`, `시스템/` 이 area 앞에 있는가? (권위 출처: `validate_tag.py`의 `FORBIDDEN_PREFIXES`. `행정`은 유효 area(`10_Areas/행정`)이므로 금지 아님)
+2. **허용 area 검사**: 1단계가 허용 area(`10_Areas/` 폴더명) 중 하나인가?
 3. **특수문자 검사**: 괄호 `()` 등이 포함되어 있는가?
 4. **area 적절성 검사**: 태그의 area가 노트 내용과 맞는가?
 
@@ -147,4 +147,4 @@ Read: .claude/skills/tag-normalize/skill.md
 - **오케스트레이터(main loop)**: 노트 생성 후 suggest 모드로 호출하여 태그 작성 위임
 - **incident-analyst / improvement-planner**: 노트 생성 후 태그 작성을 이 에이전트에 위임
 - **PostToolUse hook**: validate 모드로 호출하여 태그 검증
-- 규칙 참조: `.claude/skills/tag-normalize/skill.md`
+- 규칙 참조: `.claude/skills/tag-normalize/SKILL.md`

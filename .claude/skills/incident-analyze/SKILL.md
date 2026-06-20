@@ -82,7 +82,7 @@ python3 .claude/skills/incident-analyze/scripts/new_incident_path.py {YYYY-MM-DD
 |------|-----------|
 | frontmatter | `type: change`, `change_type: incident`, `status: open` (date 필드는 Linter가 자동 관리 -- 직접 넣지 않음) |
 | `#` 제목 | `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}` |
-| `## 관련` | `#부서/{부서명}/{직급}_{이름}` + `#업무/{영역}/{하위영역}/{메뉴명}` (직급 분류는 `tag-normalize` 스킬 참조) |
+| `## 관련` | 태그는 `tag-validator` 에이전트가 작성 (직접 작성 금지 — AGENTS.md 위임 표). 형식 참고: `#부서/{부서명}/{직급}_{이름}` + `#업무/{영역}/{하위영역}/{메뉴명}` |
 | `## 발생 정보` | 발생 일시 (`YYYY-MM-DD HH:mm`) + 기타 맥락 |
 | `## 프로시저` | `{ServiceName/methodName}` |
 | `## 메뉴 위치` | `{메뉴코드}` (텍스트 경로만; 태그는 `## 관련`으로) |
@@ -100,7 +100,7 @@ python3 .claude/skills/incident-analyze/scripts/new_incident_path.py {YYYY-MM-DD
 
 1. **log.md append**: `- {오늘날짜} #incident [[{노트 경로}]] — {도메인} 생성`
 2. **MOC 확인**: `_Wiki/topics/{도메인}-운영-MOC.md` 존재 여부 점검
-   - 존재 → `## 반복 인시던트 패턴`에 wikilink append
+   - 존재 → **양방향**: MOC `## 반복 인시던트 패턴`에 wikilink append + 이 노트 `## 관련 문서`에 `- 운영 MOC: [[{도메인}-운영-MOC]]` 역링크 추가 (contracts.md MOC 갱신 조건)
    - 없음 → 동일 도메인 인시던트 수 `qmd search "{도메인} incident" --json -n 20`으로 카운트 → 3건+ 이면 "운영 MOC 생성을 권장합니다" 보고
 
 ### Step 6: 보고
