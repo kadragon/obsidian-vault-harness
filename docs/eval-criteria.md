@@ -10,17 +10,19 @@ All required fields present and non-empty.
 
 | Score | Description |
 |-------|-------------|
-| 5 | All required fields present, values conform to schema |
-| 3 | 1 optional field missing |
-| 1 | Required field missing (date, status, tags) |
+| 5 | All required fields present, values conform to schema (`type`, `status` enum-valid) |
+| 3 | `change_type` missing on a change note (incident/improvement) |
+| 1 | `type` or `status` missing, or `status` not in enum |
 
-Required fields by template:
-- `_업무사안.md` — `date`, `status`, `tags`, `area`
-- `_인시던트.md` — `date`, `status`, `tags`, `system`, `severity`
-- `_개선.md` — `date`, `status`, `tags`, `target`
-- `_교육.md` — `date`, `tags`, `title`
+Required frontmatter by note kind (per `99_Template/_메타데이터 규칙.md` — `date created`/`date modified` are Linter-managed, NOT authored; 태그는 본문 `## 관련` 인라인, frontmatter 아님):
+- `_업무사안.md` (work) — `type: work`, `status`
+- `_인시던트.md` (change) — `type: change`, `change_type: incident`, `status`
+- `_개선.md` (change) — `type: change`, `change_type: improvement`, `status`
+- `_교육.md` (training) — `type: training`, `status`
 
-**How to test:** Read frontmatter, verify each required key has a non-empty value.
+`status` 허용값: `open | in-progress | hold | closed | active` (그 외는 위반).
+
+**How to test:** `python3` 또는 Read로 frontmatter 파싱 — `type` 존재, `status` enum 일치, change 노트는 `change_type` 확인. `check-template.py` 훅과 동일 기준.
 
 ### 2. Tag Correctness (25%)
 

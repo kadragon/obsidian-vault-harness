@@ -19,6 +19,12 @@ if not fp or not fp.endswith(".md"):
 # Normalize separators for consistent segment splitting
 fp_norm = fp.replace("\\", "/")
 
+# Skip harness dirs (skills/agents/hooks/docs) and templates — these are not
+# vault notes, so the GP#4 folder rules never apply. Keeps skill/agent edits
+# from triggering the hook.
+if any(s in fp_norm for s in ("/.claude/", "/99_Template/", "/docs/")):
+    sys.exit(0)
+
 violations = []
 
 # Rule 1: 12_Projects/ — loose .md directly under root (no sub-folder)
@@ -57,6 +63,21 @@ if "/10_Areas/" in fp_norm:
         if len(summary) > 60:
             violations.append(
                 f"10_Areas/ 파일명(summary) 60자 초과: {len(summary)}자 (GP#4)")
+        # no-attachment wrapper folder: 래퍼 폴더는 첨부 있을 때만.
+        #   현재 폴더에 non-md 파일이 하나도 없으면 단일 파일이어야 함.
+        #   (첨부가 노트보다 늦게 저장될 수 있으므로 차단 아닌 권고)
+        wrapper_dir = pathlib.Path(fp).parent
+        try:
+            siblings = list(wrapper_dir.iterdir())
+            has_attachment = any(
+                p.is_file() and p.suffix.lower() != ".md" for p in siblings)
+            md_count = sum(1 for p in siblings if p.is_file() and p.suffix == ".md")
+            if not has_attachment and md_count <= 1:
+                violations.append(
+                    f"10_Areas/ 무첨부 래퍼 폴더 — 첨부 없으면 '{slug_folder}/' 폴더 없이 "
+                    "area 루트에 단일 .md로 둘 것. 첨부를 곧 추가할 거면 무시 (conventions.md)")
+        except OSError:
+            pass
 
 # Rule 4: 14_Changes/incident/ — single canonical filename pattern
 #   '통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}.md'

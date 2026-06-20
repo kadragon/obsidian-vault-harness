@@ -9,15 +9,14 @@
 !.claude/
 !.claude/**
 .claude/change-log-report.txt
+.claude/scheduled_tasks.lock
 .claude/.cache/
 .claude/hooks/**/__pycache__/
 .claude/skills/**/__pycache__/
 !.agents/
 !.agents/**
 .agents/~syncthing~*
-!agents/
-!agents/**
-agents/~syncthing~*
+.agents/.maintenance-stamp
 !docs/
 !docs/**
 !.gitmodules

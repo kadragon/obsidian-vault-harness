@@ -69,12 +69,12 @@ python3 .claude/skills/improvement-plan/scripts/new_improvement_path.py "수강�
 
 1. **log.md append**: `- {오늘날짜} #improvement [[{노트 경로}]] — {도메인} 생성`
 2. **MOC 확인**: `_Wiki/topics/{도메인}-운영-MOC.md` 존재 여부 점검
-   - 존재 → `## 미완료 업무 목록` 또는 `## 반복 인시던트 패턴`에 wikilink append (해당 개선의 성격에 맞는 섹션)
+   - 존재 → **양방향**: MOC `## 미완료 업무 목록`/`## 반복 인시던트 패턴`에 wikilink append + 이 노트 `## 관련 문서`에 `- 운영 MOC: [[{도메인}-운영-MOC]]` 역링크 추가 (contracts.md MOC 갱신 조건)
    - 없음 → 동일 도메인 개선 수 `qmd search "{도메인} improvement" --json -n 20`으로 카운트 → 3건+ 이면 "운영 MOC 생성을 권장합니다" 보고
 
 ### Step 5: 업무 태그 지정
 
-`tag-normalize` 스킬의 규칙을 따른다. 태그가 확실하지 않으면 가장 가까운 태그를 사용하고 확인을 요청한다.
+태그는 `tag-validator` 에이전트에 위임한다 (직접 작성하지 않음 — AGENTS.md 위임 표). 규칙 출처는 `tag-normalize` 스킬.
 
 ### Step 6: 보고
 

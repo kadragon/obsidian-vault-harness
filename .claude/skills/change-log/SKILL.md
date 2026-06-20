@@ -37,13 +37,7 @@ description: |
 
 ## 카테고리 매핑
 
-`[카테고리 > 도메인]` 형식으로 묶는다:
-
-| 도메인 | 카테고리 |
-|--------|---------|
-| 수업성적, 수강신청, 졸업, 교직, 등록, 학적 | 학사 |
-| 교수업적, 시설물이용, 전임교원공채, 강사료퇴직금 | 행정 |
-| AI플랫폼, 개발공통 | 공통 |
+`[카테고리 > 도메인]` 형식으로 묶는다. 카테고리는 스크립트가 부여한 `category` 필드를 그대로 사용한다 — 도메인→카테고리 매핑의 단일 출처는 `scripts/collect_weekly_notes.py`의 `CATEGORY_MAP`이다. 여기에 표를 두지 않는다 (표를 만들면 스크립트와 드리프트한다).
 
 ---
 
@@ -105,22 +99,17 @@ python3 .claude/skills/change-log/scripts/collect_weekly_notes.py --vault .
 
 ### Step 4 — 클립보드 복사
 
-보고서 텍스트를 `.claude/change-log-report.txt`에 저장한 뒤 클립보드로 복사한다.
+1. **파일 저장** — Write tool로 보고서 전문을 `.claude/change-log-report.txt`에 저장한다 (Write는 신규 파일 생성 가능).
+2. **클립보드 복사** — OS에 맞는 클립보드 도구로 복사한다 (mac=`pbcopy`, Windows/git-bash=`clip`):
 
-**주의:** Write tool은 read-first 제약으로 신규 파일 생성 불가. 반드시 PowerShell tool로 저장한다.
-
-```powershell
-$report = @"
-[WEEK_START~WEEK_END]
-...보고서 전문...
-"@
-Set-Content -Path ".\.claude\change-log-report.txt" -Encoding UTF8 -Value $report
-Get-Content ".\.claude\change-log-report.txt" -Encoding UTF8 -Raw | Set-Clipboard
+```bash
+f=.claude/change-log-report.txt
+if command -v pbcopy >/dev/null 2>&1; then pbcopy < "$f"
+elif command -v clip >/dev/null 2>&1; then clip < "$f"
+else echo "클립보드 도구 없음 — 파일 직접 복사: $f"; fi
 ```
 
-위 두 명령을 단일 PowerShell tool 호출로 실행한다 (파일 저장 + 클립보드 복사 한 번에).
-
-완료 후 "클립보드에 복사되었습니다. 바로 붙여넣기 하세요."라고 안내한다.
+완료 후 "클립보드에 복사되었습니다. 바로 붙여넣기 하세요."라고 안내한다 (클립보드 도구가 없으면 파일 경로를 안내).
 
 ### Step 5 — 불확실한 항목 처리
 

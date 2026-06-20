@@ -33,7 +33,7 @@ import shutil
 import sys
 import unicodedata
 from dataclasses import asdict, dataclass
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 YYYYMM_RE = re.compile(r"^(\d{4})(\d{2})_.+")
@@ -120,7 +120,118 @@ def find_stale(areas_root: Path, ref: date, months: int,
                     "yyyymm": f"{yyyy}{mm}",
                     "area": area_dir.name,
                 })
+        # flat single-file notes at the area root (no wrapper folder, from
+        # new_work_path.py --flat). _iter_dated_folders yields folders only,
+        # so these would otherwise never be archived.
+        for md in sorted(area_dir.glob("*.md")):
+            fm = YYYYMM_RE.match(md.stem.lstrip("_"))
+            if not fm:
+                continue
+            f_yyyy, f_mm = fm.group(1), fm.group(2)
+            if date(int(f_yyyy), int(f_mm), 1) < cutoff:
+                out.append({
+                    "current": str(md),
+                    "archive_target": str(
+                        archive_root / area_dir.name / f_yyyy / md.name),
+                    "yyyymm": f"{f_yyyy}{f_mm}",
+                    "area": area_dir.name,
+                })
     return out
+
+
+CLOSED_RE = re.compile(r"^- (\d{4}-\d{2}-\d{2}) #closed \[\[([^\]]+)\]\]")
+
+
+def _archive_unit(vault: Path, wikipath: str):
+    """Map a log.md wikilink path to the archivable unit under 10_Areas/.
+
+    Returns (unit_path, area, yyyymm) or None if not an archivable 10_Areas
+    work note. Folder-form (note inside `{YYYYMM}_slug/`) → the dated folder;
+    flat-form (single `{YYYYMM}_X.md` at area root) → the file itself.
+    """
+    # tolerate Obsidian alias (`path|alias`) and Windows separators
+    wp = _nfc(wikipath.replace("\\", "/").split("|")[0].strip().lstrip("/"))
+    if not wp.startswith("10_Areas/"):
+        return None
+    rest = wp[len("10_Areas/"):]
+    parts = rest.split("/")
+    if len(parts) < 2:
+        return None
+    area, dated = parts[0], parts[1]
+    # strip a legacy leading `_` (note-file prefix) before the date match;
+    # keep `dated` itself for path reconstruction.
+    stem = (dated[:-3] if dated.endswith(".md") else dated).lstrip("_")
+    m = YYYYMM_RE.match(stem)
+    if not m:
+        return None
+    yyyymm = m.group(1) + m.group(2)
+    if len(parts) == 2:  # flat single-file note at area root
+        name = dated if dated.endswith(".md") else dated + ".md"
+        return vault / "10_Areas" / area / name, area, yyyymm
+    # folder-form: archive the whole dated folder
+    return vault / "10_Areas" / area / dated, area, yyyymm
+
+
+def find_closed(vault: Path, log_path: Path, ref: date, days: int,
+                archive_root: Path) -> dict:
+    """Closed-work → archive candidates, from _Wiki/log.md #closed events.
+
+    A note closed >= `days` ago (per its log close-date) and still living in
+    10_Areas/ is an archive candidate. Also reports notes whose frontmatter is
+    `status: closed` but have NO log entry (unlogged — close-date unknown).
+    """
+    # latest close-date per archive unit (a note may be re-closed)
+    closed: dict[str, tuple[date, str, str]] = {}  # unit_str -> (date, area, yyyymm)
+    if log_path.exists():
+        for line in log_path.read_text(encoding="utf-8").splitlines():
+            mm = CLOSED_RE.match(line)
+            if not mm:
+                continue
+            d = date(*map(int, mm.group(1).split("-")))
+            u = _archive_unit(vault, mm.group(2))
+            if not u:
+                print(f"warn: #closed entry not an archivable 10_Areas note, "
+                      f"skipped: {mm.group(2)!r}", file=sys.stderr)
+                continue
+            unit, area, yyyymm = u
+            key = str(unit)
+            if key not in closed or d > closed[key][0]:
+                closed[key] = (d, area, yyyymm)
+
+    candidates: list[dict] = []
+    logged_units = set(closed.keys())
+    for key, (d, area, yyyymm) in sorted(closed.items()):
+        unit = Path(key)
+        if not unit.exists():
+            continue  # already archived / moved
+        age = (ref - d).days
+        if age >= days:
+            yyyy = yyyymm[:4]
+            candidates.append({
+                "current": key,
+                "archive_target": str(archive_root / area / yyyy / unit.name),
+                "area": area,
+                "closed_date": d.isoformat(),
+                "age_days": age,
+            })
+
+    # unlogged: frontmatter status: closed but no #closed log entry
+    unlogged: list[str] = []
+    areas_dir = vault / "10_Areas"
+    if areas_dir.exists():
+        for md in areas_dir.rglob("*.md"):
+            try:
+                text = md.read_text(encoding="utf-8")
+            except OSError:
+                continue
+            fm = re.match(r'^---\s*\r?\n(.*?)\r?\n---', text, re.DOTALL)
+            if not fm or not re.search(r'^status:\s*closed', fm.group(1), re.MULTILINE):
+                continue
+            u = _archive_unit(vault, str(md.relative_to(vault)))
+            if u and str(u[0]) not in logged_units:
+                unlogged.append(str(md.relative_to(vault)))
+
+    return {"candidates": candidates, "unlogged_closed": sorted(unlogged)}
 
 
 def apply_reorg(area_root: Path, apply: bool) -> list[dict]:
@@ -172,6 +283,33 @@ def apply_archive(src: Path, archive_root: Path, apply: bool) -> dict:
     return record
 
 
+def purge_to_trash(target: Path, vault: Path, apply: bool) -> dict:
+    """Reversible delete: move target into <vault>/.trash/<timestamp>/<relpath>.
+
+    Vault notes are git-ignored, so `rm -rf` is unrecoverable. This moves
+    instead, preserving the relative path so the user can restore or empty
+    .trash after verifying. Refuses anything outside the vault, the vault root
+    itself, or paths already under .trash.
+    """
+    vault = vault.resolve()
+    target = target.resolve()
+    try:
+        rel = target.relative_to(vault)
+    except ValueError:
+        return {"status": "error: target outside vault", "target": str(target)}
+    if rel == Path(".") or rel.parts[:1] == (".trash",):
+        return {"status": "error: refusing vault root or .trash", "target": str(target)}
+    if not target.exists():
+        return {"status": "error: target missing", "target": str(target)}
+    dst = vault / ".trash" / datetime.now().strftime("%Y%m%d-%H%M%S") / rel
+    record = {"target": str(target), "trash": str(dst), "status": "planned"}
+    if apply:
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(target), str(dst))
+        record["status"] = "trashed"
+    return record
+
+
 def _emit(rows: list, as_json: bool) -> None:
     if as_json:
         print(json.dumps(
@@ -206,6 +344,17 @@ def main() -> int:
                          help="path to 90_Archive/")
     s_stale.add_argument("--json", action="store_true")
 
+    s_closed = sub.add_parser("find-closed")
+    s_closed.add_argument("vault_root", type=Path, help="vault root")
+    s_closed.add_argument("--log", type=Path, default=None,
+                          help="path to _Wiki/log.md (default: <vault>/_Wiki/log.md)")
+    s_closed.add_argument("--days", type=int, default=90,
+                          help="archive a note closed at least this many days ago (default 90)")
+    s_closed.add_argument("--ref", default=None,
+                          help="reference date YYYY-MM-DD (default: today)")
+    s_closed.add_argument("--archive-root", type=Path, required=True)
+    s_closed.add_argument("--json", action="store_true")
+
     s_reorg = sub.add_parser("apply-reorg")
     s_reorg.add_argument("area_root", type=Path)
     s_reorg.add_argument("--apply", action="store_true",
@@ -218,25 +367,64 @@ def main() -> int:
     s_arch.add_argument("--apply", action="store_true")
     s_arch.add_argument("--json", action="store_true")
 
+    s_purge = sub.add_parser("purge",
+                             help="reversible delete: move target into <vault>/.trash/")
+    s_purge.add_argument("target", type=Path, help="file/folder to remove")
+    s_purge.add_argument("vault_root", type=Path, help="vault root")
+    s_purge.add_argument("--apply", action="store_true",
+                         help="실제 이동 (기본: dry-run)")
+    s_purge.add_argument("--json", action="store_true")
+
     args = p.parse_args()
 
     if args.cmd == "scan-structure":
         _emit(scan_structure(args.area_root.resolve()), args.json)
     elif args.cmd == "find-stale":
         if args.ref:
-            y, m = map(int, args.ref.split("-"))
-            ref = date(y, m, 1)
+            try:
+                y, m = map(int, args.ref.split("-"))
+                ref = date(y, m, 1)
+            except (ValueError, TypeError):
+                print("error: --ref must be YYYY-MM", file=sys.stderr)
+                return 2
         else:
             ref = date.today()
         rows = find_stale(args.areas_root.resolve(), ref, args.months,
                           args.archive_root.resolve())
         _emit(rows, args.json)
+    elif args.cmd == "find-closed":
+        vault = args.vault_root.resolve()
+        log_path = (args.log.resolve() if args.log else vault / "_Wiki" / "log.md")
+        if args.ref:
+            try:
+                ref = date(*map(int, args.ref.split("-")))
+            except (ValueError, TypeError):
+                print("error: --ref must be YYYY-MM-DD", file=sys.stderr)
+                return 2
+        else:
+            ref = date.today()
+        res = find_closed(vault, log_path, ref, args.days,
+                          args.archive_root.resolve())
+        if args.json:
+            print(json.dumps(res, ensure_ascii=False, indent=2))
+        else:
+            print(f"## 종결→아카이브 후보 ({args.days}일 이상 경과, {len(res['candidates'])}건)")
+            for c in res["candidates"]:
+                print(f"  {c['closed_date']} ({c['age_days']}d)  {c['current']}")
+                print(f"    → {c['archive_target']}")
+            print(f"\n## 미기록 종결 (status:closed 인데 log.md #closed 없음, {len(res['unlogged_closed'])}건)")
+            for u in res["unlogged_closed"]:
+                print(f"  {u}")
     elif args.cmd == "apply-reorg":
         rows = apply_reorg(args.area_root.resolve(), args.apply)
         _emit(rows, args.json)
     elif args.cmd == "apply-archive":
         row = apply_archive(args.src.resolve(), args.archive_root.resolve(),
                             args.apply)
+        _emit([row], args.json)
+    elif args.cmd == "purge":
+        row = purge_to_trash(args.target.resolve(), args.vault_root.resolve(),
+                             args.apply)
         _emit([row], args.json)
     return 0
 

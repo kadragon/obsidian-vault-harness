@@ -70,9 +70,9 @@ description: "Workflow reference for training-note-manager agent. Do NOT invoke 
 
 ## 공통 규칙
 
-**DELETE 판단 기준** — 하나라도 해당하면 삭제 후보:
+**DELETE 판단 기준** (단일 출처: `references/assess.md` "DELETE 확정 기준") — 하나라도 해당하면 점수와 무관하게 삭제 후보:
 - 본문 3줄 이하 (제목/헤딩만)
-- 50% 이상 섹션이 비어있음
+- 70% 이상 섹션이 비어있음 (제목만 있고 내용 없음)
 - 텍스트 설명 없이 이미지만 나열
 - 하위 노트가 존재하는 순수 목차 노트
 - 재참고 가치 없는 일반 상식 수준 내용

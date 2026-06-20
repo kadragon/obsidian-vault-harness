@@ -37,8 +37,13 @@ def due_date_is_weekend(line):
         pass
     return None
 
+try:
+    text = p.read_text(encoding="utf-8")
+except Exception:
+    sys.exit(0)
+
 warnings = []
-for line in p.read_text(encoding="utf-8").splitlines():
+for line in text.splitlines():
     is_open = bool(re.search(r"- \[ \]", line))
     is_done = bool(re.search(r"- \[[xX]\]", line))
     if not (is_open or is_done):

@@ -4,8 +4,9 @@
 
 ## Step 1 — 스크립트 실행
 
+스크립트는 자신의 위치에서 볼트 루트를 자동 탐지한다 (cwd 무관, OS 무관).
+
 ```bash
-cd C:/dev/ObsidianVault
 python3 .claude/skills/syncthing-conflict-cleanup/scripts/conflict_cleanup.py scan --json
 ```
 

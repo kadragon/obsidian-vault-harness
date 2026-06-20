@@ -43,6 +43,7 @@ Never perform these directly without the designated agent/skill:
 | Improvement plan authoring | `improvement-planner` agent |
 | Vault search / past cases | `vault-navigator` agent |
 | Tag suggestion / validation | `tag-validator` agent |
+| 노트 품질 평가 (생성 직후 게이트, `docs/eval-criteria.md` 루브릭) | `note-evaluator` agent |
 | `01_Inbox/` document processing (공문·참고자료 모두) | `inbox-process` skill |
 | Training note cleanup | `training-note-manager` agent |
 | Obsidian note create/edit/open | `obsidian-operator` agent |
@@ -50,6 +51,7 @@ Never perform these directly without the designated agent/skill:
 | Status open→closed sync | `status-sync` skill |
 | Syncthing conflict files | `syncthing-conflict-cleanup` skill |
 | `.hwpx` 문서 생성/읽기/편집 | `productivity:hwpx` skill |
+| 개선 완료/결과 안내 공문 초안 작성 | `draft-gongmun` skill |
 | 주간업무회의 자료 생성 | `weekly-report` skill |
 | 시스템 변경 이력 주간 보고서 생성 | `change-log` skill |
 | Domain MOC 사전 조사 | `vault-navigator` agent |
@@ -64,6 +66,8 @@ Vault search order: `qmd` (semantic) → `rg`/grep (keyword) → `_Wiki/index.md
 ## Branching
 
 Direct-to-main: allowed — notes-only vault; no feature branches required.
+
+<!-- commit-guard: allow-main -->
 
 ## Context Management
 
