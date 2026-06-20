@@ -43,6 +43,7 @@ Never perform these directly without the designated agent/skill:
 | Improvement plan authoring | `improvement-planner` agent |
 | Vault search / past cases | `vault-navigator` agent |
 | Tag suggestion / validation | `tag-validator` agent |
+| 노트 품질 평가 (생성 직후 게이트, `docs/eval-criteria.md` 루브릭) | `note-evaluator` agent |
 | `01_Inbox/` document processing (공문·참고자료 모두) | `inbox-process` skill |
 | Training note cleanup | `training-note-manager` agent |
 | Obsidian note create/edit/open | `obsidian-operator` agent |

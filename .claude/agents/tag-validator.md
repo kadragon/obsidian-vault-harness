@@ -22,7 +22,7 @@ model: haiku
 ## Step 1: 규칙 로드
 
 ```
-Read: .claude/skills/tag-normalize/skill.md
+Read: .claude/skills/tag-normalize/SKILL.md
 ```
 
 ## Suggest 모드 -- 태그 제안 및 작성
@@ -147,4 +147,4 @@ Read: .claude/skills/tag-normalize/skill.md
 - **오케스트레이터(main loop)**: 노트 생성 후 suggest 모드로 호출하여 태그 작성 위임
 - **incident-analyst / improvement-planner**: 노트 생성 후 태그 작성을 이 에이전트에 위임
 - **PostToolUse hook**: validate 모드로 호출하여 태그 검증
-- 규칙 참조: `.claude/skills/tag-normalize/skill.md`
+- 규칙 참조: `.claude/skills/tag-normalize/SKILL.md`

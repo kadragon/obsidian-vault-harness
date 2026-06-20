@@ -1,40 +1,38 @@
 # Mode: Purge
 
-원본과 SHA-256이 완전히 동일한 conflict 파일만 삭제한다.
-원본은 절대 건드리지 않는다.
+원본과 SHA-256이 완전히 동일한 conflict 파일만 `<볼트>/.trash/`로 이동한다 (복구 가능 — hard delete 아님).
+원본은 절대 건드리지 않는다. `.trash`는 스캔에서 제외되며 사용자가 확인 후 직접 비운다.
 
 ## Step 1 — 대상 확인 (dry-run)
 
 ```bash
-cd C:/dev/ObsidianVault
 python3 .claude/skills/syncthing-conflict-cleanup/scripts/conflict_cleanup.py purge
 ```
 
 출력 예시:
 ```
-[DRY-RUN] 삭제 예정:
+[DRY-RUN] 휴지통 이동 예정:
   10_Areas/기타/202603_.../파일.sync-conflict-20260427-065342-YTJXM34.md  (원본과 동일)
   10_Areas/기타/202603_.../파일.sync-conflict-20260427-065344-WERFXNH.md  (원본과 동일)
 
-총 2개 파일이 삭제될 예정입니다. (원본 파일은 변경되지 않습니다.)
-실제 삭제하려면 --apply 옵션을 추가하세요.
+총 2개 파일이 .trash로 이동될 예정입니다. (원본 파일은 변경되지 않습니다.)
+실제 실행하려면 --apply 옵션을 추가하세요.
 ```
 
 ## Step 2 — 사용자 승인
 
 dry-run 결과를 사용자에게 보여주고 승인을 구한다:
 
-> "위 N개의 conflict 파일은 원본과 완전히 동일하여 안전하게 삭제할 수 있습니다.
-> 삭제를 진행할까요?"
+> "위 N개의 conflict 파일은 원본과 완전히 동일하여 안전하게 정리할 수 있습니다.
+> `.trash`로 이동할까요? (hard delete 아님 — 복구 가능)"
 
-삭제 대상이 없으면 ("identical 항목 0개") 사용자에게 알리고 모드를 종료한다.
+대상이 없으면 ("identical 항목 0개") 사용자에게 알리고 모드를 종료한다.
 
-## Step 3 — 실제 삭제
+## Step 3 — 실제 실행 (.trash 이동)
 
 사용자가 승인하면:
 
 ```bash
-cd C:/dev/ObsidianVault
 python3 .claude/skills/syncthing-conflict-cleanup/scripts/conflict_cleanup.py purge --apply
 ```
 
@@ -45,8 +43,8 @@ python3 .claude/skills/syncthing-conflict-cleanup/scripts/conflict_cleanup.py pu
 
 | 항목 | 수치 |
 |------|------|
-| 삭제 대상 | N |
-| 실제 삭제 | N |
+| 대상 | N |
+| .trash 이동 | N |
 | 원본 파일 변경 | 0 |
 ```
 

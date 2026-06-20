@@ -48,13 +48,13 @@ Golden Principle #1의 예외) 적용 전 반드시 사용자 승인을 받는�
    번들 각 줄에는 `profile`("areas" 또는 "changes") 필드가 포함되어 있어
    판정 시 맥락 섹션이 어떤 의미인지 구분할 수 있다.
 
-3. **사용자 보고·승인**:
+3. **사용자 보고·승인** (필수 정지 지점):
 
    ```
    ## status-sync 결과
 
    ### 닫기 후보 (auto_close + judge:CLOSE)
-   - [ ] <경로>  — 근거: …
+   - <경로>  — 근거: …
 
    ### 체크박스 추가 권장 (judge:KEEP)
    - <경로>  — 추가할 항목: `- [ ] <TODO>`
@@ -63,7 +63,11 @@ Golden Principle #1의 예외) 적용 전 반드시 사용자 승인을 받는�
    - <경로>  — 남은 할 일 N개
    ```
 
-4. **적용**(모두 `scripts/apply.py` — 메인 에이전트는 본문을 Read하지 않는다):
+   **여기서 멈춘다.** 사용자가 명시적으로 승인(예: "닫아도 됨", "적용해줘")하기 전에는
+   4단계 `apply.py`를 절대 실행하지 않는다. 보고는 일반 불릿(`-`)으로만 작성한다 —
+   `- [ ]` 체크박스를 쓰면 에이전트가 스스로 체크해 승인을 건너뛸 위험이 있다.
+
+4. **적용**(사용자 승인 후에만, 모두 `scripts/apply.py` — 메인 에이전트는 본문을 Read하지 않는다):
    - **닫기**: `apply.py close <path> ...` — 프론트매터 `status: closed`,
      `date modified` 갱신. 폴더 구분 없이 동작.
    - **체크박스 추가**: `apply.py add-todo <path> "<TODO 문구>"` — 할 일 섹션
@@ -82,3 +86,5 @@ Golden Principle #1의 예외) 적용 전 반드시 사용자 승인을 받는�
 ## 참고
 
 설계 배경(토큰 절감 전략, 폴더 프로파일 확장 방법) → `references/design.md`
+
+종결→아카이브 연계: 여기서 남기는 `log.md` `#closed` 이벤트(날짜+경로)가 close-date의 단일 출처다. `vault-cleanup`의 `reorg_archive.py find-closed`가 이를 읽어 N일(기본 90) 경과한 종결 노트를 아카이브 후보로 올린다 — 그러니 닫을 때 log.md append를 반드시 수행할 것(미기록 시 `unlogged_closed`로 분류되어 자동 아카이브 대상에서 빠진다).

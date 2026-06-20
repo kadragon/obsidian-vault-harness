@@ -17,7 +17,7 @@ fp_norm = fp.replace("\\", "/")
 # Skip harness/meta dirs and non-note paths
 skip = ["/99_Template/", "/docs/", "/.claude/", "/90_Archive/",
         "/_Wiki/", "/19_Reference/", "/01_Inbox/", "/_work",
-        "backlog.md", "tasks.md"]
+        "backlog.md", "tasks.md", "AGENTS.md", "CLAUDE.md"]
 if any(s in fp_norm for s in skip):
     sys.exit(0)
 
@@ -44,12 +44,20 @@ if any(f in fp_norm for f in note_folders):
         fm = fm_match.group(1)
         if not re.search(r'^type:\s*\S', fm, re.MULTILINE):
             violations.append("frontmatter에 type: 없음 — 99_Template/ 해당 템플릿 사용 필요 (GP#2)")
-        # Check 3: incident notes require change_type + status (_인시던트 템플릿)
+        # Check 2b: status required + enum-valid (모든 note-bearing 폴더)
+        #   허용 어휘 5개 고정 — 99_Template/_메타데이터 규칙.md 와 동일
+        valid_status = {"open", "in-progress", "hold", "closed", "active"}
+        sm = re.search(r'^status:\s*(\S+)', fm, re.MULTILINE)
+        if not sm:
+            violations.append("frontmatter에 status: 없음 — open|in-progress|hold|closed|active 중 하나 필요")
+        elif sm.group(1) not in valid_status:
+            violations.append(
+                f"비표준 status: '{sm.group(1)}' — open|in-progress|hold|closed|active만 허용 "
+                "('done'/'resolved'/'pending-action' → 'closed'로 통일)")
+        # Check 3: incident notes require change_type (_인시던트 템플릿)
         if "/14_Changes/incident/" in fp_norm:
             if not re.search(r'^change_type:\s*incident', fm, re.MULTILINE):
                 violations.append("incident frontmatter에 'change_type: incident' 없음 (_인시던트 템플릿 사용)")
-            if not re.search(r'^status:\s*\S', fm, re.MULTILINE):
-                violations.append("incident frontmatter에 'status:' 없음 (_인시던트 템플릿 사용)")
     else:
         violations.append("frontmatter 없음 — 99_Template/ 해당 템플릿 사용 필요 (GP#2)")
 

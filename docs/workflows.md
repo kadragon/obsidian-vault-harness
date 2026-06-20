@@ -27,7 +27,7 @@ When a 통합학사시스템 error occurs.
 2. After diagnosis, use `obsidian-operator` agent to create incident note.
    - Template: `99_Template/_인시던트.md` · Path: `14_Changes/incident/{year}/`
 3. Delegate tag authoring to `tag-validator` agent.
-4. After resolution, update note `status: done` (on user request).
+4. After resolution, update note `status: closed` (on user request).
 
 ---
 
@@ -65,6 +65,8 @@ Find similar incidents, past improvements, related notes.
 
 Create or update a domain MOC when: (a) a domain has 20+ notes, or (b) the same incident type has recurred 3+ times.
 
+**Gate 자동 탐지:** `python3 .claude/skills/vault-cleanup/scripts/moc_gate.py .` — 도메인별 노트/인시던트 수를 세어 임계 넘었는데 운영-MOC 없는 도메인(`gaps`)을 보고한다. 수동으로 20건 도달을 눈치챌 필요 없음. `sweep` 헬스체크에 포함.
+
 1. Delegate to `vault-navigator` — provide domain name and scope (`10_Areas/{domain}/`, `14_Changes/` filtered by `#업무/{domain}`). Request: note inventory (title·tag·status·1-line summary) + pattern analysis (monthly volume, recurring incident types, open items, related departments).
 2. Review inventory. Identify: seasonal calendar, top-3 recurring incident patterns, open items, key entities.
 3. Delegate to `obsidian-operator` — pass inventory + MOC spec from `_Wiki/contracts.md` → Operational MOC section. Save path: `_Wiki/topics/{도메인}-운영-MOC.md`.
@@ -81,7 +83,8 @@ Create or update a domain MOC when: (a) a domain has 20+ notes, or (b) the same 
 Run periodically (between feature completions, or monthly).
 
 1. `vault-cleanup` skill: check 90_Archive and 10_Areas.
-2. Review unresolved manual items in `plan.md`.
+2. `moc_gate.py` — 임계 넘은 도메인 MOC 누락 탐지. `reorg_archive.py find-closed` — 종결 90일+ 아카이브 후보.
+3. Review unresolved manual items in `plan.md`.
 3. Audit AGENTS.md rules for continued validity.
 
 ---
