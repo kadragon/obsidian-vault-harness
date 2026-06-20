@@ -203,7 +203,7 @@ def cmd_delete(args):
         print("실제 실행하려면 --apply를 추가하세요.")
         return
 
-    dest = _trash(conflict, Path(_default_root()))
+    dest = _trash(conflict, Path(args.root).resolve())
     print(f"휴지통 이동: {conflict} → {dest}")
 
 
@@ -232,7 +232,7 @@ def cmd_replace(args):
         return
 
     if orig.exists():
-        dest = _trash(orig, Path(_default_root()))
+        dest = _trash(orig, Path(args.root).resolve())
         print(f"기존 원본 휴지통 이동: {orig} → {dest}")
 
     conflict.rename(orig)
@@ -253,10 +253,12 @@ def main():
 
     p_delete = sub.add_parser("delete", help="특정 conflict 파일 삭제")
     p_delete.add_argument("conflict", help="삭제할 conflict 파일 경로")
+    p_delete.add_argument("--root", default=_default_root(), help="볼트 루트 경로 (.trash 위치 기준)")
     p_delete.add_argument("--apply", action="store_true", help="실제 삭제 실행")
 
     p_replace = sub.add_parser("replace", help="Conflict로 원본 교체")
     p_replace.add_argument("conflict", help="원본으로 올릴 conflict 파일 경로")
+    p_replace.add_argument("--root", default=_default_root(), help="볼트 루트 경로 (.trash 위치 기준)")
     p_replace.add_argument("--apply", action="store_true", help="실제 실행")
 
     args = parser.parse_args()

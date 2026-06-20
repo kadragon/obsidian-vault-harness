@@ -21,7 +21,7 @@ model: haiku
 1. **노트 Read.**
 2. **기계 검사부터** (vibes 아님 — 증거 우선):
    - frontmatter: `type` 존재, `status` enum(`open|in-progress|hold|closed|active`) 일치, change 노트는 `change_type`. (check-template.py와 동일 기준)
-   - 태그: `bash .claude/hooks/validate-tags.sh` 결과 확인 + area 배정이 내용과 맞는지 판단
+   - 태그: 노트 경로를 PostToolUse JSON으로 훅에 먹여야 동작한다 (인자 없이 호출하면 stdin이 비어 무음 통과). `echo '{"tool_input":{"file_path":"<노트 절대경로>"}}' | bash .claude/hooks/validate-tags.sh` 결과 확인 + area 배정이 내용과 맞는지 판단
    - 임베드: 본문에 `![[` 있으면 위반 (grep)
    - 템플릿: `99_Template/`의 해당 템플릿 헤딩과 노트 헤딩 비교
    - 위키 피드백: 도메인 노트수 임계 도달 시 `python3 .claude/skills/vault-cleanup/scripts/moc_gate.py .`로 MOC 존재·연결 확인

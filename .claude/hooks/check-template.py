@@ -48,11 +48,12 @@ if any(f in fp_norm for f in note_folders):
         #   허용 어휘 5개 고정 — 99_Template/_메타데이터 규칙.md 와 동일
         valid_status = {"open", "in-progress", "hold", "closed", "active"}
         sm = re.search(r'^status:\s*(\S+)', fm, re.MULTILINE)
+        status_val = sm.group(1).strip('"\'') if sm else None
         if not sm:
             violations.append("frontmatter에 status: 없음 — open|in-progress|hold|closed|active 중 하나 필요")
-        elif sm.group(1) not in valid_status:
+        elif status_val not in valid_status:
             violations.append(
-                f"비표준 status: '{sm.group(1)}' — open|in-progress|hold|closed|active만 허용 "
+                f"비표준 status: '{status_val}' — open|in-progress|hold|closed|active만 허용 "
                 "('done'/'resolved'/'pending-action' → 'closed'로 통일)")
         # Check 3: incident notes require change_type (_인시던트 템플릿)
         if "/14_Changes/incident/" in fp_norm:

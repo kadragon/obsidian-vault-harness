@@ -120,6 +120,22 @@ def find_stale(areas_root: Path, ref: date, months: int,
                     "yyyymm": f"{yyyy}{mm}",
                     "area": area_dir.name,
                 })
+        # flat single-file notes at the area root (no wrapper folder, from
+        # new_work_path.py --flat). _iter_dated_folders yields folders only,
+        # so these would otherwise never be archived.
+        for md in sorted(area_dir.glob("*.md")):
+            fm = YYYYMM_RE.match(md.stem.lstrip("_"))
+            if not fm:
+                continue
+            f_yyyy, f_mm = fm.group(1), fm.group(2)
+            if date(int(f_yyyy), int(f_mm), 1) < cutoff:
+                out.append({
+                    "current": str(md),
+                    "archive_target": str(
+                        archive_root / area_dir.name / f_yyyy / md.name),
+                    "yyyymm": f"{f_yyyy}{f_mm}",
+                    "area": area_dir.name,
+                })
     return out
 
 
@@ -133,7 +149,8 @@ def _archive_unit(vault: Path, wikipath: str):
     work note. Folder-form (note inside `{YYYYMM}_slug/`) → the dated folder;
     flat-form (single `{YYYYMM}_X.md` at area root) → the file itself.
     """
-    wp = _nfc(wikipath.strip().lstrip("/"))
+    # tolerate Obsidian alias (`path|alias`) and Windows separators
+    wp = _nfc(wikipath.replace("\\", "/").split("|")[0].strip().lstrip("/"))
     if not wp.startswith("10_Areas/"):
         return None
     rest = wp[len("10_Areas/"):]
@@ -141,7 +158,10 @@ def _archive_unit(vault: Path, wikipath: str):
     if len(parts) < 2:
         return None
     area, dated = parts[0], parts[1]
-    m = YYYYMM_RE.match(dated if not dated.endswith(".md") else dated[:-3])
+    # strip a legacy leading `_` (note-file prefix) before the date match;
+    # keep `dated` itself for path reconstruction.
+    stem = (dated[:-3] if dated.endswith(".md") else dated).lstrip("_")
+    m = YYYYMM_RE.match(stem)
     if not m:
         return None
     yyyymm = m.group(1) + m.group(2)
@@ -170,6 +190,8 @@ def find_closed(vault: Path, log_path: Path, ref: date, days: int,
             d = date(*map(int, mm.group(1).split("-")))
             u = _archive_unit(vault, mm.group(2))
             if not u:
+                print(f"warn: #closed entry not an archivable 10_Areas note, "
+                      f"skipped: {mm.group(2)!r}", file=sys.stderr)
                 continue
             unit, area, yyyymm = u
             key = str(unit)
@@ -359,8 +381,12 @@ def main() -> int:
         _emit(scan_structure(args.area_root.resolve()), args.json)
     elif args.cmd == "find-stale":
         if args.ref:
-            y, m = map(int, args.ref.split("-"))
-            ref = date(y, m, 1)
+            try:
+                y, m = map(int, args.ref.split("-"))
+                ref = date(y, m, 1)
+            except (ValueError, TypeError):
+                print("error: --ref must be YYYY-MM", file=sys.stderr)
+                return 2
         else:
             ref = date.today()
         rows = find_stale(args.areas_root.resolve(), ref, args.months,
@@ -370,7 +396,11 @@ def main() -> int:
         vault = args.vault_root.resolve()
         log_path = (args.log.resolve() if args.log else vault / "_Wiki" / "log.md")
         if args.ref:
-            ref = date(*map(int, args.ref.split("-")))
+            try:
+                ref = date(*map(int, args.ref.split("-")))
+            except (ValueError, TypeError):
+                print("error: --ref must be YYYY-MM-DD", file=sys.stderr)
+                return 2
         else:
             ref = date.today()
         res = find_closed(vault, log_path, ref, args.days,
