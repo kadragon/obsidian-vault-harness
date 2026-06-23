@@ -91,10 +91,12 @@ if [[ -n "$AREAS_DIR" ]]; then
   # NFC-normalize folder names: macOS returns filenames in NFD, but typed tags
   # are NFC — without this the two never match and every note is false-flagged.
   ALLOWED_AREAS=$(python3 -c "
-import os, sys, unicodedata
+import os, re, sys, unicodedata
 try:
     d = sys.argv[1]
-    names = [unicodedata.normalize('NFC', n) for n in os.listdir(d)
+    # re.escape each name: a folder name with ERE metachars (. + ( ) etc.)
+    # would otherwise corrupt the grep -E pattern this feeds.
+    names = [re.escape(unicodedata.normalize('NFC', n)) for n in os.listdir(d)
              if os.path.isdir(os.path.join(d, n))]
 except OSError:
     names = []

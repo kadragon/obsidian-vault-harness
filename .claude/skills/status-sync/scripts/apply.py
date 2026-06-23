@@ -64,8 +64,14 @@ def add_todo(path: Path, todo: str) -> tuple[bool, str]:
     if not m:
         return False, "no '## 할 일' section"
     today = datetime.now().strftime("%Y-%m-%d")
-    line = f"- [ ] {todo.strip()} ➕ {today} 📅 {today}"
     body = m.group(2).rstrip("\n")
+    # If the 할 일 section is a `> [!todo]` callout, keep the new item inside
+    # it by quoting the line; otherwise append a bare checkbox. Match the
+    # callout marker `> [!` specifically — a plain `>` blockquote mixed with
+    # flat checkboxes must NOT push the new item into a quote.
+    in_callout = any(ln.lstrip().startswith("> [!") for ln in body.splitlines())
+    prefix = "> " if in_callout else ""
+    line = f"{prefix}- [ ] {todo.strip()} ➕ {today} 📅 {today}"
     # Preserve a single blank line between the new item and the next section.
     new_block = m.group(1) + body + "\n" + line + "\n\n"
     new_text = text[:m.start()] + new_block + text[m.end():]

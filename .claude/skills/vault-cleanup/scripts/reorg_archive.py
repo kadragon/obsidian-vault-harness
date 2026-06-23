@@ -142,6 +142,23 @@ def find_stale(areas_root: Path, ref: date, months: int,
 CLOSED_RE = re.compile(r"^- (\d{4}-\d{2}-\d{2}) #closed \[\[([^\]]+)\]\]")
 
 
+def _find_flat(area_dir: Path, yyyymm: str):
+    """The unique flat `{YYYYMM}_*.md` note at an area root, or None.
+
+    Used to resolve a folder-form log entry whose wrapper folder was later
+    flattened (new_work_path.py --flat). Returns None when absent or ambiguous
+    (>1 match) so the caller falls back to the original folder path.
+    """
+    if not area_dir.is_dir():
+        return None
+    hits = []
+    for md in area_dir.glob("*.md"):
+        m = YYYYMM_RE.match(md.stem.lstrip("_"))
+        if m and m.group(1) + m.group(2) == yyyymm:
+            hits.append(md)
+    return hits[0] if len(hits) == 1 else None
+
+
 def _archive_unit(vault: Path, wikipath: str):
     """Map a log.md wikilink path to the archivable unit under 10_Areas/.
 
@@ -168,8 +185,16 @@ def _archive_unit(vault: Path, wikipath: str):
     if len(parts) == 2:  # flat single-file note at area root
         name = dated if dated.endswith(".md") else dated + ".md"
         return vault / "10_Areas" / area / name, area, yyyymm
-    # folder-form: archive the whole dated folder
-    return vault / "10_Areas" / area / dated, area, yyyymm
+    # folder-form: archive the whole dated folder. If the wrapper folder no
+    # longer exists, the note may have been flattened to a single file at the
+    # area root after the log entry was written — resolve to that flat file so
+    # it stays an archive candidate (and is not double-counted as unlogged).
+    folder = vault / "10_Areas" / area / dated
+    if not folder.exists():
+        flat = _find_flat(vault / "10_Areas" / area, yyyymm)
+        if flat is not None:
+            return flat, area, yyyymm
+    return folder, area, yyyymm
 
 
 def find_closed(vault: Path, log_path: Path, ref: date, days: int,
@@ -256,7 +281,10 @@ def apply_reorg(area_root: Path, apply: bool) -> list[dict]:
 
 
 def apply_archive(src: Path, archive_root: Path, apply: bool) -> dict:
-    m = YYYYMM_RE.match(src.name)
+    # tolerate a legacy leading `_` (flat note-file prefix) when reading the
+    # date; `src.name` is kept intact for the archive target. Without the
+    # lstrip, `_YYYYMM_*.md` notes emitted by find_stale fail to match here.
+    m = YYYYMM_RE.match(src.name.lstrip("_"))
     if not m:
         return {"status": "error: src name does not match YYYYMM_*",
                 "src": str(src)}
