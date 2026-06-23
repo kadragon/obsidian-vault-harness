@@ -41,8 +41,11 @@ VAULT = Path(__file__).resolve().parents[4]
 
 FM_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 STATUS_RE = re.compile(r"^status:\s*open\s*$", re.MULTILINE)
-OPEN_BOX = re.compile(r"^\s*-\s*\[\s\]", re.MULTILINE)
-DONE_BOX = re.compile(r"^\s*-\s*\[x\]", re.MULTILINE | re.IGNORECASE)
+# Optional `>` prefix so checkboxes nested in a `> [!todo]` callout count too.
+OPEN_BOX = re.compile(r"^\s*>?\s*-\s*\[\s\]", re.MULTILINE)
+DONE_BOX = re.compile(r"^\s*>?\s*-\s*\[x\]", re.MULTILINE | re.IGNORECASE)
+# A callout marker line, e.g. `[!success]- 처리 결과` (after the `>` is stripped).
+CALLOUT_MARKER = re.compile(r"\[![^\]]+\][+-]?")
 
 EXCERPT_CHARS = 800
 
@@ -54,6 +57,18 @@ def _section_re(heading: str) -> re.Pattern:
     esc = re.escape(heading).replace(r"\ ", r"\s+")
     return re.compile(
         rf"^##\s*{esc}\s*$(.*?)(?=^##\s|\Z)",
+        re.MULTILINE | re.DOTALL,
+    )
+
+
+def _section_re_any(body_pat: str) -> re.Pattern:
+    # Like `_section_re` but takes a raw regex body alternation and tolerates a
+    # leading emoji/symbol cluster (🏷 📡 🛠 ✔ ⚙ …). 14_Changes notes accumulated
+    # many heading variants across years (`할 일`/`🏷 Todo`, `처리 결과`/`🛠 주요
+    # 코드`/`✔ 처리 방안`); existing notes are immutable (GP#1) so the parser
+    # matches old and new forms alike.
+    return re.compile(
+        rf"^##\s*(?:[^\w\s]+\s*)*(?:{body_pat})\s*$(.*?)(?=^##\s|\Z)",
         re.MULTILINE | re.DOTALL,
     )
 
@@ -78,9 +93,11 @@ PROFILES: list[Profile] = [
     Profile(
         name="changes",
         root=VAULT / "14_Changes",
-        todo=_section_re("🏷 Todo"),
-        context=_section_re("📡 수정 사유"),
-        result=_section_re("🛠 주요 코드"),
+        # Alternations cover both the current template headings (할 일 / 수정
+        # 사유 / 처리 결과) and legacy emoji variants still in 14_Changes.
+        todo=_section_re_any(r"할\s*일|Todo"),
+        context=_section_re_any(r"수정\s*사유|발생\s*정보"),
+        result=_section_re_any(r"처리\s*결과|처리\s*방안|주요\s*코드"),
     ),
 ]
 
@@ -106,7 +123,14 @@ def _result_filled(section_re: re.Pattern, body: str) -> bool:
     meaningful: list[str] = []
     for ln in text.splitlines():
         s = ln.strip()
+        # Unwrap a callout quote prefix so an empty `> [!success]-` scaffold
+        # does not read as filled work.
+        if s.startswith(">"):
+            s = s.lstrip(">").strip()
         if not s or s == "-":
+            continue
+        # Skip the callout title line itself (e.g. `[!success]- 처리 결과`).
+        if CALLOUT_MARKER.match(s):
             continue
         # Skip bare fence delimiters but count language-tagged ones as
         # signal only if other lines exist — they do, since the fenced
