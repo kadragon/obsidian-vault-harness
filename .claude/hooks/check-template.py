@@ -16,7 +16,7 @@ fp_norm = fp.replace("\\", "/")
 
 # Skip harness/meta dirs and non-note paths
 skip = ["/99_Template/", "/docs/", "/.claude/", "/90_Archive/",
-        "/_Wiki/", "/19_Reference/", "/01_Inbox/", "/_work",
+        "/_Wiki/", "/_Sources/", "/01_Inbox/", "/_work",
         "backlog.md", "tasks.md", "AGENTS.md", "CLAUDE.md"]
 if any(s in fp_norm for s in skip):
     sys.exit(0)

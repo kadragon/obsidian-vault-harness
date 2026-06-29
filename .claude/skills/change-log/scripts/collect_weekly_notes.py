@@ -184,8 +184,8 @@ def collect_10areas(vault: Path, start: date, end: date) -> list[dict]:
             continue
         for md in area_path.rglob("*.md"):
             text = md.read_text(encoding="utf-8", errors="ignore")
-            if "date created:" not in text:
-                continue  # Skip attachment files with no frontmatter
+            if not text.startswith("---"):
+                continue  # Skip non-markdown attachment files (no frontmatter)
             matched = matched_date_in_range(text, start, end)
             if matched:
                 results.append(
