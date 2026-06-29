@@ -14,7 +14,7 @@ Convert 공문·요청 into 업무사안 notes, and reference materials into `_S
 4. **Action branch** (`01_Inbox/action/`): creates 업무사안 note using `99_Template/_업무사안.md`. Delegate tag authoring to `tag-validator`.
    - **No attachments** → single `10_Areas/{area}/YYYYMM_{summary}.md`
    - **With attachments** → `10_Areas/{area}/YYYYMM_{slug}/YYYYMM_{summary}.md` + attachments in same folder (slug ≤ 20 chars)
-5. **Reference branch** (`01_Inbox/reference/`): creates/updates `19_Reference/_Sources/` source note and relevant `_Wiki/` pages; updates `_Wiki/index.md` and `_Wiki/log.md`.
+5. **Reference branch** (`01_Inbox/reference/`): creates/updates `_Sources/` source note and relevant `_Wiki/` pages; updates `_Wiki/index.md` and `_Wiki/log.md`.
 6. Skill deletes processed originals after user confirmation.
 
 ---

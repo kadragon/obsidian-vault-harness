@@ -59,7 +59,7 @@ area: {판단된 area 또는 ?? (사용자 확인 필요)}
 ## Reference 워커 호출 프롬프트 구조
 
 ```
-다음 참고자료를 19_Reference/_Sources + _Wiki에 반영해줘. 세부 절차는
+다음 참고자료를 _Sources + _Wiki에 반영해줘. 세부 절차는
 .claude/skills/inbox-process/references/reference-branch.md를 반드시 Read로 읽고 따를 것.
 
 파일:
@@ -74,7 +74,7 @@ area: {판단된 area 또는 ?? (사용자 확인 필요)}
 사용자가 파일 없이 참고자료 텍스트를 직접 제공한 경우, `01_Inbox/reference/` 파일 목록을 만들거나 추정하지 않는다. 내용 자체를 워커 입력으로 전달한다.
 
 ```
-다음 인라인 참고자료를 19_Reference/_Sources + _Wiki에 반영해줘. 세부 절차는
+다음 인라인 참고자료를 _Sources + _Wiki에 반영해줘. 세부 절차는
 .claude/skills/inbox-process/references/reference-branch.md를 반드시 Read로 읽고 따를 것.
 단, 파일 탐색(1단계)과 원본 파일 삭제(6단계)는 건너뛸 것 — 내용이 아래에 직접 제공되어 있음.
 삭제할 원본 파일 없음.
