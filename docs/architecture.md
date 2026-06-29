@@ -7,7 +7,7 @@
 | 버킷 | 의미 | 현재 폴더 |
 |------|------|----------|
 | `0x` | 캡처 레이어 | `01_Inbox` |
-| `1x` | 활성 업무 레이어 (Areas·Projects·Routines·Changes·Reference) | `10_Areas`, `12_Projects`, `11_Routines`, `14_Changes`, `19_Reference` |
+| `1x` | 활성 업무 레이어 (Areas·Projects·Routines·Changes·Reference) | `10_Areas`, `12_Projects`, `11_Routines`, `14_Changes`, `_Sources` |
 | `2x` | 지식·학습 레이어 | `20_Training` |
 | `8x` | (현재 미사용 — 예비) | — |
 | `9x` | 메타·종결 레이어 | `90_Archive`, `99_Template` |
@@ -22,7 +22,7 @@ ObsidianVault/
 ├── _Wiki/                 # Vault-wide LLM wiki layer (index·log·entities·topics·syntheses·lint)
 ├── 01_Inbox/              # Unprocessed documents — process via inbox-process skill
 │   ├── action/            # 공문·요청 → 10_Areas/ 업무사안 노트
-│   ├── reference/         # PDF·HWPX·웹 클립 → 19_Reference/_Sources + _Wiki
+│   ├── reference/         # PDF·HWPX·웹 클립 → _Sources + _Wiki
 │   └── (root)             # 분류 모호 시 임시 drop zone (스킬이 분류 제안)
 ├── 10_Areas/              # Work matter notes by domain (max 2 levels deep)
 │   ├── 개발공통/
@@ -41,9 +41,13 @@ ObsidianVault/
 ├── 14_Changes/            # System change records
 │   ├── incident/          # Incidents by year
 │   └── improvement/       # Improvements by year
-├── 19_Reference/          # Reference materials (raw sources only)
-│   ├── _Assets/
-│   └── _Sources/
+├── _Sources/              # Reference materials (source notes by domain)
+│   ├── _Assets/           # Raw files by matching domain
+│   ├── AI-코딩/
+│   ├── 교무회의자료/
+│   ├── 규정/
+│   ├── 업무계획/
+│   └── ...
 ├── 20_Training/           # Education/training notes
 ├── 90_Archive/            # Completed/expired notes (no agent-created files)
 └── 99_Template/           # Note templates
@@ -60,7 +64,7 @@ ObsidianVault/
 | Training record | `20_Training/` |
 | New project | `12_Projects/{project-name}/` (folder required) |
 | Recurring routine | `11_Routines/` |
-| Source material | `19_Reference/_Sources/` |
+| Source material | `_Sources/` |
 | Wiki (entity/topic/synthesis) | `_Wiki/{entities,topics,syntheses}/` |
 
 ## Archive Placement
@@ -75,7 +79,7 @@ ObsidianVault/
 | `14_Changes/incident/{year}/` | `90_Archive/changes/incident/{year}/` |
 | `14_Changes/improvement/{year}/` | `90_Archive/changes/improvement/{year}/` |
 | `20_Training/{year}/` | `90_Archive/training/{year}/` |
-| `19_Reference/_Sources/` 개별 노트 | `90_Archive/reference/` |
+| `_Sources/` 개별 노트 | `90_Archive/reference/` |
 | `00_DailyNote/` (종료됨) | `90_Archive/daily-note/` ✅ |
 
 `90_Archive/changes/`, `90_Archive/training/`, `90_Archive/reference/` 는 agent가 vault-cleanup skill을 통해 생성한다.
@@ -85,4 +89,4 @@ ObsidianVault/
 - No files created in `90_Archive/`.
 - No loose `.md` files in `12_Projects/` — folders only.
 - `10_Areas/` depth max 2 levels. No attachment → single `.md` at area root. With attachment → `YYYYMM_{slug}/` folder containing `YYYYMM_{summary}.md` + attachments.
-- Documents in `01_Inbox/` are never processed directly; use `inbox-process` skill. The skill dispatches to action (→ `10_Areas/`) or reference (→ `19_Reference/_Sources`·`_Wiki`) based on subfolder or content-based triage.
+- Documents in `01_Inbox/` are never processed directly; use `inbox-process` skill. The skill dispatches to action (→ `10_Areas/`) or reference (→ `_Sources`·`_Wiki`) based on subfolder or content-based triage.

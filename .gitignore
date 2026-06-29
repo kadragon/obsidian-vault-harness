@@ -20,6 +20,6 @@
 !docs/
 !docs/**
 !.gitmodules
-!19_Reference/
-!19_Reference/knue-policy-hub
-!19_Reference/knue-policy-hub/**
+!_Sources/
+!_Sources/한국교원대학교-규정집
+!_Sources/한국교원대학교-규정집/**

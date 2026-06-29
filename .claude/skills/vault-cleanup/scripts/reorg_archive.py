@@ -142,19 +142,36 @@ def find_stale(areas_root: Path, ref: date, months: int,
 CLOSED_RE = re.compile(r"^- (\d{4}-\d{2}-\d{2}) #closed \[\[([^\]]+)\]\]")
 
 
-def _find_flat(area_dir: Path, yyyymm: str):
-    """The unique flat `{YYYYMM}_*.md` note at an area root, or None.
+def _flat_name_candidates(dated: str, note_part: str) -> list[str]:
+    names: list[str] = []
+    for raw in (note_part, dated):
+        name = raw if raw.endswith(".md") else raw + ".md"
+        variants = [name]
+        if name.startswith("_"):
+            variants.append(name.lstrip("_"))
+        else:
+            variants.append("_" + name)
+        for variant in variants:
+            norm = _nfc(variant)
+            if norm not in names:
+                names.append(norm)
+    return names
+
+
+def _find_flat(area_dir: Path, dated: str, note_part: str):
+    """The matching flat note at an area root, or None.
 
     Used to resolve a folder-form log entry whose wrapper folder was later
-    flattened (new_work_path.py --flat). Returns None when absent or ambiguous
-    (>1 match) so the caller falls back to the original folder path.
+    flattened (new_work_path.py --flat). It only accepts exact matches for the
+    original note filename or folder stem. Matching by YYYYMM alone can archive
+    an unrelated note from the same month.
     """
     if not area_dir.is_dir():
         return None
-    hits = []
+    candidates = set(_flat_name_candidates(dated, note_part))
+    hits: list[Path] = []
     for md in area_dir.glob("*.md"):
-        m = YYYYMM_RE.match(md.stem.lstrip("_"))
-        if m and m.group(1) + m.group(2) == yyyymm:
+        if _nfc(md.name) in candidates:
             hits.append(md)
     return hits[0] if len(hits) == 1 else None
 
@@ -191,7 +208,7 @@ def _archive_unit(vault: Path, wikipath: str):
     # it stays an archive candidate (and is not double-counted as unlogged).
     folder = vault / "10_Areas" / area / dated
     if not folder.exists():
-        flat = _find_flat(vault / "10_Areas" / area, yyyymm)
+        flat = _find_flat(vault / "10_Areas" / area, dated, parts[-1])
         if flat is not None:
             return flat, area, yyyymm
     return folder, area, yyyymm
@@ -254,7 +271,7 @@ def find_closed(vault: Path, log_path: Path, ref: date, days: int,
                 continue
             u = _archive_unit(vault, str(md.relative_to(vault)))
             if u and str(u[0]) not in logged_units:
-                unlogged.append(str(md.relative_to(vault)))
+                unlogged.append(md.relative_to(vault).as_posix())
 
     return {"candidates": candidates, "unlogged_closed": sorted(unlogged)}
 
