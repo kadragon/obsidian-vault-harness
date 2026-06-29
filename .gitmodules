@@ -1,3 +1,3 @@
-[submodule "19_Reference/knue-policy-hub"]
-	path = 19_Reference/knue-policy-hub
+[submodule "_Sources/한국교원대학교-규정집"]
+	path = _Sources/한국교원대학교-규정집
 	url = https://github.com/kadragon/knue-policy-hub
