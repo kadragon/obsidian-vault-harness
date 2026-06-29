@@ -271,7 +271,7 @@ def find_closed(vault: Path, log_path: Path, ref: date, days: int,
                 continue
             u = _archive_unit(vault, str(md.relative_to(vault)))
             if u and str(u[0]) not in logged_units:
-                unlogged.append(str(md.relative_to(vault)))
+                unlogged.append(md.relative_to(vault).as_posix())
 
     return {"candidates": candidates, "unlogged_closed": sorted(unlogged)}
 

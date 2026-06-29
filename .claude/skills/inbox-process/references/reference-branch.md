@@ -54,7 +54,9 @@
 
 ```python
 import fitz
-doc = fitz.open("C:" + 추출경로)   # 추출 결과가 \tmp\... 형태이므로 C: 접두
+from pathlib import Path
+drive = Path(vault_root).drive  # 볼트 경로에서 드라이브 추출 (예: "C:")
+doc = fitz.open(drive + 추출경로)  # 추출 경로가 \tmp\... 형태이므로 드라이브 접두
 text = "\n".join(page.get_text() for page in doc)
 ```
 
@@ -71,7 +73,7 @@ text = "\n".join(page.get_text() for page in doc)
 1. 이름 공백 제거 → 실명 도출 (예: `"김 유 진"` → `"김유진"`)
 2. `_Wiki/entities/people/{실명}*.md` Glob으로 검색 (사번 기반 파일명이므로 와일드카드 필요):
    - **1건 발견**: 아래 3~4단계 실행.
-     - **Golden Principle #1 예외**: person entity는 `contracts.md`에서 "일괄 import 자산"으로 분류되며 인사발령이 부서·직급의 공식 갱신 원천이므로, 오케스트레이터 확인 없이 갱신한다.
+     - **Golden Principle #1 예외**: 인사발령 처리 자체가 사용자의 명시적 요청이므로 GP#1 예외 적용. `contracts.md` §person-entity에 발령 이력 자동 누적이 명시되어 있어(`## 발령 이력은 인사발령 처리 시 자동 누적된다`), 오케스트레이터 확인 없이 갱신한다.
    - **2건+ 발견**: 동명이인 → 열린 질문으로 보고 ("어느 파일인지 확인 필요")
    - **0건**: 신규 인물 → `_Wiki/entities/people/{이름}.md`로 생성 (사번 미상 시 사번 부분 생략). 사번이 나중에 확인되면 파일명을 `{이름}({사번}).md`로 rename.
 3. **발령 이력 기록** — `## 정보` 덮어쓰기 전에 이전·신규 값을 `## 발령 이력` 테이블에 append:
@@ -127,7 +129,9 @@ text = "\n".join(page.get_text() for page in doc)
   - **Handysoft 포맷** (한컴 공문 PDF — Read 도구가 텍스트를 뽑지 못하거나 pdftoppm 오류가 나는 경우): `scripts/extract_handysoft_pdf.py`로 내부 PDF 추출 후, **Read 도구 대신 fitz(PyMuPDF) Bash 명령**으로 읽는다. Read 도구는 추출 후에도 pdftoppm 부재로 실패한다.
     ```python
     import fitz
-    doc = fitz.open("C:" + 추출경로)  # 추출 경로가 \tmp\... 형태이므로 C: 접두
+    from pathlib import Path
+    drive = Path(vault_root).drive  # 볼트 경로에서 드라이브 추출 (예: "C:")
+    doc = fitz.open(drive + 추출경로)  # 추출 경로가 \tmp\... 형태이므로 드라이브 접두
     text = "\n".join(page.get_text() for page in doc)
     ```
   - **이미지 기반 `.pdf`** (스캔본 — 텍스트 레이어 없음): `scripts/ocr_pdf.py`로 OCR 시도. 단, Tesseract 설치 여부는 실행 환경마다 다를 수 있으므로 실패 시 fitz로 재시도하고, 둘 다 실패하면 열린 질문으로 보고한다.
