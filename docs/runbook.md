@@ -26,7 +26,7 @@ Syncthing으로 다중 기기 동기화. OS별 경로:
 ```
 Run: inbox-process skill
 Input: 01_Inbox/ (action/ or reference/ subfolders)
-Output: 10_Areas/{area}/ note or 19_Reference/_Sources/ entry
+Output: 10_Areas/{area}/ note or _Sources/ entry
 ```
 
 ### Handle Incident
