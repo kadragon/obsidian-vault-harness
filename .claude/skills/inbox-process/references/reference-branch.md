@@ -37,7 +37,7 @@
 
 ### 2. source note 작성
 
-- 장기적으로 다시 볼 가치가 있는 자료면 `19_Reference/_Sources/` 아래에 source note를 만든다.
+- 장기적으로 다시 볼 가치가 있는 자료면 `_Sources/` 아래에 source note를 만든다.
 - source note에는 최소한 아래 내용을 넣는다.
   - 원문 식별 정보 또는 파일 경로 (신규는 `01_Inbox/reference/...` 경로를 기록)
   - 인라인 텍스트 입력은 파일 경로 대신 `inline text provided by user on YYYY-MM-DD`를 기록
@@ -45,6 +45,57 @@
   - 핵심 포인트
   - 적용 포인트
   - 관련 페이지
+
+### 2a. 인사발령 감지 → 인물 엔터티 갱신
+
+**감지 조건**: 파일명에 `인사발령` 포함. 감지되지 않으면 건너뛴다.
+
+한국교원대학교 인사발령 공문은 Handysoft 포맷이므로 `scripts/extract_handysoft_pdf.py`로 내부 PDF를 먼저 추출한 뒤, PyMuPDF(`fitz`)로 텍스트를 읽는다:
+
+```python
+import fitz
+from pathlib import Path
+drive = Path(vault_root).drive  # 볼트 경로에서 드라이브 추출 (예: "C:")
+doc = fitz.open(drive + 추출경로)  # 추출 경로가 \tmp\... 형태이므로 드라이브 접두
+text = "\n".join(page.get_text() for page in doc)
+```
+
+**공문 구조 (인물 1명당 반복되는 블록)**:
+
+```
+{현재 소속 부서}
+{직급}  {이름}           ← 이름은 음절 사이 공백 포함 (예: "김 유 진")
+{새 소속 부서} 근무를 명함  ← 또는 "{직위}에 보함"
+```
+
+**인물별 처리**:
+
+1. 이름 공백 제거 → 실명 도출 (예: `"김 유 진"` → `"김유진"`)
+2. `_Wiki/entities/people/{실명}*.md` Glob으로 검색 (사번 기반 파일명이므로 와일드카드 필요):
+   - **1건 발견**: 아래 3~4단계 실행.
+     - **Golden Principle #1 예외**: 인사발령 처리 자체가 사용자의 명시적 요청이므로 GP#1 예외 적용. `contracts.md` §person-entity에 발령 이력 자동 누적이 명시되어 있어(`## 발령 이력은 인사발령 처리 시 자동 누적된다`), 오케스트레이터 확인 없이 갱신한다.
+   - **2건+ 발견**: 동명이인 → 열린 질문으로 보고 ("어느 파일인지 확인 필요")
+   - **0건**: 신규 인물 → `_Wiki/entities/people/{이름}.md`로 생성 (사번 미상 시 사번 부분 생략). 사번이 나중에 확인되면 파일명을 `{이름}({사번}).md`로 rename.
+3. **발령 이력 기록** — `## 정보` 덮어쓰기 전에 이전·신규 값을 `## 발령 이력` 테이블에 append:
+   - `## 발령 이력` 섹션이 없으면 `## 관련 업무` 앞에 새로 삽입:
+     ```
+     ## 발령 이력
+
+     | 발령일 | 이전 부서 | 발령 부서 | 이전 직급 | 현재 직급 |
+     |--------|----------|----------|----------|----------|
+     ```
+   - 이전 `## 정보` 값 + 인사발령 문서의 신규 값을 한 행으로 추가 (발령일 = 문서 효력일, YYYY-MM-DD):
+     ```
+     | 2026-07-01 | 총무과 | 교수부 학사관리과 | 주무관 | 행정주사보 |
+     ```
+   - 내선은 이력에 포함하지 않는다 (현재 `## 정보`에 유지됨).
+4. **`## 정보` 갱신**:
+   - `부서`: **새 소속 부서** (발령 전 현재 소속이 아님)
+   - `직급`: 발령 문서의 직급
+   - `내선`: 문서에 없으므로 기존 값 그대로 유지
+5. `_Wiki/index.md` 개별 등재 금지 — 폴더 자체가 색인 (`contracts.md`)
+
+보고: 갱신된 인물 목록(이력 추가 포함), 열린 질문(신규·동명이인) 목록.
 
 ### 3. wiki 반영
 
@@ -75,10 +126,17 @@
 ## 파일 형식 주의
 
 - `.pdf`: Read 도구로 직접 읽는다. 10페이지 초과는 `pages: "1-5"`로 먼저 앞부분만 확인.
-- **이미지 기반 `.pdf`** (스캔본 — Read가 텍스트를 거의 못 뽑는 경우): 미파싱으로 포기하지 말고 `scripts/ocr_pdf.py`로 OCR한다. 예: `python .claude/skills/inbox-process/scripts/ocr_pdf.py "<경로>" --pages 1-5`. 대용량은 `--pages`로 앞부분 샘플 후 필요 범위만 추가 OCR (페이지당 수 초 소요). OCR 결과는 표·순서가 다소 흐트러질 수 있으니 핵심 사실 위주로 정리한다. Tesseract+kor 데이터는 이 머신에 이미 설치됨(`TESSDATA_PREFIX` 영구 등록).
+  - **Handysoft 포맷** (한컴 공문 PDF — Read 도구가 텍스트를 뽑지 못하거나 pdftoppm 오류가 나는 경우): `scripts/extract_handysoft_pdf.py`로 내부 PDF 추출 후, **Read 도구 대신 fitz(PyMuPDF) Bash 명령**으로 읽는다. Read 도구는 추출 후에도 pdftoppm 부재로 실패한다.
+    ```python
+    import fitz
+    from pathlib import Path
+    drive = Path(vault_root).drive  # 볼트 경로에서 드라이브 추출 (예: "C:")
+    doc = fitz.open(drive + 추출경로)  # 추출 경로가 \tmp\... 형태이므로 드라이브 접두
+    text = "\n".join(page.get_text() for page in doc)
+    ```
+  - **이미지 기반 `.pdf`** (스캔본 — 텍스트 레이어 없음): `scripts/ocr_pdf.py`로 OCR 시도. 단, Tesseract 설치 여부는 실행 환경마다 다를 수 있으므로 실패 시 fitz로 재시도하고, 둘 다 실패하면 열린 질문으로 보고한다.
 - `.txt`, `.md`: Read 도구로 읽는다.
 - `.hwp`, `.hwpx`, `.xlsx`, `.docx`: 내용 직접 파싱 불가. 파일명·사용자 설명·주변 맥락으로 판단. 불확실하면 보고의 열린 질문으로 "핵심 내용 확인 필요"를 반환한다 (워커가 사용자에게 직접 묻지 않음).
-- `.pdf` 중 Handysoft 포맷은 `scripts/extract_handysoft_pdf.py`로 추출 후 읽을 수 있다(action-branch와 동일).
 
 ## 기본 산출물
 
