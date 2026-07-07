@@ -23,6 +23,7 @@ ObsidianVault/
 ├── 01_Inbox/              # Unprocessed documents — process via inbox-process skill
 │   ├── action/            # 공문·요청 → 10_Areas/ 업무사안 노트
 │   ├── reference/         # PDF·HWPX·웹 클립 → _Sources + _Wiki
+│   ├── scraps/            # 웹 클립 수집함 (reference와 동일 경로로 처리) → _Sources + _Wiki
 │   └── (root)             # 분류 모호 시 임시 drop zone (스킬이 분류 제안)
 ├── 10_Areas/              # Work matter notes by domain (max 2 levels deep)
 │   ├── 개발공통/

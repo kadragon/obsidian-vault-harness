@@ -95,12 +95,13 @@ area: {판단된 area 또는 ?? (사용자 확인 필요)}
 ```
 ## 처리 완료
 - action: 2건 → 10_Areas/수업성적/..., 10_Areas/교직/...
-- reference: 3건 → _Sources 3건, _Wiki 2페이지 갱신
+- reference: 3건 (reference/ 2 + scraps/ 1) → _Sources 3건, _Wiki 2페이지 갱신
 - 루트 보류 1건: file_c.hwp (분류 확정 필요)
 
 ## 삭제된 원본 파일
 - 01_Inbox/action/공문A.pdf
 - 01_Inbox/reference/파일B.pdf
+- 01_Inbox/scraps/2026-06-19-naver-d2.md
 
 ## 열린 질문
 - {에이전트가 보고한 열린 질문 병합}
