@@ -39,7 +39,7 @@
 
 - 장기적으로 다시 볼 가치가 있는 자료면 `_Sources/` 아래에 source note를 만든다.
 - source note에는 최소한 아래 내용을 넣는다.
-  - 원문 식별 정보 또는 파일 경로 (신규는 `01_Inbox/reference/...` 경로를 기록)
+  - 원문 식별 정보 또는 파일 경로 (신규는 `01_Inbox/reference/...` 또는 `01_Inbox/scraps/...` 경로를 기록)
   - 인라인 텍스트 입력은 파일 경로 대신 `inline text provided by user on YYYY-MM-DD`를 기록
   - 짧은 요약
   - 핵심 포인트

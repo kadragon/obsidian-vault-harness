@@ -1,6 +1,6 @@
 ---
 name: inbox-process
-description: "This skill should be used when the user asks to process 01_Inbox/ — 문서를 분석하여 '업무사안(action)'으로 다룰지 '참고자료(reference)'로 정리할지 판단한 뒤, 각각 10_Areas/{area}/ 업무사안 노트 또는 _Sources·_Wiki/에 반영한다. 트리거 문구: 'inbox 처리', 'inbox 정리', 'inbox 비워줘', '01_Inbox 처리', '공문 처리', '공문 읽어줘', '받은 문서 정리', '받은 자료 정리', '수집함 처리', 'InfoBox 처리', '문서 정리해줘', '자료 정리해줘', '위키에 반영해줘'. inbox·공문·받은 문서·수집함·참고자료 처리 요청이면 '01_Inbox'를 명시적으로 언급하지 않아도 이 스킬이 해당된다."
+description: "This skill should be used when the user asks to process 01_Inbox/ — 문서를 분석하여 '업무사안(action)'으로 다룰지 '참고자료(reference)'로 정리할지 판단한 뒤, 각각 10_Areas/{area}/ 업무사안 노트 또는 _Sources·_Wiki/에 반영한다. 트리거 문구: 'inbox 처리', 'inbox 정리', 'inbox 비워줘', '01_Inbox 처리', '공문 처리', '공문 읽어줘', '받은 문서 정리', '받은 자료 정리', '수집함 처리', 'InfoBox 처리', '문서 정리해줘', '자료 정리해줘', '위키에 반영해줘', 'scraps 처리해줘', '웹 클립 정리해줘'. inbox·공문·받은 문서·수집함·참고자료·웹 클립 처리 요청이면 '01_Inbox'를 명시적으로 언급하지 않아도 이 스킬이 해당된다."
 ---
 
 # Inbox 처리 오케스트레이터
