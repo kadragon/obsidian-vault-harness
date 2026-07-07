@@ -5,7 +5,10 @@
 #   2. 90_Archive/ 파일 생성 금지
 #   3. 10_Areas/ 깊이·slug·summary 길이 제한
 #   4. 14_Changes/incident/ 파일명 단일 명명규칙 강제
-import json, sys, re, pathlib, unicodedata
+import json, sys, re, pathlib, time, unicodedata
+
+# 래퍼 폴더가 방금 생성됐으면(첨부 저장 전 과도기) 무첨부 경고를 스킵하는 유예 시간(초)
+GRACE_SECONDS = 60
 
 try:
     d = json.loads(sys.stdin.read())
@@ -66,18 +69,25 @@ if "/10_Areas/" in fp_norm:
         # no-attachment wrapper folder: 래퍼 폴더는 첨부 있을 때만.
         #   현재 폴더에 non-md 파일이 하나도 없으면 단일 파일이어야 함.
         #   (첨부가 노트보다 늦게 저장될 수 있으므로 차단 아닌 권고)
+        #   grace period: 폴더가 GRACE_SECONDS 이내에 생성됐으면 첨부 저장 전
+        #   과도기 상태일 뿐이므로 경고 자체를 스킵한다.
         wrapper_dir = pathlib.Path(fp).parent
         try:
-            siblings = list(wrapper_dir.iterdir())
-            has_attachment = any(
-                p.is_file() and p.suffix.lower() != ".md" for p in siblings)
-            md_count = sum(1 for p in siblings if p.is_file() and p.suffix == ".md")
-            if not has_attachment and md_count <= 1:
-                violations.append(
-                    f"10_Areas/ 무첨부 래퍼 폴더 — 첨부 없으면 '{slug_folder}/' 폴더 없이 "
-                    "area 루트에 단일 .md로 둘 것. 첨부를 곧 추가할 거면 무시 (conventions.md)")
+            folder_age = time.time() - wrapper_dir.stat().st_mtime
         except OSError:
-            pass
+            folder_age = GRACE_SECONDS + 1  # stat 실패 시 유예 없이 기존 동작 유지
+        if folder_age > GRACE_SECONDS:
+            try:
+                siblings = list(wrapper_dir.iterdir())
+                has_attachment = any(
+                    p.is_file() and p.suffix.lower() != ".md" for p in siblings)
+                md_count = sum(1 for p in siblings if p.is_file() and p.suffix == ".md")
+                if not has_attachment and md_count <= 1:
+                    violations.append(
+                        f"10_Areas/ 무첨부 래퍼 폴더 — 첨부 없으면 '{slug_folder}/' 폴더 없이 "
+                        "area 루트에 단일 .md로 둘 것. 첨부를 곧 추가할 거면 무시 (conventions.md)")
+            except OSError:
+                pass
 
 # Rule 4: 14_Changes/incident/ — single canonical filename pattern
 #   '통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}.md'
