@@ -71,9 +71,13 @@ if "/10_Areas/" in fp_norm:
         #   (첨부가 노트보다 늦게 저장될 수 있으므로 차단 아닌 권고)
         #   grace period: 폴더가 GRACE_SECONDS 이내에 생성됐으면 첨부 저장 전
         #   과도기 상태일 뿐이므로 경고 자체를 스킵한다.
+        # st_ctime(Windows: 생성 시각) 사용 — st_mtime은 이 훅을 트리거한 바로 그
+        # Write가 폴더에 새 항목을 추가하며 매번 갱신되므로(디렉터리 mtime bump),
+        # 노트 생성 순간엔 항상 age~0이 되어 유예 조건이 사실상 상시 True가 됨.
+        # 폴더 생성 시각(ctime)은 이후 자식 파일 추가로 바뀌지 않아 실제 경과 시간을 반영.
         wrapper_dir = pathlib.Path(fp).parent
         try:
-            folder_age = time.time() - wrapper_dir.stat().st_mtime
+            folder_age = time.time() - wrapper_dir.stat().st_ctime
         except OSError:
             folder_age = GRACE_SECONDS + 1  # stat 실패 시 유예 없이 기존 동작 유지
         if folder_age > GRACE_SECONDS:
