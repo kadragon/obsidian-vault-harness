@@ -150,6 +150,12 @@ Scope: 10_Areas/ → 90_Archive/
 **Cause:** `C:\Users\<user>\AppData\Local\Microsoft\WindowsApps\python*.exe` are store-alias stubs, not a real interpreter. `py.exe` launcher mis-encodes non-ASCII argv in some environments.
 **Fix:** Call the real interpreter directly via PowerShell (not Bash), e.g. `& "C:\Users\<user>\AppData\Local\Programs\Python\Python313\python.exe" script.py args...`. Locate installed versions with `py -0p`.
 
+### git status shows files as modified but git diff is empty
+
+**Symptom:** `git status` lists many files as `modified`, but `git diff HEAD -- <file>` returns nothing for most of them (only a small subset actually has content changes).
+**Cause:** `core.autocrlf=true` combined with `.gitattributes` forcing `eol=lf` on tracked files — a stat/mtime cache mismatch (racy git) flags files as possibly-modified without any real content difference. Confirm with `git update-index --refresh` (reports `needs update`) and `git ls-files --eol <file>` (shows `i/lf w/lf`, i.e. index and working tree already match).
+**Fix:** Trust `git diff --stat HEAD` / `git diff HEAD --name-only` over the modified-file count in `git status` when scoping a commit — it reflects actual content changes. Do not assume every `git status` "modified" entry needs staging.
+
 ### inbox-process skill cannot find template
 
 **Symptom:** Skill fails with "template not found".  
