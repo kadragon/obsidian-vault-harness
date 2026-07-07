@@ -20,6 +20,7 @@ description: "This skill should be used when the user asks to process 01_Inbox/ 
 01_Inbox/
 ├── action/        # 확신 있는 action → inbox-action-worker에 위임
 ├── reference/     # 확신 있는 reference → inbox-reference-worker에 위임
+├── scraps/        # 웹 클립 수집함 → reference 갈래와 동일하게 inbox-reference-worker에 위임
 └── (root)         # 분류 모호 → 오케스트레이터가 triage 후 하위 이동
 ```
 
@@ -59,11 +60,12 @@ pwsh -File ".claude/skills/inbox-process/scripts/hwp_to_hwpx.ps1" -InboxPath ".\
 
 `01_Inbox/` 존재 여부 확인. 없으면 "01_Inbox 폴더가 없습니다. 생성할까요?"라고 묻고 종료.
 
-Glob으로 세 영역을 각각 스캔:
+Glob으로 네 영역을 각각 스캔:
 
 - `01_Inbox/` 루트 (하위폴더 제외, 파일만)
 - `01_Inbox/action/` — 바로 아래 폴더·단독 파일 각각이 업무 단위. 폴더만 있어도 정상. 빈 폴더는 건너뜀.
 - `01_Inbox/reference/`
+- `01_Inbox/scraps/` — 웹 클립 수집함. reference 갈래와 동일하게 처리(디스패치는 4단계 참조).
 
 모두 비어 있으면 "01_Inbox가 비어 있습니다" 알리고 종료.
 
@@ -74,6 +76,7 @@ Glob으로 세 영역을 각각 스캔:
 - 루트: 2건 (분류 필요)
 - action/: 1건
 - reference/: 3건
+- scraps/: 12건
 전체 처리할까요? 아니면 특정 영역만?
 ```
 
@@ -95,7 +98,7 @@ Glob으로 세 영역을 각각 스캔:
 
 ### 4단계: Reference 갈래 디스패치
 
-`01_Inbox/reference/`에 파일이 있으면 `inbox-reference-worker` 에이전트를 Agent 도구로 호출한다. 호출 프롬프트 구조는 `references/dispatch-guide.md` 참조. 워커 세부 절차는 `references/reference-branch.md`에 있으며, 호출 프롬프트에 해당 경로를 포함시켜 워커가 읽도록 한다.
+`01_Inbox/reference/`와 `01_Inbox/scraps/`에 파일이 있으면 (둘 중 하나만 있어도) `inbox-reference-worker` 에이전트를 Agent 도구로 호출한다. 두 디렉터리 파일을 하나의 처리 단위 목록으로 합쳐 전달한다. 호출 프롬프트 구조는 `references/dispatch-guide.md` 참조. 워커 세부 절차는 `references/reference-branch.md`에 있으며, 호출 프롬프트에 해당 경로를 포함시켜 워커가 읽도록 한다.
 
 ### 병렬 실행
 
@@ -113,6 +116,8 @@ Glob으로 세 영역을 각각 스캔:
 - 처리가 부분 실패이거나 열린 질문이 남아 있는 건
 - 사용자가 이번 요청에서 "파일은 남겨줘" 등 보존 의사를 명시한 경우
 
+**자동 승인 정책 차단 시**: 삭제 명령이 auto-mode 분류기에 의해 차단될 수 있다(비가역적 삭제 + 미파싱 첨부 등). 차단되면 재시도하지 말고, 삭제 대상 전체를 하나의 `AskUserQuestion`으로 묶어 사용자 승인을 받은 뒤 진행한다.
+
 보고 형식은 `references/dispatch-guide.md` 참조. 처리 완료 후 Handysoft 임시 파일도 함께 정리한다: `rm -f /tmp/extracted_*.pdf`
 
 ## 공통 규칙
@@ -128,6 +133,7 @@ Glob으로 세 영역을 각각 스캔:
 - 사용자가 파일명을 명시하면 해당 영역의 갈래만 디스패치.
 - "action만", "reference만", "공문만", "자료만" → 해당 갈래만 실행.
 - "공문 처리해줘" → action 중심, "수집함·InfoBox 정리해줘" → reference 중심 (기존 호칭 호환).
+- "scraps 처리해줘", "웹 클립 정리해줘" → `01_Inbox/scraps/`만 reference 갈래로 디스패치.
 - 지시가 없으면 스캔 결과를 요약하고 사용자 선택 대기.
 
 ## 참고 자료

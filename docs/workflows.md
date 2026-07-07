@@ -9,12 +9,12 @@ Recurring task patterns. Each workflow runs independently.
 Convert 공문·요청 into 업무사안 notes, and reference materials into `_Sources`/`_Wiki`. The skill routes between two branches.
 
 1. Run `inbox-process` skill.
-2. Skill scans three areas: `01_Inbox/` root, `action/`, `reference/`.
+2. Skill scans four areas: `01_Inbox/` root, `action/`, `reference/`, `scraps/` (web-clip inbox, routed through the reference branch).
 3. Root files → skill reads headers and proposes action/reference classification → moves to the appropriate subfolder after user confirmation.
 4. **Action branch** (`01_Inbox/action/`): creates 업무사안 note using `99_Template/_업무사안.md`. Delegate tag authoring to `tag-validator`.
    - **No attachments** → single `10_Areas/{area}/YYYYMM_{summary}.md`
    - **With attachments** → `10_Areas/{area}/YYYYMM_{slug}/YYYYMM_{summary}.md` + attachments in same folder (slug ≤ 20 chars)
-5. **Reference branch** (`01_Inbox/reference/`): creates/updates `_Sources/` source note and relevant `_Wiki/` pages; updates `_Wiki/index.md` and `_Wiki/log.md`.
+5. **Reference branch** (`01_Inbox/reference/` + `01_Inbox/scraps/`): creates/updates `_Sources/` source note and relevant `_Wiki/` pages; updates `_Wiki/index.md` and `_Wiki/log.md`.
 6. Skill deletes processed originals after user confirmation.
 
 ---
