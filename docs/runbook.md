@@ -156,6 +156,12 @@ Scope: 10_Areas/ → 90_Archive/
 **Cause:** `core.autocrlf=true` combined with `.gitattributes` forcing `eol=lf` on tracked files — a stat/mtime cache mismatch (racy git) flags files as possibly-modified without any real content difference. Confirm with `git update-index --refresh` (reports `needs update`) and `git ls-files --eol <file>` (shows `i/lf w/lf`, i.e. index and working tree already match).
 **Fix:** Trust `git diff --stat HEAD` / `git diff HEAD --name-only` over the modified-file count in `git status` when scoping a commit — it reflects actual content changes. Do not assume every `git status` "modified" entry needs staging.
 
+### `.agents/skills` shows git mode 100644 instead of 120000
+
+**Symptom:** `git ls-files -s .agents/skills` reports mode `100644` (regular file) instead of `120000` (symlink); the file's content is the literal text `../.claude/skills` (17 bytes, no trailing newline).
+**Cause:** Windows checkout without symlink privilege (Developer Mode + `core.symlinks=true`) cannot materialize a real symlink, so the checkout falls back to a plain text file containing the link target. This is the harness's own documented **Case 2** fallback in `symlink-guard.sh` (find current copy via `find ~/.claude/plugins/cache/kadragon/dev-tools -name symlink-guard.sh`) — the script's comment explicitly names a regular file containing exactly `../.claude/skills` as "the correct representation" for a `core.symlinks=false` checkout, and treats it as a success case, not an error.
+**Fix:** Do nothing — this is expected, not a bug. Running `symlink-guard.sh` against the repo exits 0 silently, confirming Case 2 is satisfied. Do not "fix" by adding `.agents/skills` to `.gitignore` or by setting `core.symlinks=true` alone: flipping the local config does not retroactively change the *already-committed blob's mode* — that would additionally require Developer Mode enabled and recreating the path as a real symlink (`rm .agents/skills && ln -s ../.claude/skills .agents/skills && git add .agents/skills`), which is unnecessary since Case 2 is already valid. Nothing in this repo reads `.agents/skills` expecting real symlink semantics (`os.path.islink()` or similar) — only `tasks.md`/`.gitignore` reference the path textually.
+
 ### inbox-process skill cannot find template
 
 **Symptom:** Skill fails with "template not found".  
