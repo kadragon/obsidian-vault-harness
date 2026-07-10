@@ -38,15 +38,15 @@ Required frontmatter by note kind (per `99_Template/_메타데이터 규칙.md` 
 
 ### 3. Template Adherence (25%)
 
-Note structure matches template from `99_Template/`.
+Note structure matches template from `99_Template/`. **`## 관련 문서`는 content-conditional 섹션** — 실제 관련 문서(첨부·설계 문서·위키 등)가 있을 때만 포함한다. 근거 없어 생략한 것은 "누락"으로 채점하지 않는다.
 
 | Score | Description |
 |-------|-------------|
-| 5 | All template sections present, heading hierarchy correct |
-| 3 | 1 section missing or renamed |
-| 1 | Multiple sections missing; bare text without template structure |
+| 5 | All required sections present, heading hierarchy correct (content-conditional 섹션은 근거 없으면 생략되어 있어도 5점) |
+| 3 | 1 required section missing or renamed (content-conditional 섹션 생략은 해당 안 됨) |
+| 1 | Multiple required sections missing; bare text without template structure; **또는 `- [[ ]]` 같은 빈 wikilink 플레이스홀더가 남아있음(생략하지 않고 억지로 채운 흔적)** |
 
-**How to test:** Compare note headings against template headings.
+**How to test:** Compare note headings against template headings, excluding `## 관련 문서`(및 근거 없는 다른 content-conditional 섹션) when genuinely empty. Grep note body for `\[\[\s*\]\]` — any match is an automatic 1.
 
 ### 4. Wikilink Style (10%)
 
