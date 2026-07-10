@@ -63,5 +63,9 @@
         ]
       }
     ]
-  }
+  },
+  "enabledPlugins": {},
+  "enabledMcpjsonServers": [
+    "korean-law"
+  ]
 }

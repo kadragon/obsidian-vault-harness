@@ -36,6 +36,15 @@ violations = []
 if re.search(r'!\[\[', text):
     violations.append("![[...]] embed 사용 — 명시적 요청 없으면 embed 금지 (GP#2)")
 
+# Check 1b: empty wikilink placeholder — template's `- [[ ]]` left unfilled
+# instead of omitting the (content-conditional) section. Strip fenced code
+# blocks first so documented `[[ ]]` examples don't false-positive.
+text_no_code = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
+if re.search(r'\[\[\s*\]\]', text_no_code):
+    violations.append(
+        "빈 wikilink 플레이스홀더 [[ ]] 발견 — 관련 문서 등 content-conditional 섹션은 "
+        "근거 없으면 섹션째 생략 (docs/conventions.md, docs/eval-criteria.md)")
+
 # Check 2: missing type: frontmatter — only for note-bearing folders
 note_folders = ["10_Areas", "12_Projects", "11_Routines", "14_Changes", "20_Training"]
 if any(f in fp_norm for f in note_folders):

@@ -107,3 +107,5 @@ Always pick from `99_Template/` when creating a new note:
 | Metadata rules | `99_Template/_메타데이터 규칙.md` |
 
 > Removed (2026-05): `_업무노트.md` (daily), `_주간노트.md` (weekly) — archived in `90_Archive/daily-note/`
+
+**Content-conditional sections:** `## 관련 문서`는 실제 관련 문서(첨부·설계 문서·위키 등)가 있을 때만 채운다. 없으면 섹션(헤딩+콜아웃) 전체를 생략한다 — `- [[ ]]` 같은 빈 wikilink 플레이스홀더를 남기지 않는다. 템플릿의 모든 섹션을 기계적으로 다 채우는 것이 아니라, 실제 내용 없는 섹션은 생략 가능하다는 원칙. 평가 기준은 `docs/eval-criteria.md` → Template Adherence.

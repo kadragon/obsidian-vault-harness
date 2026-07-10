@@ -150,6 +150,12 @@ Scope: 10_Areas/ → 90_Archive/
 **Cause:** `C:\Users\<user>\AppData\Local\Microsoft\WindowsApps\python*.exe` are store-alias stubs, not a real interpreter. `py.exe` launcher mis-encodes non-ASCII argv in some environments.
 **Fix:** Call the real interpreter directly via PowerShell (not Bash), e.g. `& "C:\Users\<user>\AppData\Local\Programs\Python\Python313\python.exe" script.py args...`. Locate installed versions with `py -0p`.
 
+### `pip install <pkg>` succeeds but `python -c "import <pkg>"` fails
+
+**Symptom:** Bare `pip install X` reports success (or `python -m pip show X` even lists it installed), but `python -c "import X"` raises `ModuleNotFoundError`.
+**Cause:** Bare `pip` resolves to a different Python than bare `python` — e.g. `pip` → `C:\Users\<user>\AppData\Local\Microsoft\WindowsApps\pip.exe` (store-alias Python) while `python` → `C:\Users\<user>\AppData\Local\Programs\Python\Python313\python.exe`. Two separate site-packages trees.
+**Fix:** Always install via the same interpreter you'll run: `python -m pip install X`, not bare `pip install X`. Verify with `(Get-Command python).Source` vs `(Get-Command pip).Source` if unsure they match.
+
 ### git status shows files as modified but git diff is empty
 
 **Symptom:** `git status` lists many files as `modified`, but `git diff HEAD -- <file>` returns nothing for most of them (only a small subset actually has content changes).

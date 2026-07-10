@@ -89,6 +89,7 @@ python3 .claude/skills/incident-analyze/scripts/new_incident_path.py {YYYY-MM-DD
 | `## 오류 구분` | Exception 클래스명 |
 | `### PARAMETER_INFO` | 핵심 파라미터만 발췌 (code block) |
 | `### ERR_INFO` | 에러 메시지 (code block) |
+| `## 관련 문서` | **실제 관련 문서(과거 유사 인시던트 노트, 설계 문서, 운영 MOC 등) 있을 때만 포함**. 없으면 섹션(헤딩+콜아웃) 전체를 생략 — 빈 `[[ ]]` 플레이스홀더 금지 |
 | `## 할 일` | `- [ ] {진단 기반 처리 항목} 📅 {YYYY-MM-DD} ➕ {오늘 날짜}` |
 | `## 처리 결과` | 해결 후 결론 (완료 시 기록) |
 
