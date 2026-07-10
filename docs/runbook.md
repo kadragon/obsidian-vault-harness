@@ -162,6 +162,12 @@ Scope: 10_Areas/ → 90_Archive/
 **Cause:** `core.autocrlf=true` combined with `.gitattributes` forcing `eol=lf` on tracked files — a stat/mtime cache mismatch (racy git) flags files as possibly-modified without any real content difference. Confirm with `git update-index --refresh` (reports `needs update`) and `git ls-files --eol <file>` (shows `i/lf w/lf`, i.e. index and working tree already match).
 **Fix:** Trust `git diff --stat HEAD` / `git diff HEAD --name-only` over the modified-file count in `git status` when scoping a commit — it reflects actual content changes. Do not assume every `git status` "modified" entry needs staging.
 
+### `dev-tools:dev-review-cycle` PR step fails / reviews empty diff in this repo
+
+**Symptom:** `dev-review-cycle --auto` preflight returns `feature_branch == base_branch == "main"` (this vault has no open PRs, no `.github/workflows/`). Step 1's `--pr` create then fails or is meaningless (head branch == base branch), and Step 2 reviewers diffing `base_branch...HEAD` see an empty diff once the commit is already pushed to `main`.
+**Cause:** This repo's `AGENTS.md` opts into direct-to-main (notes-only vault, no feature branches required — see global `CLAUDE.md` git-rule exception clause) and has no CI configured. The skill's default flow assumes a feature branch distinct from base with a PR/CI loop.
+**Fix:** Skip Step 0 (no branch needed). Step 1: commit on `main`, `git push origin main` directly — do not attempt `--pr`. Step 2: diff/review against the **parent commit** (`git rev-parse HEAD~1` before pushing, or the prior `git log` SHA) instead of `base_branch`, since `base_branch` now equals `HEAD`. Steps 6 (CI wait / merge) do not apply — there is no PR and no CI; stop after Step 5.
+
 ### `.agents/skills` shows git mode 100644 instead of 120000
 
 **Symptom:** `git ls-files -s .agents/skills` reports mode `100644` (regular file) instead of `120000` (symlink); the file's content is the literal text `../.claude/skills` (17 bytes, no trailing newline).
