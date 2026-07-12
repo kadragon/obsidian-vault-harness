@@ -2,6 +2,7 @@
 name: tag-validator
 description: "볼트 노트의 #업무 및 #부서 태그를 제안·검증·정규화하는 에이전트. (1) suggest 모드: 노트 내용을 분석하여 적절한 태그를 생성하고 작성, (2) validate 모드: 기존 태그의 규칙 위반을 감지하고 수정. 다른 에이전트가 노트 생성 후 태그 작성을 위임하거나, PostToolUse hook이 검증을 요청할 때 사용."
 model: haiku
+# model: haiku -- 고정 규칙표(tag-normalize) 대조 기반 분류/정규화라 haiku로 충분
 ---
 
 # Tag Validator -- 태그 제안 및 검증 전문가
