@@ -14,15 +14,15 @@
 
 - **Max 2 levels**: `10_Areas/{area}/` — notes live here, never deeper.
 - **No attachments → single `.md`** at area root. Do not create a wrapper folder.
-- **With attachments → folder per note**: folder name uses short `YYYYMM_{slug}` (slug ≤ 20 chars, 1–2 keywords). The note inside uses the full summary without `_` prefix.
-- **Summary length**: keep `{summary}` ≤ 60 chars.
+- **With attachments → folder per note**: folder name `YYYYMM_{summary}` (full title, not shortened). The note inside uses the same slug with a `_` prefix: `_YYYYMM_{summary}.md`.
+- No fixed length cap on `{summary}` — match the source document's title. Long, fully descriptive Korean titles are the vault norm (generator: `inbox-process` 스킬 `new_work_path.py`).
 
 ```
 10_Areas/수업성적/
-  202602_장바구니 기간 오등록 조치.md        ← no attachments → single file
-  202602_장바구니장애학생/                    ← has attachments → folder (short slug)
-    202602_장바구니 기간 장애학생지원 오등록수강인원 카운트 미변동.md
-    조회결과.png
+  202606_강의평가 삭제 요청.md                ← no attachments → single file
+  202605_수업시간표 삭제 요청/                 ← has attachments → folder (full title)
+    _202605_수업시간표 삭제 요청.md
+    수업시간표삭제요청_채지아.txt
 ```
 
 ## Frontmatter
