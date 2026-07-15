@@ -49,8 +49,10 @@ description: "This skill should be used when the user asks to process 01_Inbox/ 
 2. 변환 스크립트 실행:
 
 ```powershell
-pwsh -File ".claude/skills/inbox-process/scripts/hwp_to_hwpx.ps1" -InboxPath ".\01_Inbox"
+powershell -File ".claude/skills/inbox-process/scripts/hwp_to_hwpx.ps1" -InboxPath ".\01_Inbox"
 ```
+
+> 이 환경엔 `pwsh`(PowerShell Core) 미설치 — `powershell`(Windows PowerShell) 사용.
 
 3. 출력에서 `FAIL:` 줄 추출 → 해당 파일 경고 후 제외하고 계속
 4. 출력에 `ERROR: Hancom not installed` 포함 시 → "한컴 미설치 — HWP 파일 건너뜀" 경고 후 해당 파일 제외하고 계속
