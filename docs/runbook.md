@@ -105,8 +105,9 @@ Scope: 10_Areas/ → 90_Archive/
 | `incident-analyst` | Error log diagnosis |
 | `improvement-planner` | Improvement note authoring |
 | `vault-navigator` | Past cases / vault search |
-| `tag-validator` | Tag suggest or validate |
-| `obsidian-operator` | Create/open/edit note in Obsidian |
+| `tag-validator` | 문맥 의존 태그 판정만 — 규칙 대조는 `validate_tag.py --json` 우선 (AGENTS.md 위임 비용 규칙 #2) |
+| `obsidian-operator` | Create(템플릿)/open/프로퍼티/앱 내 JS — **기존 노트 소규모 수정은 직접 Edit** (규칙 #3) |
+| `note-evaluator` | 생성 직후 품질 게이트 (`docs/eval-criteria.md`) |
 | `training-note-manager` | Training note cleanup |
 | `inbox-action-worker` | Sub-agent of inbox-process (action branch) |
 | `inbox-reference-worker` | Sub-agent of inbox-process (reference branch) |
@@ -173,6 +174,41 @@ Scope: 10_Areas/ → 90_Archive/
 **Symptom:** `git ls-files -s .agents/skills` reports mode `100644` (regular file) instead of `120000` (symlink); the file's content is the literal text `../.claude/skills` (17 bytes, no trailing newline).
 **Cause:** This is a historical commit artifact, not a per-checkout side effect — confirmed empirically: a genuinely-committed symlink (mode `120000`) still reports `120000` via `git ls-files -s` even on a fresh `core.symlinks=false` clone (checkout capability does not downgrade the index mode). So the `100644` here means `.agents/skills` was `git add`ed from a working tree where it was *already* a plain text file (Windows, no symlink privilege, at commit time) — every clone (Windows or POSIX) inherits that same `100644` blob until someone with real symlink capability (Developer Mode) recreates the path and recommits it as a genuine `120000` object.
 **Fix:** No action needed *for this repo's own code* — nothing here dereferences `.agents/skills` expecting real symlink semantics (`os.path.islink()` or similar); only `tasks.md`/`.gitignore` reference the path textually, and `symlink-guard.sh`'s Case 2 treats the current text-pointer form as valid, non-blocking state (exits 0). Caveat: this means `.agents/skills` does **not** function as a live directory symlink on *any* platform today, not just Windows — if Codex CLI or other external tooling ever needs to traverse `.agents/skills/` as a real directory (rather than just reading it as a static reference), this placeholder won't resolve anywhere, and the only real fix is recreating it as a genuine `120000` object on a machine with Developer Mode + real symlink support, then recommitting. Revisit if Codex reports actual skill-discovery failures (not just static mode-mismatch commentary) through this path.
+
+### local branch diverged from `origin/main` after squash-merge PRs
+
+**Symptom:** `git branch -vv` shows local `main` both ahead and behind `origin/main`; a local feature branch has commits with no matching hash upstream, even though the same work appears to already be merged.
+**Cause:** This repo merges PRs via squash/rebase (see `dev-tools:dev-review-cycle` runbook entry above — actually direct-to-main here) or a parallel session re-did equivalent work under different commit hashes. Commit-level diffing (`git log branch..origin/main`) looks scary but is misleading — it compares history shape, not content.
+**Fix:** Diagnose with **working-tree-vs-origin content diff**, not commit history: `git diff origin/main --stat` (run from the branch with all commits + uncommitted changes applied). If it shows near-zero diff, local work is already reflected upstream under different commits — safe to `git reset --hard origin/main` on `main` and drop the stale branch. Before deleting any branch (local or remote), confirm with `gh pr list --state all --json headRefName,state,mergedAt` that its PR is `MERGED`, not just that the diff looks small. Preserve any local-only files (e.g. gitignored-but-force-added files like `.gitattributes`) by `git show <old-branch>:<path>` before resetting.
+
+### Agent tool spawn fails with `name` regex error on Korean folder/area names
+
+**Symptom:** `Agent(name: "review-홈페이지")` (or similar Korean-labeled agent name) → `InputValidationError: name must start with a letter or digit and contain only letters, digits, underscores, or hyphens`.
+**Cause:** Agent tool's `name` param is ASCII-only (`^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`). This vault's areas/folders (`10_Areas/`, `90_Archive/areas/`) are Korean-named by convention, so any multi-agent fan-out keyed by area name hits this immediately.
+**Fix:** Use a short ASCII slug for `name` (e.g. `review-homepage` for 홈페이지, `review-grades` for 수업성적) while keeping the Korean folder path in the `prompt`/`description`. Map slugs 1:1 to areas before spawning so results can be re-associated afterward.
+
+### PostToolUse 훅 수동 테스트가 항상 "위반 없음"으로 나온다
+
+**Symptom:** 위반이 명백한 샘플 파일을 만들어 훅에 먹였는데 출력이 비고 exit 0. 훅이 고장난 것처럼 보인다.
+**Cause:** git-bash `$(pwd)`는 `/c/Dev/...` 형식을 준다. 훅은 Windows Python이라 `pathlib`이 이를 `C:\c\Dev\...`로 해석 → `path.is_file()` False → 조용히 exit 0. 실제 Claude Code는 `C:/...` 형식으로 넘기므로 런타임에는 정상.
+**Fix:** 수동 테스트 시 `file_path`에 **Windows 경로**(`C:/Dev/ObsidianVault/...`)를 쓴다:
+
+```bash
+echo '{"tool_input":{"file_path":"C:/Dev/ObsidianVault/.claude/agents/incident-analyst.md"}}' \
+  | python .claude/hooks/check-nested-delegation.py
+```
+
+무출력이 "위반 없음"인지 "경로 인식 실패"인지 구분하려면 위반 샘플로 true-positive를 먼저 확인할 것.
+
+### 스킬 contract 테스트가 pytest로 수집되지 않는다
+
+**Symptom:** `python -m pytest .claude/skills/status-sync/tests/test_contract.py` → `no tests ran`.
+**Cause:** 테스트가 `.claude/`(dot-prefixed) 아래에 있고, pytest 형식(`test_*` 함수)이 아닌 **단독 실행 스크립트**다.
+**Fix:** 직접 실행한다 — 성공 시 `OK — ...` 출력 + exit 0.
+
+```bash
+python .claude/skills/status-sync/tests/test_contract.py
+```
 
 ### inbox-process skill cannot find template
 

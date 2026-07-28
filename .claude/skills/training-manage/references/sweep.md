@@ -33,4 +33,4 @@ find 20_Training/ -name "*.md" | wc -l
 
 > "교육 노트가 N건 누적되었습니다. `_Wiki/topics/교육-운영-MOC.md` 생성을 권장합니다."
 
-MOC 생성 자체는 obsidian-operator에 위임하며, `_Wiki/contracts.md` Operational MOC 스키마를 따른다. 자동 생성하지 않는다.
+MOC 생성은 `_Wiki/contracts.md` Operational MOC 스키마에 따라 **직접 작성**한다 (obsidian-operator 위임 불가 — 서브에이전트는 다른 서브에이전트를 부르지 못한다). 자동 생성하지 않고 사용자 승인을 먼저 받는다.

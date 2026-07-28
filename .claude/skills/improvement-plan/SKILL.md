@@ -66,7 +66,7 @@ python3 .claude/skills/improvement-plan/scripts/new_improvement_path.py "수강�
 
 ### Step 4: Wiki 피드백
 
-노트 생성 직후 `_Wiki/contracts.md` Wiki Feedback Payload 규칙에 따라 obsidian-operator에 위임:
+노트 생성 직후 `_Wiki/contracts.md` Wiki Feedback Payload 규칙에 따라 **직접 수행**한다 (Read + Edit). obsidian-operator 위임 금지 — 이 스킬은 서브에이전트(improvement-planner)가 읽으며, **서브에이전트는 다른 서브에이전트를 호출할 수 없다**(도구 목록에 `Agent` 없음). 과거 위임 지시는 실행 불가였다.
 
 1. **log.md append**: `- {오늘날짜} #improvement [[{노트 경로}]] — {도메인} 생성`
 2. **MOC 확인**: `_Wiki/topics/{도메인}-운영-MOC.md` 존재 여부 점검
@@ -75,7 +75,9 @@ python3 .claude/skills/improvement-plan/scripts/new_improvement_path.py "수강�
 
 ### Step 5: 업무 태그 지정
 
-태그는 `tag-validator` 에이전트에 위임한다 (직접 작성하지 않음 — AGENTS.md 위임 표). 규칙 출처는 `tag-normalize` 스킬.
+태그는 **직접 작성**한다. 후보를 정한 뒤 `python .claude/skills/tag-normalize/scripts/validate_tag.py --json -` 로 검증하고, `valid: false`면 `normalized` 값을 쓴다. 문맥 의존 건만 보고에 남겨 메인 스레드가 확정하게 한다. 절차 전문은 `improvement-planner` 정의 §태그 작성.
+
+> tag-validator 위임 금지 — 서브에이전트는 다른 서브에이전트를 호출할 수 없다(도구 목록에 `Agent` 없음).
 
 ### Step 6: 보고
 

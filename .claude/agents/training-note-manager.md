@@ -37,21 +37,25 @@ model: sonnet
 
 ## 태그 작성
 
-노트 생성/수정 후 `## 관련` 섹션의 태그 작성은 **tag-validator 에이전트(haiku)**에 위임한다:
+`## 관련` 섹션의 `#업무` 태그는 **직접 작성**한다.
 
-```
-Agent(
-  name: "tag-validator",
-  subagent_type: "tag-validator",
-  model: "haiku",
-  prompt: "suggest 모드. 다음 교육 노트에 적절한 #업무 태그를 작성하라: {노트 경로}"
-)
-```
+> **서브에이전트는 다른 서브에이전트를 호출할 수 없다.** 실측 확인: 서브에이전트 도구 목록에 `Agent`·`Task` 없음. 이 자리에 있던 `Agent(subagent_type: "tag-validator")` 지시는 실행 불가였고 태그가 무음 누락됐다.
 
-직접 태그를 작성하지 않는다. 에이전트 간 역할 분리 원칙.
+절차:
+
+1. 후보 태그를 정한 뒤 **스크립트로 검증**한다 (결정론적 — AGENTS.md 위임 비용 규칙 #2):
+
+   ```bash
+   printf '%s\n' '#업무/...' | python .claude/skills/tag-normalize/scripts/validate_tag.py --json -
+   ```
+
+2. `valid: false`면 출력의 `normalized` 값을 그대로 노트 `## 관련`에 기재한다.
+3. 스크립트가 못 푸는 문맥 의존 건은 후보 태그로 남기고 **보고에 적는다** — 메인 스레드가 `tag-validator`로 확정한다.
+4. 쓰기 시 PostToolUse `validate-tags.sh` 훅이 재검증한다.
 
 ## 협업
 
-- vault-navigator에게 기존 교육 노트 검색을 위임할 수 있다
-- obsidian-operator에게 노트 생성(템플릿 적용)을 위임할 수 있다
-- tag-validator에게 태그 작성을 위임한다
+**서브에이전트 간 직접 호출은 불가하다.** 아래는 메인 스레드에 **보고·제안**하는 항목이다.
+
+- 기존 교육 노트 검색은 직접 `qmd`/Grep/Glob으로 수행한다. 범위가 넓으면 vault-navigator 필요를 보고에 적는다
+- 노트 생성은 `99_Template/` 템플릿을 직접 Read해 적용한다. Obsidian 앱 상태 조작(열기·프로퍼티·앱 내 JS)이 필요하면 그 사실을 보고해 메인 스레드가 obsidian-operator를 호출하게 한다

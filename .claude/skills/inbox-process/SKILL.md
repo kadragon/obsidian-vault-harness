@@ -10,7 +10,7 @@ description: "This skill should be used when the user asks to process 01_Inbox/ 
 - **action 갈래** (공문·업무요청) → `inbox-action-worker` (sonnet)
 - **reference 갈래** (참고자료·수집물) → `inbox-reference-worker` (sonnet)
 
-오케스트레이터의 책임은 스캔, 루트 triage, 유사 노트 사전 수집(vault-navigator), 에이전트 디스패치, 사용자 확인, **태그 확정(tag-validator)**, 삭제 일괄 처리, 최종 보고다. 파일 내용 Read·노트 작성은 하지 않는다.
+오케스트레이터의 책임은 스캔, 루트 triage, 유사 노트 사전 수집(vault-navigator), **모호성 grill(§Grill 게이트)**, 에이전트 디스패치, **태그 확정(tag-validator)**, **품질 게이트(note-evaluator)**, 삭제 일괄 처리, 최종 보고다. 파일 내용 Read·노트 작성은 하지 않는다. 단, grill 결과를 노트에 반영하는 소규모 수정은 직접 Edit으로 한다(§Grill 게이트).
 
 > **서브에이전트 호출 규약**: 워커(`inbox-action-worker`·`inbox-reference-worker`)는 서브에이전트이므로 **다른 서브에이전트를 호출하거나 사용자와 직접 대화할 수 없다.** 따라서 vault-navigator·tag-validator·incident-analyst·improvement-planner 호출과 모든 사용자 확인은 **오케스트레이터가 전담**한다. 워커는 후보 태그·열린 질문·삭제 권고를 보고로만 반환한다.
 
@@ -35,7 +35,29 @@ description: "This skill should be used when the user asks to process 01_Inbox/ 
 - action인 경우 → `inbox-action-worker`를 호출한다. 호출 프롬프트 구조는 `references/dispatch-guide.md` §인라인 텍스트 Action 워커 참조.
 - reference인 경우 → `inbox-reference-worker`를 호출한다. 호출 프롬프트 구조는 `references/dispatch-guide.md` §인라인 텍스트 Reference 워커 참조.
 - 처리 완료 후 원본 삭제 불필요 (파일이 없으므로).
-- 이 경우 1~5단계를 건너뛰고 곧바로 워커 디스패치로 이동한다.
+- 이 경우 1~5단계를 건너뛰고 곧바로 **§Grill 게이트 → 워커 디스패치**로 이동한다.
+
+### Grill 게이트 (모호성 해소)
+
+이 절에 필요한 규칙을 모두 담는다 — 저장소 밖 설정(전역 `CLAUDE.md`)에 의존하지 않는다. 전역 설정이 있으면 그 §Grill protocol과 동일하다.
+
+**대상 판별 — 반드시 둘로 나눈다:**
+
+| 분류 | 처리 |
+|------|------|
+| **사실(fact)** — 볼트·파일에서 찾을 수 있음 (화면 XML, 테이블·컬럼, 메뉴코드, 과거 처리 이력) | **묻지 않는다.** `vault-navigator`·Grep으로 조사. 못 찾으면 노트 `## 할 일`에 조사 항목으로 남긴다 |
+| **결정(decision)** — 사용자만 답할 수 있음 (작업 범위, 처리 방식, 대상 확정, 우선순위, 기한) | **grill 한다** |
+
+**적용 지점 2곳:**
+
+1. **워커 디스패치 전** — 오케스트레이터가 내용을 이미 보유한 경우(인라인 텍스트, 2단계 triage에서 읽은 루트 파일). 결정 항목을 워커에 넘기기 전에 확정 → 노트가 첫 작성부터 정확해진다.
+2. **워커 반환 후** — 워커가 `## 열린 질문`으로 올린 항목 중 **결정**에 해당하는 것. 5단계 태그 확정 **전**에 grill한다.
+
+**규칙:**
+- 한 번에 **한 질문**. 각 질문에 **추천 답 + 근거** 병기. `AskUserQuestion` 사용.
+- 결정 항목이 없으면 게이트를 건너뛴다 — 물을 것이 없는데 묻지 않는다.
+- 확정된 답은 노트 `## 현황`에 `[사용자 확인(YYYY-MM-DD)]` 출처와 함께 기재하고, 대응하는 `## 할 일`·`## 열린 질문` 항목을 해결 표시한다.
+- **이 반영은 오케스트레이터가 직접 Edit으로 한다.** obsidian-operator 위임 금지 — 수 줄 수정에 서브에이전트 왕복은 토큰·시간 낭비이며 섹션 누락 위험이 있다.
 
 ### 0단계: HWP 사전 변환
 
@@ -49,8 +71,10 @@ description: "This skill should be used when the user asks to process 01_Inbox/ 
 2. 변환 스크립트 실행:
 
 ```powershell
-pwsh -File ".claude/skills/inbox-process/scripts/hwp_to_hwpx.ps1" -InboxPath ".\01_Inbox"
+powershell -File ".claude/skills/inbox-process/scripts/hwp_to_hwpx.ps1" -InboxPath ".\01_Inbox"
 ```
+
+> 이 환경엔 `pwsh`(PowerShell Core) 미설치 — `powershell`(Windows PowerShell) 사용.
 
 3. 출력에서 `FAIL:` 줄 추출 → 해당 파일 경고 후 제외하고 계속
 4. 출력에 `ERROR: Hancom not installed` 포함 시 → "한컴 미설치 — HWP 파일 건너뜀" 경고 후 해당 파일 제외하고 계속
@@ -93,6 +117,7 @@ Glob으로 네 영역을 각각 스캔:
 1. `ls 10_Areas/` 실행 → 실제 area 폴더 목록 확보
 2. 각 처리 단위에 대해 파일명·주변 맥락으로 area 1차 판단 (모호하면 "결정 필요"로 표시)
 3. 필요 시 `vault-navigator` 에이전트 호출 → 유사 과거 노트 후보 수집 (중첩 서브에이전트 방지)
+4. 2단계 triage에서 내용을 읽은 건에 한해 **§Grill 게이트 1차** 수행 (결정 항목이 있을 때만)
 
 이후 `inbox-action-worker` 에이전트를 Agent 도구로 호출한다. 호출 프롬프트 구조는 `references/dispatch-guide.md` 참조. 워커 세부 절차는 `references/action-branch.md`에 있으며, 호출 프롬프트에 해당 경로를 포함시켜 워커가 읽도록 한다.
 
@@ -104,13 +129,25 @@ Glob으로 네 영역을 각각 스캔:
 
 3단계와 4단계 모두 처리 대상이 있으면, **두 Agent 호출을 하나의 메시지에 함께 보내 병렬 실행**한다 (두 갈래는 상태 독립).
 
-### 5단계: 태그 확정 → 일괄 삭제 → 최종 보고
+### 5단계: Grill 2차 → 태그 확정 → 품질 게이트 → 일괄 삭제 → 최종 보고
 
 두 서브에이전트의 결과가 도착하면 다음 순서로 마무리한다:
 
-1. **태그 확정**: action 워커가 각 노트 `## 관련`에 기재한 **후보 태그**를 `tag-validator` 에이전트(validate 모드)로 검증·정규화한다. 워커는 tag-validator를 호출할 수 없으므로 이 단계는 오케스트레이터가 수행한다. (reference 갈래는 태그 노트를 만들지 않으므로 해당 없음.)
-2. **일괄 삭제**: 성공적으로 처리된 원본 파일을 워커의 `## 삭제 권고` 목록 기준으로 **즉시 삭제**한다. 사용자 승인을 기다리지 않는다.
-3. **최종 보고**.
+1. **Grill 2차**: 워커가 올린 `## 열린 질문` 중 **결정** 항목을 §Grill 게이트 규칙대로 처리하고, 확정된 답을 노트에 직접 Edit으로 반영한다. 조사 항목은 grill하지 않는다.
+2. **태그 확정 — 스크립트 우선**: action 워커가 각 노트 `## 관련`에 기재한 **후보 태그**를 먼저 스크립트로 검사한다. 워커는 tag-validator를 호출할 수 없으므로 이 단계는 오케스트레이터가 수행한다. (reference 갈래는 태그 노트를 만들지 않으므로 해당 없음.)
+
+   ```bash
+   printf '%s\n' '#업무/...' '#부서/...' | python .claude/skills/tag-normalize/scripts/validate_tag.py --json -
+   ```
+
+   - `valid: true` → 그대로 확정. **에이전트 호출하지 않는다.**
+   - `valid: false` → `normalized` 값을 노트에 직접 Edit으로 반영한다.
+   - 스크립트가 판단하지 못하는 문맥 의존 건(예: 팀 직함 확정, 신규 area 신설 여부)만 `tag-validator`(validate 모드)로 **에스컬레이션**한다.
+
+   > 근거: 규칙표 대조는 `validate_tag.py`로 결정론적으로 끝난다. status-sync·vault-cleanup이 쓰는 "스크립트 우선 → 애매한 것만 에이전트" 패턴과 동일하게 맞춘다.
+3. **품질 게이트**: action 갈래로 생성된 노트를 `note-evaluator` 에이전트로 채점한다(`docs/eval-criteria.md` 루브릭). 워커는 서브에이전트를 호출할 수 없으므로 이 게이트도 오케스트레이터 책임이다. FAIL이면 지적 항목을 수정한 뒤 진행한다 — 자주 걸리는 항목은 MOC 순방향 등록(Wiki Feedback Loop). reference 갈래는 해당 없음.
+4. **일괄 삭제**: 성공적으로 처리된 원본 파일을 워커의 `## 삭제 권고` 목록 기준으로 **즉시 삭제**한다. 사용자 승인을 기다리지 않는다.
+5. **최종 보고**.
 
 **삭제 제외 조건** (아래 중 하나라도 해당하면 삭제하지 않는다):
 - 처리가 부분 실패이거나 열린 질문이 남아 있는 건
