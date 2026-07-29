@@ -18,6 +18,8 @@ Subcommands:
       single `.md` at the area root. Detection only; nothing is moved.
       Covers the `check-folder-rules.py` grace-period blind spot where a
       wrapper created together with its note is never flagged.
+      `target_occupied: true` means the flatten destination already holds a
+      note — never `mv` onto it (POSIX mv overwrites; notes are gitignored).
 
   apply-reorg <area_root>   (requires --apply, otherwise dry-run)
       Move flat `{area}/YYYYMM_*` folders into `{area}/YYYY/YYYYMM_*`.
@@ -152,6 +154,10 @@ class BareWrapper:
     note: str
     suggested: str
     area: str
+    # True when `suggested` is already taken. The documented cleanup is a manual
+    # `mv`, which replaces the destination on POSIX — flattening onto an
+    # occupied path would destroy a note (and notes are gitignored: no undo).
+    target_occupied: bool
 
 
 def find_bare_wrappers(areas_root: Path) -> list[BareWrapper]:
@@ -183,17 +189,22 @@ def find_bare_wrappers(areas_root: Path) -> list[BareWrapper]:
                 continue
             if any(p.suffix.lower() != ".md" for p in files):
                 continue
-            notes = [p for p in files if p.suffix == ".md"]
+            # .lower() on both sides: a `.MD` file must not read as "neither
+            # attachment nor note", which would report a populated wrapper as
+            # empty.
+            notes = [p for p in files if p.suffix.lower() == ".md"]
             if len(notes) > 1:
                 continue
             note = notes[0] if notes else None
             flat_name = (_nfc(note.name).lstrip("_") if note
                          else _nfc(wrapper.name) + ".md")
+            suggested = area_dir / flat_name
             out.append(BareWrapper(
                 current=str(wrapper),
                 note=str(note) if note else "",
-                suggested=str(area_dir / flat_name),
+                suggested=str(suggested),
                 area=_nfc(area_dir.name),
+                target_occupied=suggested.exists(),
             ))
     return out
 

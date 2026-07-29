@@ -92,9 +92,11 @@ python3 .claude/skills/vault-cleanup/scripts/reorg_archive.py \
   find-bare-wrappers 10_Areas --json
 ```
 
-각 항목: `current`(래퍼 폴더) · `note`(안쪽 노트, 빈 폴더면 `""`) · `suggested`(평탄화 대상 경로, `_` 접두어 제거) · `area`.
+각 항목: `current`(래퍼 폴더) · `note`(안쪽 노트, 빈 폴더면 `""`) · `suggested`(평탄화 대상 경로, `_` 접두어 제거) · `area` · `target_occupied`.
 
 첨부는 **재귀로** 센다 — `{wrapper}/2026-012/결과물/x.pdf`처럼 하위 폴더에 든 첨부도 첨부로 친다.
+
+**`target_occupied: true`인 항목은 절대 그냥 `mv` 하지 말 것.** `suggested` 경로에 이미 다른 노트가 있다는 뜻이고, POSIX `mv`는 대상을 덮어쓴다 — 노트는 gitignore라 복구 불가다. 이름을 바꿔 옮기거나 두 노트를 먼저 병합한다.
 
 **스크립트는 탐지만 한다 — 이동은 없다.** 결과를 사용자에게 목록으로 보여주고 승인을 받은 뒤 `git mv`/`mv`로 개별 평탄화한다 (안전 규칙 #1). 노트를 옮기면 기존 wikilink가 깨질 수 있으므로 이동 전 `rg -F "<노트명>"` 으로 참조를 확인한다.
 

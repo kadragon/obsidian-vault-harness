@@ -170,6 +170,47 @@ class BareWrapperSweepTest(unittest.TestCase):
             self.assertEqual(str(areas / "학사" / "202401_성적정정.md"),
                              rows[0].suggested)
 
+    def test_occupied_flatten_target_is_flagged(self):
+        """A manual `mv` onto an existing note would destroy it (notes are
+        gitignored — no undo), so the collision must be reported."""
+        with tempfile.TemporaryDirectory() as tmp:
+            areas = self._areas(tmp)
+            area = areas / "학사"
+            wrapper = area / "202401_성적정정"
+            wrapper.mkdir(parents=True)
+            (wrapper / "_202401_성적정정.md").write_text("래퍼\n", encoding="utf-8")
+            (area / "202401_성적정정.md").write_text("이미 있음\n", encoding="utf-8")
+
+            rows = reorg_archive.find_bare_wrappers(areas)
+
+            self.assertEqual(1, len(rows))
+            self.assertTrue(rows[0].target_occupied)
+
+    def test_free_flatten_target_is_not_flagged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            areas = self._areas(tmp)
+            wrapper = areas / "학사" / "202401_성적정정"
+            wrapper.mkdir(parents=True)
+            (wrapper / "_202401_성적정정.md").write_text("래퍼\n", encoding="utf-8")
+
+            rows = reorg_archive.find_bare_wrappers(areas)
+
+            self.assertEqual(1, len(rows))
+            self.assertFalse(rows[0].target_occupied)
+
+    def test_uppercase_md_extension_counts_as_a_note(self):
+        """`.MD` must not read as neither-attachment-nor-note, which would
+        report a populated wrapper as empty (note='')."""
+        with tempfile.TemporaryDirectory() as tmp:
+            areas = self._areas(tmp)
+            wrapper = areas / "학사" / "202401_성적정정"
+            wrapper.mkdir(parents=True)
+            (wrapper / "_202401_성적정정.MD").write_text("본문\n", encoding="utf-8")
+            (wrapper / "메모.md").write_text("본문\n", encoding="utf-8")
+
+            # two notes (one .MD, one .md) → not a bare wrapper
+            self.assertEqual([], reorg_archive.find_bare_wrappers(areas))
+
     def test_missing_areas_root_returns_empty(self):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual([],

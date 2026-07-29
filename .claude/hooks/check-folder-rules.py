@@ -75,7 +75,9 @@ if "/10_Areas/" in fp_norm:
                 siblings = [p for p in wrapper_dir.rglob("*") if p.is_file()]
                 has_attachment = any(
                     p.suffix.lower() != ".md" for p in siblings)
-                md_count = sum(1 for p in siblings if p.suffix == ".md")
+                # .lower() on both sides — a `.MD` note must not count as
+                # neither attachment nor note.
+                md_count = sum(1 for p in siblings if p.suffix.lower() == ".md")
                 if not has_attachment and md_count <= 1:
                     violations.append(
                         f"10_Areas/ 무첨부 래퍼 폴더 — 첨부 없으면 '{slug_folder}/' 폴더 없이 "
