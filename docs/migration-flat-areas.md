@@ -1,16 +1,10 @@
 # 10_Areas 평탄화 마이그레이션 가이드
 
-적용 배경: 폴더-안-동명파일(`YYYYMM_{title}/_YYYYMM_{title}.md`) 패턴이 굳어져 경로가 800자 초과 사례가 발생함. 신규 노트는 `docs/conventions.md → 10_Areas/ Depth Rules`에 따라 작성하고, 기존 노트는 접근 시 아래 절차로 점진 정리.
+적용 배경: **첨부가 없는데도** 폴더-안-동명파일(`YYYYMM_{title}/_YYYYMM_{title}.md`)로 감싸는 패턴이 굳어져 경로가 800자 초과 사례가 발생함. 기존 노트는 접근 시 아래 절차로 점진 정리.
 
----
-
-## 신규 노트 기준 (즉시 적용)
-
-- 첨부 없음 → `10_Areas/{area}/YYYYMM_{summary}.md` (단일 파일)
-- 첨부 있음 → `10_Areas/{area}/YYYYMM_{slug}/YYYYMM_{summary}.md` + 첨부물
-  - 폴더명 slug: 핵심 키워드 1~2개, ≤ 20자
-  - 내부 노트명: 풀 summary, prefix `_` 없음
-  - 폴더명 ≠ 내부 노트명 (의도적 분리)
+> **신규 노트 기준은 여기에 두지 않는다.** 단일 진실 원천은 `docs/conventions.md → 10_Areas/ Depth Rules`이며, 생성기는 `.claude/skills/inbox-process/scripts/new_work_path.py`다. 이 문서는 **기존 노트 정리 절차 전용**이다.
+>
+> 요약(2026-07-24 확정, 상세는 conventions.md): 첨부 없음 → area 루트에 단일 `.md`, 래퍼 폴더 금지. 첨부 있음 → `YYYYMM_{summary}/` 폴더(전체 제목, 길이 캡 없음) + 내부 `_YYYYMM_{summary}.md`(`_` prefix 유지).
 
 ---
 
@@ -38,9 +32,9 @@ done
 
 ### 케이스 B — 첨부 있는 폴더
 
-처리 순서 (Obsidian 열린 상태에서):
-1. 폴더명을 `YYYYMM_{slug}` 형식으로 rename (slug ≤ 20자) → Obsidian이 자동 링크 갱신
-2. 내부 `_<이름>.md`에서 `_` prefix 제거 → Obsidian이 자동 링크 갱신
+**정리 대상이 아니다.** 첨부가 있는 노트는 래퍼 폴더 + `_` prefix 내부 파일이 현행 canonical 형태다(`conventions.md`). 폴더명을 짧은 slug로 rename하거나 `_` prefix를 제거하면 **규약을 되돌리는 것**이므로 하지 말 것.
+
+확인만 한다 — 폴더명이 `YYYYMM_{summary}`이고 내부 노트가 같은 이름에 `_`를 붙인 `_YYYYMM_{summary}.md`인지. 어긋나면 rename 대신 사용자에게 보고한다(기존 노트 불변 — Golden Principle #1, 링크 일괄 편집 사고 이력).
 
 ---
 
@@ -83,6 +77,6 @@ find /Users/kadragon/ObsidianVault/10_Areas -mindepth 3 -type f -name "*.md"
 # 경로 길이 분포 (200자 초과 항목)
 find /Users/kadragon/ObsidianVault/10_Areas -name "*.md" | awk '{print length, $0}' | sort -rn | awk '$1 > 200'
 
-# _ prefix 파일 잔여 확인
-find /Users/kadragon/ObsidianVault/10_Areas -name "_*.md"
+# area 루트에 남은 _ prefix 파일 확인 (래퍼 폴더 안의 _*.md 는 canonical 이므로 제외)
+find /Users/kadragon/ObsidianVault/10_Areas -mindepth 2 -maxdepth 2 -name "_*.md"
 ```

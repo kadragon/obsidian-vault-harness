@@ -58,4 +58,4 @@ grep -rn "{이동된 노트 파일명}" \
   "_Wiki/index.md" "_Wiki/log.md" "_Wiki/topics/" 2>/dev/null
 ```
 
-발견된 deadlink 목록을 보고한다. 자동 수정은 하지 않으며, obsidian-operator에 위임할지 사용자에게 확인한다.
+발견된 deadlink 목록을 보고한다. 자동 수정은 하지 않으며, 수정 여부를 사용자에게 확인한다. 승인 시 **직접 Edit**으로 고친다 (링크 한두 줄 수정에 에이전트 왕복 금지 — AGENTS.md 위임 비용 규칙 #3).

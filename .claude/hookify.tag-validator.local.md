@@ -1,6 +1,6 @@
 ---
 name: tag-validator
-enabled: true
+enabled: false
 event: file
 conditions:
   - field: file_path
@@ -10,6 +10,8 @@ conditions:
     operator: regex_match
     pattern: "#(업무|부서)/"
 ---
+
+> **비활성화됨 (2026-07-24).** `.claude/hooks/validate-tags.sh`(PostToolUse)가 동일 검증을 결정론적으로 수행하고 **위반이 있을 때만** 경고하며, 그 경고문이 이미 "tag-validator 에이전트를 실행하여 태그를 정규화하세요"로 안내한다. 이 룰은 위반이 없어도 매 쓰기마다 풀에이전트(~39k 토큰/40초)를 기동시켜 순수 중복 비용이었다. 되살리려면 `enabled: true`로 바꾸되 `validate-tags.sh`와의 중복을 먼저 해소할 것.
 
 **태그 검증 위임 필요!** `.md` 파일에 `#업무` 또는 `#부서` 태그가 포함되어 있습니다.
 

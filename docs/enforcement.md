@@ -11,7 +11,8 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | #1 Existing notes immutable | AGENTS.md rule + Hard Stop + 대량편집 dry-run 규율 | Doc-enforced (의도적) |
 | #2 Follow templates | `check-template.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #3 Normalize tags (form) | `validate-tags.sh` PostToolUse hook (mechanical) | Shell-enforced (committed) |
-| #3 Normalize tags (semantic) | `hookify.tag-validator.local.md` delegation reminder | Hookify-enforced (enabled) |
+| #3 Normalize tags (semantic) | 생성 워크플로가 `validate_tag.py --json` 호출 (script-first) → 문맥 의존 건만 `tag-validator` | Workflow-enforced (2026-07-24) — 훅 아님, 아래 사각지대 참조 |
+| 위임 비용 규칙 #1 (중첩 위임 금지) | `check-nested-delegation.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #4 Folder rules | `check-folder-rules.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #2 Task date fields | `check-todo-due-date.py` PostToolUse hook (mechanical) | Shell-enforced |
 | #5 Inbox (01_Inbox) via skill | AGENTS.md delegation rule | Doc-enforced |
@@ -58,9 +59,35 @@ Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-to
 - Silent on success; errors are non-blocking
 - Machine-local only: `qmd` CLI is not portable, so this hook stays in `settings.local.json`
 
-### Active: `hookify.tag-validator.local.md` (agent delegation)
+### Retired: `hookify.tag-validator.local.md` (agent delegation) — 2026-07-24
 
-`enabled: true`. On every `.md` write containing `#업무/` or `#부서/`, injects a delegation reminder to run `tag-validator` in `validate` mode. Prompt-based, advisory — the agent need not run every time. Complements `validate-tags.sh` (catches semantic area-assignment errors the regex hook cannot detect). Token cost: agent delegation is advisory, not forced.
+`enabled: false`. 은퇴 사유:
+
+- **본문이 advisory가 아니었다.** 룰 본문은 "직접 검증하지 말 것 — 반드시 에이전트에 위임할 것"으로 강제였고, 이 문서의 과거 서술("advisory, not forced")과 어긋났다.
+- **중복.** `validate-tags.sh`가 금지 접두어·괄호·미등록 area·`#부서` frontmatter 오배치를 이미 결정론적으로 검사하고, **위반이 있을 때만** "tag-validator 에이전트를 실행하세요" 경고를 낸다 → 필요할 때만 에이전트가 뜨는 구조가 이미 완성.
+- **비용.** 위반이 없어도 태그 포함 쓰기마다 풀에이전트 기동(실측 ~39k 토큰 / 43초).
+
+의미 수준 검증이 필요하면 `tag-normalize/scripts/validate_tag.py --json`으로 먼저 판정하고(직급 매핑·금지 접두어 제거까지 처리), 스크립트가 못 푸는 문맥 의존 건만 `tag-validator`로 에스컬레이션한다.
+
+**알려진 사각지대 (2026-07-24):** `validate_tag.py`를 **자동으로 부르는 훅은 없다.** 호출 지점은 생성 워크플로(`inbox-process` 오케스트레이터 5단계, `incident-analyst`·`improvement-planner`·`training-note-manager` §태그 작성)뿐이다. 그 경로 밖에서 태그가 달린 노트를 직접 쓰면 남는 자동 검사는 `validate-tags.sh`(형식 수준: 금지 접두어·괄호·미등록 area·`#부서` frontmatter 오배치)뿐이라, **직급 매핑 같은 의미 수준 오류는 통과한다**. 근본 해결은 `validate-tags.sh`가 태그를 추출해 `validate_tag.py`에 파이프하는 것 → `tasks.md`.
+
+## Nested Delegation Guard
+
+### Active: `check-nested-delegation.py` (mechanical)
+
+`.claude/hooks/check-nested-delegation.py`, `settings.json`의 `PostToolUse` `Write|Edit`에 등록.
+
+**배경 (2026-07-24 실측):** 서브에이전트의 도구 목록에 `Agent`·`Task`가 **없다**(`Skill`·`Read`·`Write`·`Edit`·`Bash`·`Grep`·`Glob`는 있음). 그런데 `improvement-planner`·`incident-analyst`·`training-note-manager` 3개 정의가 `Agent(subagent_type: "tag-validator")`를 호출하도록 지시하고 있었다 → 런타임 **무음 실패**로 태그 작성이 조용히 누락됐다.
+
+**검사 대상** (서브에이전트가 읽는 파일만): `.claude/agents/*.md` · `description`에 `Do NOT invoke directly`가 있는 **스킬 디렉터리 전체**(`SKILL.md` + `references/` 이하 모든 `.md`) · `inbox-process/references/{action,reference}-branch.md`.
+
+**에이전트명 목록**은 `.claude/agents/*.md`에서 **런타임에 유도**한다. 하드코딩하면 에이전트 추가 시 갱신을 잊어 산문 탐지가 조용히 꺼진다 — 훅이 막으려는 바로 그 무음 실패다.
+
+**검출:** `subagent_type` / `Agent(` / `Task(` / "{에이전트명} … 위임·호출·맡기·기동" + **어미** 패턴. 어미는 `한다`·`하라`·`할 것`·`할 수 있`·`해야`·`하도록`·`하고`·`하거나`·`하여`·`해서`·`한 뒤`와 **줄끝**·**여는 괄호 앞**까지 포함한다(명사형 `…에 위임`으로 끝나는 줄, `…에 위임 (`, `…에 위임하거나`가 실제 누락됐다). "위임 금지/불가", "호출할 수 없다" 같은 **부정문은 제외**(규칙을 문서화한 줄은 위반이 아님).
+
+> **어미 그룹을 선택(`?`)으로 풀지 말 것.** 에이전트명 근처의 모든 `위임`·`호출`이 걸려, 규칙이 **권장하는** 표현("보고에 적어 메인 스레드가 호출하게 한다", "오케스트레이터가 수행한다", "incident-analyst 추가 호출 필요?로 반환")까지 오탐한다 — 실측 8건. `하게`·`하지`·` 불가`·` 필요`는 의도적으로 어미 목록에서 뺐다.
+
+검증: 위반 6종(`Agent(subagent_type:…)`, `…에 위임한다`, `…를 위임할 수 있다`, 명사형 줄끝 `…에 위임`, `…에 위임하거나`, `…에 위임 (`) 탐지 + 부정문·"메인 스레드가 호출하게 한다" 무시 확인, 현행 하네스 전체 파일 스윕 **오탐 0**.
 
 ## Template Check Hook
 
@@ -83,7 +110,8 @@ Skips: `99_Template`, `docs`, `.claude`, `90_Archive`, `_Wiki`, `_Sources`, `01_
 
 1. **`12_Projects/`** — loose `.md` at root (no sub-folder) → warn
 2. **`90_Archive/`** — any write → warn (no file creation allowed)
-3. **`10_Areas/`** — depth > 2 levels, attachment-folder slug > 20 chars, summary > 60 chars, 무첨부 래퍼 폴더(첨부 없는데 폴더로 감쌈) → warn
+3. **`10_Areas/`** — depth > 2 levels, 무첨부 래퍼 폴더(첨부 없는데 폴더로 감쌈) → warn. 길이 제한(slug 20자·summary 60자)은 2026-07-24에 제거 — `conventions.md`가 "전체 제목, 길이 캡 없음"으로 확정됐다.
+   - **알려진 사각지대 (2026-07-24 실측):** 래퍼 폴더 생성 후 `GRACE_SECONDS`(60초) 이내 Write는 검사를 통째로 건너뛴다. 첨부가 노트보다 늦게 저장되는 경우의 오탐을 막으려는 유예인데, 폴더·노트를 한 번에 만드는 **최초 생성 경로에서는 항상 유예에 걸려** 무첨부 래퍼가 잡히지 않는다(재현 확인: 신규 폴더 + 노트 Write → 무경고). 이후 같은 노트를 편집하면 검사된다. 1차 방어는 생성 측 `new_work_path.py --flat`. 잔존분 일괄 검출은 sweep 스크립트 필요 → `tasks.md`.
 4. **`14_Changes/incident/`** — filename must match `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}.md` (NFC-normalized) → warn. Blocks legacy drift patterns (`Error_*`, `오류 처리 *`, `_통합학사…`). Fires on `Write` only, so editing the ~96 pre-existing legacy notes is not nagged; new incident notes must use `incident-analyze` 스킬의 `new_incident_path.py`.
 
 Warning-only, exit 0.
