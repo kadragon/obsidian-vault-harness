@@ -11,7 +11,7 @@ script approximates it with raw incident volume (`--incident-threshold`) and
 leaves the "3+ distinct recurring types" call to the human/agent.
 
 Usage:
-    python moc_gate.py <vault> [--note-threshold 20] [--incident-threshold 10] [--json]
+    python3 moc_gate.py <vault> [--note-threshold 20] [--incident-threshold 10] [--json]
 """
 from __future__ import annotations
 

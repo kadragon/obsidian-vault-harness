@@ -10,8 +10,7 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 |-----------------|-------------------|--------|
 | #1 Existing notes immutable | AGENTS.md rule + Hard Stop + 대량편집 dry-run 규율 | Doc-enforced (의도적) |
 | #2 Follow templates | `check-template.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
-| #3 Normalize tags (form) | `validate-tags.sh` PostToolUse hook (mechanical) | Shell-enforced (committed) |
-| #3 Normalize tags (semantic) | 생성 워크플로가 `validate_tag.py --json` 호출 (script-first) → 문맥 의존 건만 `tag-validator` | Workflow-enforced (2026-07-24) — 훅 아님, 아래 사각지대 참조 |
+| #3 Normalize tags (form + semantic) | `validate-tags.sh` PostToolUse hook이 태그를 추출해 `validate_tag.py --json`에 파이프 (mechanical) → 문맥 의존 건만 `tag-validator` | Shell-enforced (form: committed · semantic: 2026-07-29) |
 | 위임 비용 규칙 #1 (중첩 위임 금지) | `check-nested-delegation.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #4 Folder rules | `check-folder-rules.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #2 Task date fields | `check-todo-due-date.py` PostToolUse hook (mechanical) | Shell-enforced |
@@ -40,14 +39,17 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 
 ### Active: `validate-tags.sh` (mechanical)
 
-`.claude/hooks/validate-tags.sh`, registered in **`settings.json`** (committed) as `PostToolUse` on `Write|Edit`. Regex-based checks:
+`.claude/hooks/validate-tags.sh`, registered in **`settings.json`** (committed) as `PostToolUse` on `Write|Edit`.
 
-- Forbidden `#업무/` prefixes (e.g., `#업무/인트라넷/`, `#업무/학사/`)
-- Parentheses in `#업무/` tags
-- Unknown areas (outside allowed list)
-- `#부서/` tags appearing in frontmatter
+훅 자체는 **태그를 추출해 `tag-normalize/scripts/validate_tag.py - --json`에 파이프**하고 결과를 보고할 뿐, 규칙을 스스로 판정하지 않는다 (2026-07-29). 태그 규칙의 단일 진실 원천은 `validate_tag.py` 하나다 — 예전처럼 훅이 정규식으로 같은 규칙을 재구현하면 두 사본이 드리프트한다.
 
-Skips: `.claude/`, `99_Template/`, `docs/` (harness docs contain tag examples that would false-positive).
+`validate_tag.py`가 판정하는 것: 금지 `#업무/` 접두어 · 괄호·공백·`&`·`+` · 미등록 area(런타임에 `10_Areas/` 폴더명에서 유도) · **직급 매핑**(`행정주사보`→`주무관`) · **부서명 매핑** · `P_` 접두어 · `퇴직/` 중간 경로 · 학과 조교 경로.
+
+훅에만 남은 검사: **`#부서/` 태그의 frontmatter 오배치** — `validate_tag.py`는 태그 문자열만 받아 파일 내 위치를 알 수 없다.
+
+제외: 펜스·인라인 코드 블록(Dataview 쿼리 태그) · `{`/`}` 포함 플레이스홀더(`#업무/{area}`) · `.claude/`, `99_Template/`, `docs/` 경로.
+
+`validate_tag.py` 또는 `python3` 부재 시 조용히 exit 0 (쓰기를 막지 않는다).
 
 Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-todo-due-date.py`, so warnings appear in Claude's tool-result context. Warning-only (does not block). Zero token cost (this hook; hookify semantic layer has advisory token cost when triggered — see below).
 
@@ -69,7 +71,7 @@ Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-to
 
 의미 수준 검증이 필요하면 `tag-normalize/scripts/validate_tag.py --json`으로 먼저 판정하고(직급 매핑·금지 접두어 제거까지 처리), 스크립트가 못 푸는 문맥 의존 건만 `tag-validator`로 에스컬레이션한다.
 
-**알려진 사각지대 (2026-07-24):** `validate_tag.py`를 **자동으로 부르는 훅은 없다.** 호출 지점은 생성 워크플로(`inbox-process` 오케스트레이터 5단계, `incident-analyst`·`improvement-planner`·`training-note-manager` §태그 작성)뿐이다. 그 경로 밖에서 태그가 달린 노트를 직접 쓰면 남는 자동 검사는 `validate-tags.sh`(형식 수준: 금지 접두어·괄호·미등록 area·`#부서` frontmatter 오배치)뿐이라, **직급 매핑 같은 의미 수준 오류는 통과한다**. 근본 해결은 `validate-tags.sh`가 태그를 추출해 `validate_tag.py`에 파이프하는 것 → `tasks.md`.
+**해소됨 (2026-07-29):** 이 사각지대는 "`validate_tag.py`를 자동으로 부르는 훅이 없어, 생성 워크플로 밖에서 쓴 노트는 직급 매핑 같은 의미 수준 오류가 통과한다"는 것이었다. `validate-tags.sh`가 태그를 추출해 `validate_tag.py`에 파이프하도록 바뀌면서 경로와 무관하게 의미 수준 검사가 걸린다 (위 §Active 참조).
 
 ## Nested Delegation Guard
 
@@ -111,7 +113,9 @@ Skips: `99_Template`, `docs`, `.claude`, `90_Archive`, `_Wiki`, `_Sources`, `01_
 1. **`12_Projects/`** — loose `.md` at root (no sub-folder) → warn
 2. **`90_Archive/`** — any write → warn (no file creation allowed)
 3. **`10_Areas/`** — depth > 2 levels, 무첨부 래퍼 폴더(첨부 없는데 폴더로 감쌈) → warn. 길이 제한(slug 20자·summary 60자)은 2026-07-24에 제거 — `conventions.md`가 "전체 제목, 길이 캡 없음"으로 확정됐다.
-   - **알려진 사각지대 (2026-07-24 실측):** 래퍼 폴더 생성 후 `GRACE_SECONDS`(60초) 이내 Write는 검사를 통째로 건너뛴다. 첨부가 노트보다 늦게 저장되는 경우의 오탐을 막으려는 유예인데, 폴더·노트를 한 번에 만드는 **최초 생성 경로에서는 항상 유예에 걸려** 무첨부 래퍼가 잡히지 않는다(재현 확인: 신규 폴더 + 노트 Write → 무경고). 이후 같은 노트를 편집하면 검사된다. 1차 방어는 생성 측 `new_work_path.py --flat`. 잔존분 일괄 검출은 sweep 스크립트 필요 → `tasks.md`.
+   - **첨부는 재귀로 센다 (2026-07-29 수정).** 이전에는 래퍼의 **직속 자식만** 훑어서, 첨부가 `{wrapper}/2026-012/결과물/x.pdf`처럼 한 단계 아래 놓이면 "무첨부"로 읽혔다. 실볼트에서 첨부 37~147개를 가진 `10_Areas/과업심의/` 래퍼 5개가 전부 오탐으로 걸리고 있었다(해당 노트를 편집할 때마다 헛경고). `rglob`으로 바꿔 오탐 5→0.
+   - **남아 있는 사각지대 (2026-07-24 실측):** 래퍼 폴더 생성 후 `GRACE_SECONDS`(60초) 이내 Write는 검사를 통째로 건너뛴다. 첨부가 노트보다 늦게 저장되는 경우의 오탐을 막으려는 유예인데, 폴더·노트를 한 번에 만드는 **최초 생성 경로에서는 항상 유예에 걸려** 무첨부 래퍼가 잡히지 않는다(재현 확인: 신규 폴더 + 노트 Write → 무경고). 이후 같은 노트를 편집하면 검사된다. 유예 자체는 의도된 오탐 방지책이라 유지한다.
+   - **잔존분 검출 (2026-07-29):** `reorg_archive.py find-bare-wrappers 10_Areas --json`이 `10_Areas/` 전체를 훑어 "첨부 0 + `.md` ≤1"인 래퍼 폴더를 목록화한다. 판정 로직은 Rule 3과 동일하게 맞춰 놨다 — 어긋나면 사각지대를 하나 더 만드는 셈이다. **탐지 전용**(이동 없음); 절차는 `vault-cleanup` 스킬 `references/mode-reorganize.md` Step 5. 1차 방어는 여전히 생성 측 `new_work_path.py --flat`.
 4. **`14_Changes/incident/`** — filename must match `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}.md` (NFC-normalized) → warn. Blocks legacy drift patterns (`Error_*`, `오류 처리 *`, `_통합학사…`). Fires on `Write` only, so editing the ~96 pre-existing legacy notes is not nagged; new incident notes must use `incident-analyze` 스킬의 `new_incident_path.py`.
 
 Warning-only, exit 0.
@@ -129,6 +133,9 @@ All three layers are now active. Promotion log:
 7. ✅ status 어휘 드리프트 (`done`/`resolved`/`pending-action` vs status-sync의 `closed`) → `check-template.py` Check 2b: 모든 note-bearing 폴더에서 `status:` 필수 + enum 검증 (2026-06). 동시에 `conventions.md`·`_메타데이터 규칙.md`·`workflows.md` 종결 상태를 `closed`로 통일.
 8. ✅ 무첨부 래퍼 폴더 (첨부 없는데 `{YYYYMM}_{slug}/` 폴더로 감쌈) → `check-folder-rules.py` Rule 3 확장 + `new_work_path.py --flat` 옵션 + `inbox-process` action-branch 문서화 (2026-06). conventions.md "No attachments → single .md" 규칙을 생성·검증 양쪽에서 기계화.
 9. ✅ `## 관련 문서` 등 content-conditional 섹션을 근거 없이도 템플릿대로 채우다 빈 `[[ ]]` 플레이스홀더가 남는 문제 (2건 발견) → `check-template.py`에 빈 wikilink 감지 추가 + `action-branch.md`·`incident-analyze/SKILL.md`·`improvement-plan/SKILL.md`·`eval-criteria.md`·`conventions.md`에 "근거 없으면 섹션째 생략" 명시 (2026-07)
+10. ✅ 의미 수준 태그 오류(직급·부서명 매핑)가 생성 워크플로 밖 쓰기에서 통과하던 문제 → `validate-tags.sh`가 태그를 추출해 `validate_tag.py - --json`에 파이프하도록 교체, 훅의 중복 정규식 판정은 삭제 (2026-07-29). 규칙 단일 진실 원천 = `validate_tag.py`.
+11. ✅ `check-folder-rules.py` Rule 3의 60초 유예로 최초 생성 경로의 무첨부 래퍼가 검출되지 않던 문제 → `reorg_archive.py find-bare-wrappers` 스윕 추가 (2026-07-29). 훅은 실시간 방어, 스윕은 잔존분 일괄 검출.
+12. ✅ Rule 3이 첨부를 직속 자식만 세어 하위 폴더에 첨부를 둔 래퍼를 "무첨부"로 오탐하던 문제 → 훅·스윕 양쪽 `rglob` 재귀 카운트 (2026-07-29). 스윕 도입 시 훅과의 판정 차등 테스트로 발견 — 실볼트 오탐 5건이 0건이 됐다. 판정 로직이 두 곳에 있으면 이런 차등 테스트가 가능하다는 게 부수 효과.
 
 ## Generator Config (not version-controlled)
 

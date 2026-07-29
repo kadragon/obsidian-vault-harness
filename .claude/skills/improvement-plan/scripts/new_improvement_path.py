@@ -9,7 +9,7 @@ Rules (from improvement-plan SKILL.md):
                append `_2`, `_3`, ... until unique
 
 Usage:
-    python new_improvement_path.py "수강신청 로그 개선" \\
+    python3 new_improvement_path.py "수강신청 로그 개선" \\
         [--date YYYY-MM-DD] [--vault /path/to/vault]
 
 Output: absolute path of the new note on stdout. Does NOT create the file.

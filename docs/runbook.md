@@ -15,7 +15,7 @@ Syncthing으로 다중 기기 동기화. OS별 경로:
 이미지(스캔) PDF는 Read/`pdftotext`로 텍스트가 안 나온다. OCR로 추출한다.
 
 - **도구**: PyMuPDF(`fitz`) + Tesseract 5.x. `pdftoppm` 불필요.
-- **스크립트**: `python .claude/skills/inbox-process/scripts/ocr_pdf.py "<pdf>" --pages 1-5` (페이지당 수 초; 대용량은 범위 샘플)
+- **스크립트**: `python3 .claude/skills/inbox-process/scripts/ocr_pdf.py "<pdf>" --pages 1-5` (페이지당 수 초; 대용량은 범위 샘플)
 - **언어 데이터**: `kor`+`eng` → `%TESSDATA_PREFIX%` (`~/tessdata/`). 사용자 env에 영구 등록됨.
 - **재구축** (새 머신): `winget install UB-Mannheim.TesseractOCR` → `kor.traineddata`(tessdata_best)를 쓰기 가능 디렉터리에 두고 `TESSDATA_PREFIX` 지정 + Tesseract를 PATH에. Program Files tessdata는 쓰기 권한 없음 — 홈에 둘 것.
 
@@ -201,7 +201,7 @@ Scope: 10_Areas/ → 90_Archive/
 
 ```bash
 echo '{"tool_input":{"file_path":"C:/Dev/ObsidianVault/.claude/agents/incident-analyst.md"}}' \
-  | python .claude/hooks/check-nested-delegation.py
+  | python3 .claude/hooks/check-nested-delegation.py
 ```
 
 무출력이 "위반 없음"인지 "경로 인식 실패"인지 구분하려면 위반 샘플로 true-positive를 먼저 확인할 것.
@@ -213,7 +213,7 @@ echo '{"tool_input":{"file_path":"C:/Dev/ObsidianVault/.claude/agents/incident-a
 **Fix:** 직접 실행한다 — 성공 시 `OK — ...` 출력 + exit 0.
 
 ```bash
-python .claude/skills/status-sync/tests/test_contract.py
+python3 .claude/skills/status-sync/tests/test_contract.py
 ```
 
 ### inbox-process skill cannot find template

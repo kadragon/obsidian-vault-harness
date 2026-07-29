@@ -69,10 +69,15 @@ if "/10_Areas/" in fp_norm:
             folder_age = GRACE_SECONDS + 1  # stat 실패 시 유예 없이 기존 동작 유지
         if folder_age > GRACE_SECONDS:
             try:
-                siblings = list(wrapper_dir.iterdir())
+                # rglob, not iterdir: 첨부가 `{wrapper}/2026-012/결과물/x.pdf`처럼
+                # 한 단계 아래 놓이는 경우가 많다. 직속 자식만 세면 첨부 147개를
+                # 가진 폴더도 "무첨부"로 읽혀 헛경고가 난다 (2026-07-29 실측 5건).
+                siblings = [p for p in wrapper_dir.rglob("*") if p.is_file()]
                 has_attachment = any(
-                    p.is_file() and p.suffix.lower() != ".md" for p in siblings)
-                md_count = sum(1 for p in siblings if p.is_file() and p.suffix == ".md")
+                    p.suffix.lower() != ".md" for p in siblings)
+                # .lower() on both sides — a `.MD` note must not count as
+                # neither attachment nor note.
+                md_count = sum(1 for p in siblings if p.suffix.lower() == ".md")
                 if not has_attachment and md_count <= 1:
                     violations.append(
                         f"10_Areas/ 무첨부 래퍼 폴더 — 첨부 없으면 '{slug_folder}/' 폴더 없이 "
