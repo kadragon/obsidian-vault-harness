@@ -49,69 +49,51 @@ VAULT_ROOT_LC=$(echo "$VAULT_ROOT" | tr 'A-Z' 'a-z')
 # example tags (e.g. `#업무/{도메인}`) are NOT flagged as real tags.
 CLEANED=$(awk '/^[[:space:]]*```/{f=!f; next} !f' "$FILE_PATH" | sed 's/`[^`]*`//g')
 
-# --- #업무 tag validation ---
-FORBIDDEN_PREFIXES=(
-  '#업무/인트라넷/'
-  '#업무/부속/'
-  '#업무/학사/'
-  '#업무/공통/'
-  '#업무/시스템/'
-  '#업무/직원서비스/'
-  '#업무/학생서비스/'
-  '#업무/교수서비스/'
-)
-
 VIOLATIONS=""
 
-for PREFIX in "${FORBIDDEN_PREFIXES[@]}"; do
-  FOUND=$(grep -o "${PREFIX}[^ 	\"]*" <<< "$CLEANED" 2>/dev/null)
-  if [[ -n "$FOUND" ]]; then
-    VIOLATIONS="${VIOLATIONS}\n  - ${FOUND}"
-  fi
-done
+# --- #업무 / #부서 tag validation (delegated to validate_tag.py) ---
+# Single source of truth for tag rules is the tag-normalize skill's script:
+# it covers the form checks this hook used to re-implement in regex (forbidden
+# prefixes, parentheses, unregistered areas) AND the semantic ones a regex
+# cannot do (직급 매핑, 부서명 매핑, P_ 접두어, 퇴직/ 경로). Re-implementing
+# them here would let the two copies drift.
+VALIDATE_TAG="$SCRIPT_DIR/../skills/tag-normalize/scripts/validate_tag.py"
+[[ -f "$VALIDATE_TAG" ]] || { echo "validate-tags: $VALIDATE_TAG not found — tag validation skipped" >&2; exit 0; }
 
-# Check parentheses in #업무 tags
-PAREN_FOUND=$(grep -oE '#업무/[^ 	"]*\(' <<< "$CLEANED" 2>/dev/null)
-if [[ -n "$PAREN_FOUND" ]]; then
-  VIOLATIONS="${VIOLATIONS}\n  - 괄호 사용: ${PAREN_FOUND}"
-fi
+# Placeholder tags in docs/templates (`#업무/{area}`, `#부서/{부서명}/...`) are
+# markup, not real tags — drop anything holding a brace.
+TAGS=$(grep -oE '#(업무|부서)/[^ 	"]*' <<< "$CLEANED" 2>/dev/null | grep -v '[{}]' | sort -u)
 
-# Check allowed areas — derived at RUNTIME from 10_Areas/ subfolder names.
-# Source of truth: "#업무/ 태그 = 10_Areas 폴더명 그대로" (문서 유형 불문).
-# Degrade gracefully: if 10_Areas/ cannot be located, skip this check (never block writes).
-AREAS_DIR=""
-for _candidate in "${CLAUDE_PROJECT_DIR:+$CLAUDE_PROJECT_DIR/10_Areas}" "$VAULT_ROOT/10_Areas"; do
-  if [[ -n "$_candidate" && -d "$_candidate" ]]; then
-    AREAS_DIR="$_candidate"
-    break
-  fi
-done
-
-if [[ -n "$AREAS_DIR" ]]; then
-  # NFC-normalize folder names: macOS returns filenames in NFD, but typed tags
-  # are NFC — without this the two never match and every note is false-flagged.
-  ALLOWED_AREAS=$(python3 -c "
-import os, re, sys, unicodedata
+if [[ -n "$TAGS" ]]; then
+  # exit 1 == "some tag needs fixing", not a failure — don't let it kill the hook
+  TAG_JSON=$(printf '%s\n' "$TAGS" | python3 "$VALIDATE_TAG" - --json 2>/dev/null || true)
+  if [[ -n "$TAG_JSON" ]]; then
+    TAG_REPORT=$(python3 -c "
+import json, sys
 try:
-    d = sys.argv[1]
-    # re.escape each name: a folder name with ERE metachars (. + ( ) etc.)
-    # would otherwise corrupt the grep -E pattern this feeds.
-    names = [re.escape(unicodedata.normalize('NFC', n)) for n in os.listdir(d)
-             if os.path.isdir(os.path.join(d, n))]
-except OSError:
-    names = []
-print('|'.join(names))
-" "$AREAS_DIR" 2>/dev/null)
-  if [[ -n "$ALLOWED_AREAS" ]]; then
-    UNKNOWN_AREAS=$(grep -oE '#업무/[^/ 	"]+' <<< "$CLEANED" 2>/dev/null | grep -vE "^#업무/(${ALLOWED_AREAS})$" | grep -v '#업무/{area}' | sort -u)
-    if [[ -n "$UNKNOWN_AREAS" ]]; then
-      VIOLATIONS="${VIOLATIONS}\n  - 미등록 area: ${UNKNOWN_AREAS}"
+    results = json.loads(sys.argv[1])
+except json.JSONDecodeError:
+    sys.exit(0)
+lines = []
+for r in results:
+    if r.get('valid'):
+        continue
+    line = '  - ' + r['original']
+    if r.get('normalized') and r['normalized'] != r['original']:
+        line += ' → ' + r['normalized']
+    lines.append(line)
+    lines.extend('      · ' + i for i in r.get('issues', []))
+print('\n'.join(lines))
+" "$TAG_JSON" 2>/dev/null)
+    if [[ -n "$TAG_REPORT" ]]; then
+      VIOLATIONS="${VIOLATIONS}\n${TAG_REPORT}"
     fi
   fi
 fi
 
-# --- #부서 tag validation ---
-# Check if #부서 tags are in frontmatter (between --- lines)
+# --- #부서 tag placement ---
+# Stays here, not in validate_tag.py: that script sees a bare tag string and
+# cannot know where in the file it sat. Frontmatter = between the --- lines.
 FRONTMATTER_DEPT=$(awk '/^---$/{if(++c==2)exit}c==1' "$FILE_PATH" 2>/dev/null | grep '#부서/')
 if [[ -n "$FRONTMATTER_DEPT" ]]; then
   VIOLATIONS="${VIOLATIONS}\n  - #부서 태그가 frontmatter에 있음 (본문으로 이동 필요)"

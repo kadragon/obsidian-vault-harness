@@ -46,7 +46,7 @@
 
 3. **이미지 기반(스캔) PDF**: Read가 텍스트를 거의 못 뽑으면 미파싱으로 건너뛰지 말고 OCR한다. 번들 스크립트를 직접 호출한다(매번 코드 재작성 금지):
    ```bash
-   python .claude/skills/inbox-process/scripts/ocr_pdf.py "파일경로.pdf" --pages 1-5
+   python3 .claude/skills/inbox-process/scripts/ocr_pdf.py "파일경로.pdf" --pages 1-5
    ```
    대용량은 `--pages`로 앞부분 샘플 후 필요 범위만 추가 OCR(페이지당 수 초). 표·순서가 흐트러질 수 있으니 핵심 사실 위주로 정리한다. Tesseract+kor 데이터는 이 머신에 설치됨(`TESSDATA_PREFIX` 영구 등록).
 

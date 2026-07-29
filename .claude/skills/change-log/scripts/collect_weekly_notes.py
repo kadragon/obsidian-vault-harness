@@ -11,7 +11,7 @@ Criteria: notes whose `✅ YYYY-MM-DD` completion dates or `date created` frontm
 Output (stdout): JSON with week range and list of note metadata.
 
 Usage:
-    python collect_weekly_notes.py [--week YYYY-MM-DD] [--vault PATH]
+    python3 collect_weekly_notes.py [--week YYYY-MM-DD] [--vault PATH]
 
     --week   Any date inside the desired week (Mon-Sun).
              Defaults to the previous full week relative to today.
