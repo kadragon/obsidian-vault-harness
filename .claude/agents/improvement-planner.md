@@ -44,11 +44,11 @@ model: sonnet
 1. 후보 태그를 정한 뒤 **스크립트로 검증**한다 (결정론적 — AGENTS.md 위임 비용 규칙 #2):
 
    ```bash
-   printf '%s\n' '#업무/...' '#부서/...' | python .claude/skills/tag-normalize/scripts/validate_tag.py --json -
+   printf '%s\n' '#업무/...' '#부서/...' | python3 .claude/skills/tag-normalize/scripts/validate_tag.py --json -
    ```
 
-2. `valid: false`면 출력의 `normalized` 값을 그대로 노트 `## 관련`에 기재한다.
-3. 스크립트가 못 푸는 문맥 의존 건(팀 직함 확정, 신규 area 신설 여부)은 후보 태그로 남기고 **보고에 적는다** — 메인 스레드가 `tag-validator`로 확정한다.
+2. `valid: false`이고 `normalized`가 `original`과 **다르면** 스크립트가 고쳐준 것이다(금지 접두어 제거·직급 매핑 등). 그 `normalized` 값을 노트 `## 관련`에 기재한다.
+3. `valid: false`인데 `normalized`가 `original`과 **같으면** 스크립트가 고칠 수 없는 건이다(미등록 area 등). 그 태그를 그대로 쓰지 말고 `issues`와 함께 **보고에 적는다**. 스크립트가 못 푸는 문맥 의존 건(팀 직함 확정, 신규 area 신설 여부)도 동일하게 후보 태그로 남기고 보고한다 — 메인 스레드가 `tag-validator`로 확정한다.
 4. 쓰기 시 PostToolUse `validate-tags.sh` 훅이 재검증한다.
 
 ## 협업

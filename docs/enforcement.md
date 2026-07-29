@@ -11,7 +11,7 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | #1 Existing notes immutable | AGENTS.md rule + Hard Stop + 대량편집 dry-run 규율 | Doc-enforced (의도적) |
 | #2 Follow templates | `check-template.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #3 Normalize tags (form) | `validate-tags.sh` PostToolUse hook (mechanical) | Shell-enforced (committed) |
-| #3 Normalize tags (semantic) | `validate_tag.py --json` (script-first) → 문맥 의존 건만 `tag-validator` | Script-enforced (2026-07-24) |
+| #3 Normalize tags (semantic) | 생성 워크플로가 `validate_tag.py --json` 호출 (script-first) → 문맥 의존 건만 `tag-validator` | Workflow-enforced (2026-07-24) — 훅 아님, 아래 사각지대 참조 |
 | 위임 비용 규칙 #1 (중첩 위임 금지) | `check-nested-delegation.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #4 Folder rules | `check-folder-rules.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #2 Task date fields | `check-todo-due-date.py` PostToolUse hook (mechanical) | Shell-enforced |
@@ -69,6 +69,8 @@ Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-to
 
 의미 수준 검증이 필요하면 `tag-normalize/scripts/validate_tag.py --json`으로 먼저 판정하고(직급 매핑·금지 접두어 제거까지 처리), 스크립트가 못 푸는 문맥 의존 건만 `tag-validator`로 에스컬레이션한다.
 
+**알려진 사각지대 (2026-07-24):** `validate_tag.py`를 **자동으로 부르는 훅은 없다.** 호출 지점은 생성 워크플로(`inbox-process` 오케스트레이터 5단계, `incident-analyst`·`improvement-planner`·`training-note-manager` §태그 작성)뿐이다. 그 경로 밖에서 태그가 달린 노트를 직접 쓰면 남는 자동 검사는 `validate-tags.sh`(형식 수준: 금지 접두어·괄호·미등록 area·`#부서` frontmatter 오배치)뿐이라, **직급 매핑 같은 의미 수준 오류는 통과한다**. 근본 해결은 `validate-tags.sh`가 태그를 추출해 `validate_tag.py`에 파이프하는 것 → `tasks.md`.
+
 ## Nested Delegation Guard
 
 ### Active: `check-nested-delegation.py` (mechanical)
@@ -77,11 +79,15 @@ Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-to
 
 **배경 (2026-07-24 실측):** 서브에이전트의 도구 목록에 `Agent`·`Task`가 **없다**(`Skill`·`Read`·`Write`·`Edit`·`Bash`·`Grep`·`Glob`는 있음). 그런데 `improvement-planner`·`incident-analyst`·`training-note-manager` 3개 정의가 `Agent(subagent_type: "tag-validator")`를 호출하도록 지시하고 있었다 → 런타임 **무음 실패**로 태그 작성이 조용히 누락됐다.
 
-**검사 대상** (서브에이전트가 읽는 파일만): `.claude/agents/*.md` · `description`에 `Do NOT invoke directly`가 있는 `SKILL.md` · `inbox-process/references/{action,reference}-branch.md`.
+**검사 대상** (서브에이전트가 읽는 파일만): `.claude/agents/*.md` · `description`에 `Do NOT invoke directly`가 있는 **스킬 디렉터리 전체**(`SKILL.md` + `references/` 이하 모든 `.md`) · `inbox-process/references/{action,reference}-branch.md`.
 
-**검출:** `subagent_type` / `Agent(` / `Task(` / "{에이전트명} … 위임·호출·기동한다" 패턴. "위임 금지", "호출할 수 없다" 같은 **부정문은 제외**(규칙을 문서화한 줄은 위반이 아님).
+**에이전트명 목록**은 `.claude/agents/*.md`에서 **런타임에 유도**한다. 하드코딩하면 에이전트 추가 시 갱신을 잊어 산문 탐지가 조용히 꺼진다 — 훅이 막으려는 바로 그 무음 실패다.
 
-검증: 위반 샘플 3종 탐지 + 부정문·"메인 스레드가 호출하게 한다" 문장 무시 확인, 현행 하네스 전체 파일 스윕 무경고.
+**검출:** `subagent_type` / `Agent(` / `Task(` / "{에이전트명} … 위임·호출·맡기·기동" + **어미** 패턴. 어미는 `한다`·`하라`·`할 것`·`할 수 있`·`해야`·`하도록`·`하고`·`하거나`·`하여`·`해서`·`한 뒤`와 **줄끝**·**여는 괄호 앞**까지 포함한다(명사형 `…에 위임`으로 끝나는 줄, `…에 위임 (`, `…에 위임하거나`가 실제 누락됐다). "위임 금지/불가", "호출할 수 없다" 같은 **부정문은 제외**(규칙을 문서화한 줄은 위반이 아님).
+
+> **어미 그룹을 선택(`?`)으로 풀지 말 것.** 에이전트명 근처의 모든 `위임`·`호출`이 걸려, 규칙이 **권장하는** 표현("보고에 적어 메인 스레드가 호출하게 한다", "오케스트레이터가 수행한다", "incident-analyst 추가 호출 필요?로 반환")까지 오탐한다 — 실측 8건. `하게`·`하지`·` 불가`·` 필요`는 의도적으로 어미 목록에서 뺐다.
+
+검증: 위반 6종(`Agent(subagent_type:…)`, `…에 위임한다`, `…를 위임할 수 있다`, 명사형 줄끝 `…에 위임`, `…에 위임하거나`, `…에 위임 (`) 탐지 + 부정문·"메인 스레드가 호출하게 한다" 무시 확인, 현행 하네스 전체 파일 스윕 **오탐 0**.
 
 ## Template Check Hook
 

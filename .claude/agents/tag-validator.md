@@ -146,6 +146,6 @@ Read: .claude/skills/tag-normalize/SKILL.md
 ## 협업
 
 - **오케스트레이터(main loop)**: 노트 생성 후 suggest 모드로 호출하여 태그 작성 위임
-- **incident-analyst / improvement-planner**: 노트 생성 후 태그 작성을 이 에이전트에 위임
+- **incident-analyst / improvement-planner / training-note-manager**: 태그를 **직접 작성**하고(`validate_tag.py --json`으로 검증) 스크립트가 못 푸는 문맥 의존 건만 보고에 남긴다. 이 에이전트를 호출할 수 없다 — 서브에이전트는 서브에이전트를 호출하지 못한다. 확정은 메인 스레드가 한다.
 - **PostToolUse hook**: validate 모드로 호출하여 태그 검증
 - 규칙 참조: `.claude/skills/tag-normalize/SKILL.md`

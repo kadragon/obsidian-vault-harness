@@ -137,12 +137,13 @@ Glob으로 네 영역을 각각 스캔:
 2. **태그 확정 — 스크립트 우선**: action 워커가 각 노트 `## 관련`에 기재한 **후보 태그**를 먼저 스크립트로 검사한다. 워커는 tag-validator를 호출할 수 없으므로 이 단계는 오케스트레이터가 수행한다. (reference 갈래는 태그 노트를 만들지 않으므로 해당 없음.)
 
    ```bash
-   printf '%s\n' '#업무/...' '#부서/...' | python .claude/skills/tag-normalize/scripts/validate_tag.py --json -
+   printf '%s\n' '#업무/...' '#부서/...' | python3 .claude/skills/tag-normalize/scripts/validate_tag.py --json -
    ```
 
    - `valid: true` → 그대로 확정. **에이전트 호출하지 않는다.**
-   - `valid: false` → `normalized` 값을 노트에 직접 Edit으로 반영한다.
-   - 스크립트가 판단하지 못하는 문맥 의존 건(예: 팀 직함 확정, 신규 area 신설 여부)만 `tag-validator`(validate 모드)로 **에스컬레이션**한다.
+   - `valid: false` + `normalized ≠ original` → 스크립트가 고쳐준 건(금지 접두어 제거·직급 매핑 등). `normalized` 값을 노트에 직접 Edit으로 반영한다.
+   - `valid: false` + `normalized == original` → 스크립트가 고칠 수 없는 건(미등록 area 등). 후보 태그를 그대로 확정하지 말고 `issues`와 함께 `tag-validator`(validate 모드)로 **에스컬레이션**한다.
+   - 스크립트가 판단하지 못하는 문맥 의존 건(예: 팀 직함 확정, 신규 area 신설 여부)도 동일하게 **에스컬레이션**한다.
 
    > 근거: 규칙표 대조는 `validate_tag.py`로 결정론적으로 끝난다. status-sync·vault-cleanup이 쓰는 "스크립트 우선 → 애매한 것만 에이전트" 패턴과 동일하게 맞춘다.
 3. **품질 게이트**: action 갈래로 생성된 노트를 `note-evaluator` 에이전트로 채점한다(`docs/eval-criteria.md` 루브릭). 워커는 서브에이전트를 호출할 수 없으므로 이 게이트도 오케스트레이터 책임이다. FAIL이면 지적 항목을 수정한 뒤 진행한다 — 자주 걸리는 항목은 MOC 순방향 등록(Wiki Feedback Loop). reference 갈래는 해당 없음.

@@ -75,7 +75,7 @@ python3 .claude/skills/improvement-plan/scripts/new_improvement_path.py "수강�
 
 ### Step 5: 업무 태그 지정
 
-태그는 **직접 작성**한다. 후보를 정한 뒤 `python .claude/skills/tag-normalize/scripts/validate_tag.py --json -` 로 검증하고, `valid: false`면 `normalized` 값을 쓴다. 문맥 의존 건만 보고에 남겨 메인 스레드가 확정하게 한다. 절차 전문은 `improvement-planner` 정의 §태그 작성.
+태그는 **직접 작성**한다. 후보를 정한 뒤 `python3 .claude/skills/tag-normalize/scripts/validate_tag.py --json -` 로 검증하고, `valid: false`이면서 `normalized`가 `original`과 다를 때만 그 `normalized` 값을 쓴다. `normalized`가 `original`과 같으면(미등록 area 등 스크립트가 못 고치는 건) 그 태그를 쓰지 말고 문맥 의존 건과 함께 보고에 남겨 메인 스레드가 확정하게 한다. 절차 전문은 `improvement-planner` 정의 §태그 작성.
 
 > tag-validator 위임 금지 — 서브에이전트는 다른 서브에이전트를 호출할 수 없다(도구 목록에 `Agent` 없음).
 
