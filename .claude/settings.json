@@ -18,6 +18,11 @@
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-template.py\"",
             "statusMessage": "템플릿 검사 중..."
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-nested-delegation.py\"",
+            "statusMessage": "중첩 위임 검사 중..."
           }
         ]
       },

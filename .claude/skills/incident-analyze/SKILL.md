@@ -82,7 +82,7 @@ python3 .claude/skills/incident-analyze/scripts/new_incident_path.py {YYYY-MM-DD
 |------|-----------|
 | frontmatter | `type: change`, `change_type: incident`, `status: open` (date 필드는 Linter가 자동 관리 -- 직접 넣지 않음) |
 | `#` 제목 | `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}` |
-| `## 관련` | 태그는 `tag-validator` 에이전트가 작성 (직접 작성 금지 — AGENTS.md 위임 표). 형식 참고: `#부서/{부서명}/{직급}_{이름}` + `#업무/{영역}/{하위영역}/{메뉴명}` |
+| `## 관련` | 태그는 **직접 작성** (`validate_tag.py --json`으로 검증. tag-validator 위임 금지 — 서브에이전트는 서브에이전트를 호출할 수 없다). 형식: `#부서/{부서명}/{직급}_{이름}` + `#업무/{영역}/{하위영역}/{메뉴명}` |
 | `## 발생 정보` | 발생 일시 (`YYYY-MM-DD HH:mm`) + 기타 맥락 |
 | `## 프로시저` | `{ServiceName/methodName}` |
 | `## 메뉴 위치` | `{메뉴코드}` (텍스트 경로만; 태그는 `## 관련`으로) |
@@ -97,7 +97,7 @@ python3 .claude/skills/incident-analyze/scripts/new_incident_path.py {YYYY-MM-DD
 
 ### Step 5: Wiki 피드백
 
-노트 생성 직후 `_Wiki/contracts.md` Wiki Feedback Payload 규칙에 따라 obsidian-operator에 위임:
+노트 생성 직후 `_Wiki/contracts.md` Wiki Feedback Payload 규칙에 따라 **직접 수행**한다 (Read + Edit). obsidian-operator 위임 금지 — 이 스킬은 서브에이전트(incident-analyst)가 읽으며, **서브에이전트는 다른 서브에이전트를 호출할 수 없다**(도구 목록에 `Agent` 없음). 과거 위임 지시는 실행 불가였다.
 
 1. **log.md append**: `- {오늘날짜} #incident [[{노트 경로}]] — {도메인} 생성`
 2. **MOC 확인**: `_Wiki/topics/{도메인}-운영-MOC.md` 존재 여부 점검
