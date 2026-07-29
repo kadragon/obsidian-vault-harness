@@ -12,6 +12,13 @@ Subcommands:
       List `YYYYMM_*` folders older than `ref - months` (default: today - 12).
       Output shows current + proposed archive path under `90_Archive/`.
 
+  find-bare-wrappers <10_areas_root>
+      List `{area}/{wrapper}/` folders holding no attachment (no non-`.md`
+      file, at most one `.md`) — conventions.md wants those flattened to a
+      single `.md` at the area root. Detection only; nothing is moved.
+      Covers the `check-folder-rules.py` grace-period blind spot where a
+      wrapper created together with its note is never flagged.
+
   apply-reorg <area_root>   (requires --apply, otherwise dry-run)
       Move flat `{area}/YYYYMM_*` folders into `{area}/YYYY/YYYYMM_*`.
       Refuses to overwrite an existing target. Does NOT add tags — frontmatter
@@ -136,6 +143,58 @@ def find_stale(areas_root: Path, ref: date, months: int,
                     "yyyymm": f"{f_yyyy}{f_mm}",
                     "area": area_dir.name,
                 })
+    return out
+
+
+@dataclass
+class BareWrapper:
+    current: str
+    note: str
+    suggested: str
+    area: str
+
+
+def find_bare_wrappers(areas_root: Path) -> list[BareWrapper]:
+    """List `10_Areas/{area}/{wrapper}/` folders that hold no attachment.
+
+    Same verdict as `check-folder-rules.py` Rule 3 (무첨부 래퍼 폴더): a wrapper
+    is bare when it holds no non-`.md` file and at most one `.md`. That hook
+    skips the check for `GRACE_SECONDS` after the folder is created, and the
+    create-folder-and-note-together path always trips that grace — so wrappers
+    born bare are never flagged there. This sweep finds the residue.
+
+    Detection only: `suggested` is the flattened area-root path (`_` prefix
+    dropped per conventions.md), never moved here — moving notes needs user
+    approval (GP#1).
+    """
+    out: list[BareWrapper] = []
+    if not areas_root.exists():
+        return out
+    for area_dir in sorted(p for p in areas_root.iterdir()
+                           if p.is_dir() and not p.name.startswith(".")):
+        for wrapper in sorted(p for p in area_dir.iterdir()
+                              if p.is_dir() and not p.name.startswith(".")):
+            try:
+                # rglob, not iterdir: attachments often sit one level deeper
+                # (`{wrapper}/2026-012/결과물/x.pdf`). Counting direct children
+                # only reported those wrappers as 무첨부 — 실볼트 5건 전부 오탐.
+                files = [p for p in wrapper.rglob("*") if p.is_file()]
+            except OSError:
+                continue
+            if any(p.suffix.lower() != ".md" for p in files):
+                continue
+            notes = [p for p in files if p.suffix == ".md"]
+            if len(notes) > 1:
+                continue
+            note = notes[0] if notes else None
+            flat_name = (_nfc(note.name).lstrip("_") if note
+                         else _nfc(wrapper.name) + ".md")
+            out.append(BareWrapper(
+                current=str(wrapper),
+                note=str(note) if note else "",
+                suggested=str(area_dir / flat_name),
+                area=_nfc(area_dir.name),
+            ))
     return out
 
 
@@ -389,6 +448,12 @@ def main() -> int:
                          help="path to 90_Archive/")
     s_stale.add_argument("--json", action="store_true")
 
+    s_bare = sub.add_parser(
+        "find-bare-wrappers",
+        help="첨부 없는 10_Areas 래퍼 폴더 목록 (탐지 전용, 이동 없음)")
+    s_bare.add_argument("areas_root", type=Path, help="path to 10_Areas/")
+    s_bare.add_argument("--json", action="store_true")
+
     s_closed = sub.add_parser("find-closed")
     s_closed.add_argument("vault_root", type=Path, help="vault root")
     s_closed.add_argument("--log", type=Path, default=None,
@@ -437,6 +502,8 @@ def main() -> int:
         rows = find_stale(args.areas_root.resolve(), ref, args.months,
                           args.archive_root.resolve())
         _emit(rows, args.json)
+    elif args.cmd == "find-bare-wrappers":
+        _emit(find_bare_wrappers(args.areas_root.resolve()), args.json)
     elif args.cmd == "find-closed":
         vault = args.vault_root.resolve()
         log_path = (args.log.resolve() if args.log else vault / "_Wiki" / "log.md")

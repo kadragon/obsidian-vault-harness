@@ -2,9 +2,9 @@
 """Validate and normalize `#업무` / `#부서` tags per tag-normalize skill rules.
 
 Usage:
-    python validate_tag.py '#업무/학사/수업성적/강좌관리'
-    python validate_tag.py --json '#부서/학사관리과/행정주사보_김영희'
-    echo '#업무/...' | python validate_tag.py -
+    python3 validate_tag.py '#업무/학사/수업성적/강좌관리'
+    python3 validate_tag.py --json '#부서/학사관리과/행정주사보_김영희'
+    echo '#업무/...' | python3 validate_tag.py -
 
 Exit codes:
     0 — tag is valid as-is

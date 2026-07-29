@@ -13,7 +13,7 @@ Rules (from inbox-process SKILL.md / docs/conventions.md 10_Areas Depth Rules):
 Uses NFC normalization for filename comparisons (macOS HFS+ stores NFD).
 
 Usage:
-    python new_work_path.py <area> "<title>" [--yyyymm YYYYMM] \\
+    python3 new_work_path.py <area> "<title>" [--yyyymm YYYYMM] \\
         [--vault /path/to/vault] [--doc-number "총무과-7453"] [--json]
 
 Output (default, two lines):

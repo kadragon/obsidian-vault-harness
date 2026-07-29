@@ -80,3 +80,22 @@ for md in Path('.').rglob('*.md'):
         print(f'ORPHAN: {md}')
 "
 ```
+
+### Step 5: `10_Areas/` 무첨부 래퍼 폴더 스윕
+
+Step 1~4와 대상이 다르다 — 여기부터는 `90_Archive/`가 아니라 **`10_Areas/`** 를 본다.
+
+`conventions.md` 규칙: 첨부가 없으면 래퍼 폴더 없이 area 루트에 단일 `.md`. `check-folder-rules.py`가 이 규칙을 훅으로 강제하지만 폴더 생성 직후 60초 유예에 걸려 **최초 생성 경로에서는 검출되지 않는다**. 잔존분은 이 스윕으로 찾는다.
+
+```bash
+python3 .claude/skills/vault-cleanup/scripts/reorg_archive.py \
+  find-bare-wrappers 10_Areas --json
+```
+
+각 항목: `current`(래퍼 폴더) · `note`(안쪽 노트, 빈 폴더면 `""`) · `suggested`(평탄화 대상 경로, `_` 접두어 제거) · `area`.
+
+첨부는 **재귀로** 센다 — `{wrapper}/2026-012/결과물/x.pdf`처럼 하위 폴더에 든 첨부도 첨부로 친다.
+
+**스크립트는 탐지만 한다 — 이동은 없다.** 결과를 사용자에게 목록으로 보여주고 승인을 받은 뒤 `git mv`/`mv`로 개별 평탄화한다 (안전 규칙 #1). 노트를 옮기면 기존 wikilink가 깨질 수 있으므로 이동 전 `rg -F "<노트명>"` 으로 참조를 확인한다.
+
+`note`가 `""`인 항목은 노트 없이 폴더만 남은 잔해다 — 첨부 추가 예정인지 사용자에게 확인한 뒤 비었으면 제거한다.
