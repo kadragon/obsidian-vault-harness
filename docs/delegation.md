@@ -13,8 +13,9 @@ If any trigger applies, delegate first — do not proceed without it.
 | Error log present (PARAMETER_INFO, ERR_INFO, stack trace) | `incident-analyst` | Full error log, menu path, date/time |
 | Improvement/change plan requested | `improvement-planner` | Change description, related menu/procedure |
 | File to process in `01_Inbox/` (action or reference) | `inbox-process` skill | File path or subfolder (`action/`/`reference/`) |
-| Tag rule uncertain | `tag-validator` | Note content, mode: `suggest` or `validate` |
-| Obsidian note create/open requested | `obsidian-operator` | Template name, save path, initial content |
+| Tag 검증 | **1차 `tag-normalize/scripts/validate_tag.py --json`** (결정론적). 스크립트가 못 푸는 문맥 의존 건만 `tag-validator` | Note content, mode: `suggest` or `validate` |
+| Obsidian note create(템플릿)/open/프로퍼티 | `obsidian-operator` | Template name, save path, initial content |
+| 기존 노트 소규모 수정 (수 줄·1~2파일) | **직접 Edit — 위임 금지** (AGENTS.md 위임 비용 규칙 #3) | — |
 | Training note cleanup requested | `training-note-manager` | Training info, note path |
 
 ### Background Gates (non-blocking)
@@ -28,7 +29,7 @@ If any trigger applies, delegate first — do not proceed without it.
 | Syncthing conflict files present | `syncthing-conflict-cleanup` skill | — |
 | `.hwpx` 문서 작업 | `productivity:hwpx` skill | File path, operation type |
 | 개선 완료/결과 안내 공문 초안 작성 | `draft-gongmun` skill | 개선 노트 경로 |
-| Note created by agent | evaluator pass (see `docs/eval-criteria.md`) | note path |
+| Note created by agent (모든 생성 경로) | **메인 스레드가** `note-evaluator` 호출 — 생성자는 자기 노트를 평가하지 않는다 (AGENTS.md 위임 비용 규칙 #5) | note path |
 
 ### Escalation
 

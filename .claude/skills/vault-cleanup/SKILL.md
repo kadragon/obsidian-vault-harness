@@ -50,6 +50,10 @@ python3 ... apply-reorg 90_Archive/areas/{area} --apply --json
 # 4) 개별 오래된 폴더를 90_Archive로 이동 (dry-run)
 python3 .claude/skills/vault-cleanup/scripts/reorg_archive.py \
   apply-archive 10_Areas/{area}/202304_... 90_Archive --apply
+
+# 5) 무첨부 래퍼 폴더 스윕 (탐지 전용 — 이동 없음)
+python3 .claude/skills/vault-cleanup/scripts/reorg_archive.py \
+  find-bare-wrappers 10_Areas --json
 ```
 
 스크립트가 **하지 않는 것**: `#업무/{area}/{category}` 태그 추가 (frontmatter 편집은 포맷 변형이 많아 LLM이 직접 검토·삽입). 이동 후 태그 작업은 별도 단계로 진행한다.

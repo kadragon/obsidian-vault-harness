@@ -1,8 +1,9 @@
 ---
 name: note-evaluator
-description: "갓 생성·수정된 볼트 노트의 품질을 docs/eval-criteria.md 루브릭으로 채점하는 평가 전문가. 생성자(generator)와 분리된 독립 평가 패스 — leniency drift 방지. 다른 에이전트(inbox-action-worker·incident-analyst·improvement-planner·obsidian-operator)가 노트 생성 후 품질 게이트를 위임하거나, 사용자가 '노트 평가', '품질 점검', 'eval'을 요청할 때 사용. 기존 노트 대량 감사가 아니라 방금 만든 노트 1~수개 검증용."
-model: haiku
-# model: haiku -- 고정 rubric(docs/eval-criteria.md) 대조 채점이라 haiku로 충분
+description: "갓 생성·수정된 볼트 노트의 품질을 docs/eval-criteria.md 루브릭으로 채점하는 평가 전문가. 생성자(generator)와 분리된 독립 평가 패스 — leniency drift 방지. 생성 에이전트(inbox-action-worker·incident-analyst·improvement-planner·obsidian-operator)가 노트를 반환한 뒤 **메인 스레드가** 호출하는 품질 게이트이며, 사용자가 '노트 평가', '품질 점검', 'eval'을 요청할 때도 사용한다. 생성자는 이 에이전트를 호출할 수 없다(서브에이전트는 서브에이전트를 호출하지 못함) — AGENTS.md 위임 비용 규칙 #5. 기존 노트 대량 감사가 아니라 방금 만든 노트 1~수개 검증용."
+model: sonnet
+# model: sonnet -- 검증자는 생성자(sonnet 워커) 이상이어야 한다. haiku는 rubric 기계 대조는 통과하나
+# 원문 대비 사실 왜곡·누락 판정에서 약하다(검증자 < 생성자 = 역방향 게이트). 호출 빈도가 낮아 비용 영향 제한적.
 ---
 
 # Note Evaluator — 노트 품질 평가 전문가

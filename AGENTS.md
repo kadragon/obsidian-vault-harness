@@ -42,11 +42,12 @@ Never perform these directly without the designated agent/skill:
 | Error log / incident analysis | `incident-analyst` agent |
 | Improvement plan authoring | `improvement-planner` agent |
 | Vault search / past cases | `vault-navigator` agent |
-| Tag suggestion / validation | `tag-validator` agent |
+| Tag 검증·정규화 | **1차: `tag-normalize/scripts/validate_tag.py --json`** (결정론적) · 문맥 의존 건만 `tag-validator` agent |
 | 노트 품질 평가 (생성 직후 게이트, `docs/eval-criteria.md` 루브릭) | `note-evaluator` agent |
 | `01_Inbox/` document processing (공문·참고자료 모두) | `inbox-process` skill |
 | Training note cleanup | `training-note-manager` agent |
-| Obsidian note create/edit/open | `obsidian-operator` agent |
+| Obsidian note **create**(템플릿 적용)·open·프로퍼티·앱 내 JS | `obsidian-operator` agent |
+| 기존 노트 본문 **소규모 수정**(수 줄·1~2파일) | 직접 Edit — 위임 금지 (§Delegation 비용 규칙) |
 | Vault cleanup (Archive) | `vault-cleanup` skill |
 | Status open→closed sync | `status-sync` skill |
 | Syncthing conflict files | `syncthing-conflict-cleanup` skill |
@@ -58,6 +59,14 @@ Never perform these directly without the designated agent/skill:
 | Domain MOC 노트 생성·등록 | `obsidian-operator` agent |
 
 Full context manifest → `docs/delegation.md`
+
+### 위임 비용 규칙 (2026-07-24 확립)
+
+1. **서브에이전트는 다른 서브에이전트를 호출할 수 없다.** 실측: 서브에이전트 도구 목록에 `Agent`·`Task` 없음(`Skill`·`Read`·`Write`·`Edit`·`Bash`는 있음). 에이전트 정의·서브에이전트 전용 스킬에 "…에 위임한다"라고 쓰면 **런타임 무음 실패**한다. 위임이 꼭 필요하면 **보고에 적어 메인 스레드가 호출**하게 한다. `check-nested-delegation.py` 훅이 기계 검출한다.
+2. **스크립트 우선.** 규칙표 대조·경로 계산·해시 비교처럼 결정론적인 일은 스크립트로 끝내고, **판단이 필요한 잔여분만** 에이전트로 에스컬레이션한다 (status-sync·vault-cleanup·syncthing-cleanup이 이 패턴).
+3. **소규모 편집은 직접.** 수 줄·1~2파일 수정에 풀에이전트 왕복(수만 토큰·수십 초)은 금지. `_Wiki/log.md` 한 줄 append도 직접 Edit.
+4. **검증자 ≥ 생성자.** 품질 게이트 에이전트의 모델은 생성자와 같거나 강해야 한다.
+5. **품질 게이트는 메인 스레드 책임.** 노트를 생성하는 에이전트(`improvement-planner`·`incident-analyst`·`training-note-manager`·`inbox-action-worker`)가 반환하면 **메인 스레드가** `note-evaluator`를 호출해 `docs/eval-criteria.md` 루브릭으로 채점한다. 생성자가 스스로 부를 수 없고(규칙 #1), 불러서도 안 된다(self-preference). FAIL이면 지적 항목을 수정한 뒤 사용자에게 보고한다. 자주 걸리는 항목: MOC 순방향 등록(Wiki Feedback Loop).
 
 ## Search Priority
 
