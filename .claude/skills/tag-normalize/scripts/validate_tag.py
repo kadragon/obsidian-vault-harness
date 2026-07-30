@@ -2,9 +2,9 @@
 """Validate and normalize `#업무` / `#부서` tags per tag-normalize skill rules.
 
 Usage:
-    python validate_tag.py '#업무/학사/수업성적/강좌관리'
-    python validate_tag.py --json '#부서/학사관리과/행정주사보_김영희'
-    echo '#업무/...' | python validate_tag.py -
+    python3 validate_tag.py '#업무/학사/수업성적/강좌관리'
+    python3 validate_tag.py --json '#부서/학사관리과/행정주사보_김영희'
+    echo '#업무/...' | python3 validate_tag.py -
 
 Exit codes:
     0 — tag is valid as-is
@@ -159,8 +159,12 @@ def normalize_buseo(tag: str) -> Result:
         issues.append("removed 퇴직/ middle path")
 
     parts = normalized.split("/")
-    if len(parts) < 3 or parts[0] != "#부서":
-        issues.append("malformed: must be '#부서/{부서명}/{직급}_{이름}'")
+    # conventions.md → `#부서/{단과대학}/{학과}` or a department-only
+    # `#부서/{부서명}` (e.g. `#부서/교무처`). Requiring 3 segments rejected the
+    # documented 2-segment form as malformed.
+    if len(parts) < 2 or parts[0] != "#부서":
+        issues.append("malformed: must be '#부서/{부서명}' or "
+                      "'#부서/{부서명}/{직급}_{이름}'")
         return Result(tag, normalized, False, issues)
 
     # department normalization (position 1 unless 학과 path)
@@ -176,8 +180,10 @@ def normalize_buseo(tag: str) -> Result:
             issues.append(f"부서명 '{dept}' → '{DEPARTMENT_MAP[dept]}'")
             parts[1] = DEPARTMENT_MAP[dept]
 
-    # job-title normalization (last segment: 직급_이름)
-    last = parts[-1]
+    # job-title normalization (last segment: 직급_이름).
+    # Department-only tags have no 직급 segment — parts[-1] is the department
+    # name itself, so skip rather than rewrite it.
+    last = parts[-1] if len(parts) >= 3 else ""
     if "_" in last:
         rank, name = last.split("_", 1)
         if rank in JOB_TITLE_MAP:

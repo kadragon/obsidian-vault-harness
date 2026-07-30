@@ -9,7 +9,7 @@ Rules (from incident-analyze SKILL.md):
          (scanned anywhere under `14_Changes/incident/{YYYY}/`)
 
 Usage:
-    python new_incident_path.py <YYYY-MM-DD> [--vault /path/to/vault]
+    python3 new_incident_path.py <YYYY-MM-DD> [--vault /path/to/vault]
 
 Output: absolute path of the new note on stdout. Does NOT create the file.
 """

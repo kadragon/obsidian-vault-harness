@@ -1,6 +1,6 @@
 ---
 name: tag-validator
-description: "볼트 노트의 #업무 및 #부서 태그를 제안·검증·정규화하는 에이전트. (1) suggest 모드: 노트 내용을 분석하여 적절한 태그를 생성하고 작성, (2) validate 모드: 기존 태그의 규칙 위반을 감지하고 수정. 다른 에이전트가 노트 생성 후 태그 작성을 위임하거나, PostToolUse hook이 검증을 요청할 때 사용."
+description: "볼트 노트의 #업무 및 #부서 태그를 제안·검증·정규화하는 에이전트. (1) suggest 모드: 노트 내용을 분석하여 적절한 태그를 생성하고 작성, (2) validate 모드: 기존 태그의 규칙 위반을 감지하고 수정. 규칙 대조는 `tag-normalize/scripts/validate_tag.py --json`이 1차로 처리하므로, 이 에이전트는 **스크립트가 못 푸는 문맥 의존 건**(팀 직함 확정, 신규 area 신설 여부, 부서·담당자 추정)에 사용한다. 메인 스레드만 호출할 수 있다 — 서브에이전트는 다른 서브에이전트를 호출하지 못한다."
 model: haiku
 # model: haiku -- 고정 규칙표(tag-normalize) 대조 기반 분류/정규화라 haiku로 충분
 ---
@@ -146,6 +146,6 @@ Read: .claude/skills/tag-normalize/SKILL.md
 ## 협업
 
 - **오케스트레이터(main loop)**: 노트 생성 후 suggest 모드로 호출하여 태그 작성 위임
-- **incident-analyst / improvement-planner**: 노트 생성 후 태그 작성을 이 에이전트에 위임
+- **incident-analyst / improvement-planner / training-note-manager**: 태그를 **직접 작성**하고(`validate_tag.py --json`으로 검증) 스크립트가 못 푸는 문맥 의존 건만 보고에 남긴다. 이 에이전트를 호출할 수 없다 — 서브에이전트는 서브에이전트를 호출하지 못한다. 확정은 메인 스레드가 한다.
 - **PostToolUse hook**: validate 모드로 호출하여 태그 검증
 - 규칙 참조: `.claude/skills/tag-normalize/SKILL.md`
