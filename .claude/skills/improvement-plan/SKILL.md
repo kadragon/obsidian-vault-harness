@@ -53,7 +53,7 @@ python3 .claude/skills/improvement-plan/scripts/new_improvement_path.py "수강�
 
 | 섹션 | 채우는 내용 |
 |------|-----------|
-| frontmatter | `type: change`, `change_type: improvement`, `status: open` (date 필드는 Linter가 자동 관리 -- 직접 넣지 않음) |
+| frontmatter | `type: change`, `change_type: improvement`, `status: open` (`date created`/`date modified`는 Linter가 자동 관리 -- 직접 넣지 않음). 공문에서 비롯된 개선이면 `doc_date: YYYY-MM-DD`(공문 시행일), 접수일이 다를 때만 `recv_date` 추가 -- `99_Template/_메타데이터 규칙.md` |
 | `#` 제목 | 개선 제목 |
 | `## 🏷 Todo` | `- [ ] {구체적 작업 항목} 📅 {YYYY-MM-DD} ➕ {오늘 날짜}` |
 | `## 📑 메뉴` | `{메뉴코드} / #업무/{영역}/{하위영역}/{메뉴명}` |
