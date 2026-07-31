@@ -34,8 +34,12 @@ All notes follow the template frontmatter:
 type: work | change | project | training | routine | reference
 status: open | in-progress | hold | closed | active   # closed = terminal (status-sync 스킬이 기록). 'done'/'resolved'는 비표준 — 사용 금지
 change_type: incident | improvement   # only when type: change
+doc_date: YYYY-MM-DD                  # 선택 — 공문 시행일 (공문 유래 노트만)
+recv_date: YYYY-MM-DD                 # 선택 — 접수일, doc_date와 다를 때만
 ---
 ```
+
+`doc_date`는 **`#` 제목의 날짜 프리픽스를 대체한다** (2026-07-30). 제목엔 날짜를 붙이지 않는다 — 폐기 근거·전체 필드 규칙은 SSOT인 `99_Template/_메타데이터 규칙.md`. 형식(`YYYY-MM-DD`)은 `check-template.py` Check 2c가 검사한다.
 
 ## Tag System
 

@@ -80,7 +80,7 @@ python3 .claude/skills/incident-analyze/scripts/new_incident_path.py {YYYY-MM-DD
 
 | 섹션 | 채우는 내용 |
 |------|-----------|
-| frontmatter | `type: change`, `change_type: incident`, `status: open` (date 필드는 Linter가 자동 관리 -- 직접 넣지 않음) |
+| frontmatter | `type: change`, `change_type: incident`, `status: open` (`date created`/`date modified`는 Linter가 자동 관리 -- 직접 넣지 않음). 공문으로 접수된 장애면 `doc_date: YYYY-MM-DD`(공문 시행일), 접수일이 다를 때만 `recv_date` 추가 -- `99_Template/_메타데이터 규칙.md` |
 | `#` 제목 | `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}` |
 | `## 관련` | 태그는 **직접 작성** (`validate_tag.py --json`으로 검증. tag-validator 위임 금지 — 서브에이전트는 서브에이전트를 호출할 수 없다). 형식: `#부서/{부서명}/{직급}_{이름}` + `#업무/{영역}/{하위영역}/{메뉴명}` |
 | `## 발생 정보` | 발생 일시 (`YYYY-MM-DD HH:mm`) + 기타 맥락 |
