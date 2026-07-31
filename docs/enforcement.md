@@ -101,6 +101,10 @@ Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-to
 - Empty wikilink placeholder `[[ ]]` anywhere in file (fenced code blocks excluded) → warn (GP#2: `## 관련 문서` 등 content-conditional 섹션은 근거 없으면 섹션째 생략 — 템플릿 섹션을 기계적으로 다 채우지 말 것; 2026-07)
 - Missing `type:` frontmatter in note-bearing folders (`10_Areas`, `12_Projects`, `11_Routines`, `14_Changes`, `20_Training`) → warn (GP#2: use template from `99_Template/`)
 - Missing `status:` OR non-enum value in note-bearing folders → warn. Allowed: `open|in-progress|hold|closed|active` (`_메타데이터 규칙.md` 5개 고정). Catches the `done`/`resolved`/`pending-action` drift that left status-sync blind (2026-06).
+- **Check 2c — `doc_date`/`recv_date` 형식:** 있으면 `YYYY-MM-DD`여야 하고, 아니면 warn. 부재는 위반 아님(공문 유래 노트만 쓰는 선택 필드). 공문 표기 `2026. 7. 20.`를 그대로 넣어 정렬·Dataview가 깨지는 것을 막는다. 제목 날짜 프리픽스 규칙(폐기, 2026-07-30)을 대체한 필드 (2026-07-30).
+- **Check 4 — 필수 섹션 앵커 (`10_Areas/`만):** `## 관련`·`## 할 일` 중 하나라도 없으면 warn. 선행 기호(이모지·ZWJ·variation selector)를 떼고 한글 본문으로 비교하므로 `## 🙋‍♂️ 관련`·`## 🛠 해결 방안`이 그대로 통과한다. **템플릿 문자열 일치나 5섹션 전부 존재는 검사하지 않는다** (2026-07-30).
+  - 근거(실측 202건): `## 🙋‍♂️ 관련` 116건·`## 🛠 해결 방안` 115건으로 이모지 별칭이 다수 관행이고, 템플릿 5섹션 외 자유 섹션 보유 노트가 136건이다. "템플릿 그대로"를 강요하면 오탐 145건(72%)이 된다. 앵커 2개만 보면 오탐 22건(11%, 전부 앵커 없는 구형 분석 노트)이고 훅은 신규 write에만 발동한다.
+  - 이 검사가 없어서 지불한 비용: 구조 이탈 판정을 `note-evaluator`(LLM)가 대신 수행 → 노트 1건당 약 101k 토큰. 게다가 템플릿 문자 그대로 채점해 다수 관행을 위반으로 오판했다.
 
 Skips: `99_Template`, `docs`, `.claude`, `90_Archive`, `_Wiki`, `_Sources`, `01_Inbox`, `_work`, `backlog.md`, `tasks.md`, `AGENTS.md`, `CLAUDE.md`. Warning-only, exit 0.
 
@@ -136,6 +140,8 @@ All three layers are now active. Promotion log:
 10. ✅ 의미 수준 태그 오류(직급·부서명 매핑)가 생성 워크플로 밖 쓰기에서 통과하던 문제 → `validate-tags.sh`가 태그를 추출해 `validate_tag.py - --json`에 파이프하도록 교체, 훅의 중복 정규식 판정은 삭제 (2026-07-29). 규칙 단일 진실 원천 = `validate_tag.py`.
 11. ✅ `check-folder-rules.py` Rule 3의 60초 유예로 최초 생성 경로의 무첨부 래퍼가 검출되지 않던 문제 → `reorg_archive.py find-bare-wrappers` 스윕 추가 (2026-07-29). 훅은 실시간 방어, 스윕은 잔존분 일괄 검출.
 12. ✅ Rule 3이 첨부를 직속 자식만 세어 하위 폴더에 첨부를 둔 래퍼를 "무첨부"로 오탐하던 문제 → 훅·스윕 양쪽 `rglob` 재귀 카운트 (2026-07-29). 스윕 도입 시 훅과의 판정 차등 테스트로 발견 — 실볼트 오탐 5건이 0건이 됐다. 판정 로직이 두 곳에 있으면 이런 차등 테스트가 가능하다는 게 부수 효과.
+13. ✅ 노트 구조 검사를 기계 검사 없이 `note-evaluator`(LLM)에 맡겨 노트 1건당 약 101k 토큰을 쓰면서도, 템플릿 문자 그대로 채점해 다수 관행(`## 🙋‍♂️ 관련` 116건·`## 🛠 해결 방안` 115건)을 위반으로 오판하던 문제 → `check-template.py` Check 4(필수 앵커 2개, 별칭·자유 섹션 허용) + `eval-criteria.md` Template Adherence 기준 재정의 + `inbox-process` note-evaluator 조건부 호출 (2026-07-30). **교훈: `eval-criteria.md`의 5개 기준은 전부 "How to test"가 기계적이다 — 기준을 새로 쓸 때 훅이 없으면 그 비용은 매 노트마다 LLM 토큰으로 청구된다.**
+14. ✅ `#` 제목 날짜 프리픽스 규칙이 준수율 64/202(32%)로 관행이 아니었고, 기록하는 값이 **노트 작성일**이라 업무 발생 시점을 못 담고 Linter `date created`와 의미가 겹치던 문제 → 프리픽스 규칙 폐기 + `doc_date`(공문 시행일)·`recv_date`(다를 때만) frontmatter 신설, `check-template.py` Check 2c로 `YYYY-MM-DD` 형식 기계 검사 (2026-07-30). 기존 64건은 GP#1로 불변 — 신규 노트에만 적용. 반영: `_메타데이터 규칙.md`(SSOT)·`conventions.md`·`eval-criteria.md`·`action-branch.md`·`incident-analyze`·`improvement-plan`.
 
 ## Generator Config (not version-controlled)
 
