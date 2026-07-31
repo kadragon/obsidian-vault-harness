@@ -101,10 +101,15 @@ Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-to
 - Empty wikilink placeholder `[[ ]]` anywhere in file (fenced code blocks excluded) → warn (GP#2: `## 관련 문서` 등 content-conditional 섹션은 근거 없으면 섹션째 생략 — 템플릿 섹션을 기계적으로 다 채우지 말 것; 2026-07)
 - Missing `type:` frontmatter in note-bearing folders (`10_Areas`, `12_Projects`, `11_Routines`, `14_Changes`, `20_Training`) → warn (GP#2: use template from `99_Template/`)
 - Missing `status:` OR non-enum value in note-bearing folders → warn. Allowed: `open|in-progress|hold|closed|active` (`_메타데이터 규칙.md` 5개 고정). Catches the `done`/`resolved`/`pending-action` drift that left status-sync blind (2026-06).
-- **Check 2c — `doc_date`/`recv_date` 형식:** 있으면 `YYYY-MM-DD`여야 하고, 아니면 warn. 부재는 위반 아님(공문 유래 노트만 쓰는 선택 필드). 공문 표기 `2026. 7. 20.`를 그대로 넣어 정렬·Dataview가 깨지는 것을 막는다. 제목 날짜 프리픽스 규칙(폐기, 2026-07-30)을 대체한 필드 (2026-07-30).
-- **Check 4 — 필수 섹션 앵커 (`10_Areas/`만):** `## 관련`·`## 할 일` 중 하나라도 없으면 warn. 선행 기호(이모지·ZWJ·variation selector)를 떼고 한글 본문으로 비교하므로 `## 🙋‍♂️ 관련`·`## 🛠 해결 방안`이 그대로 통과한다. **템플릿 문자열 일치나 5섹션 전부 존재는 검사하지 않는다** (2026-07-30).
-  - 근거(실측 202건): `## 🙋‍♂️ 관련` 116건·`## 🛠 해결 방안` 115건으로 이모지 별칭이 다수 관행이고, 템플릿 5섹션 외 자유 섹션 보유 노트가 136건이다. "템플릿 그대로"를 강요하면 오탐 145건(72%)이 된다. 앵커 2개만 보면 오탐 22건(11%, 전부 앵커 없는 구형 분석 노트)이고 훅은 신규 write에만 발동한다.
+- **Check 2c — `doc_date`/`recv_date` 형식:** 값이 **있으면** `YYYY-MM-DD`여야 하고, 아니면 warn. 부재도 빈 값(`doc_date:`)도 위반 아님(공문 유래 노트만 쓰는 선택 필드). 공문 표기 `2026. 7. 20.`를 그대로 넣어 정렬·Dataview가 깨지는 것을 막는다. 제목 날짜 프리픽스 규칙(폐기, 2026-07-30)을 대체한 필드 (2026-07-30). 값 추출은 **한 줄 앵커**(`^{fld}:[ \t]*(\S.*?)[ \t]*$`)여야 한다 — `\s*`를 쓰면 개행을 먹어 빈 값일 때 다음 frontmatter 키를 값으로 오인하고, 공백 포함 값(`2026. 7. 20.`)도 앞토막만 잘라 경고문이 틀린다.
+- **Check 3 — change 노트 `change_type`:** `14_Changes/incident/`는 `change_type: incident`, `14_Changes/improvement/`는 `change_type: improvement` 필요, 없으면 warn. improvement 갈래는 2026-07-30 추가 — incident만 검사하던 동안 `eval-criteria.md` 기준 1의 "change 노트는 `change_type` 확인"이 개선 노트에서 기계적으로 검증되지 않았다(레거시 미보유 57/97건, 아래 백로그).
+- **Check 4 — 필수 섹션 앵커 (`10_Areas/` + `type: work`만):** `## 관련`·`## 할 일` 중 하나라도 없으면 warn. **템플릿 문자열 일치나 5섹션 전부 존재는 검사하지 않는다** (2026-07-30). 별칭 허용은 **두 가지 서로 다른 장치**다 — 혼동하지 말 것:
+  1. 비교 전 **선행 기호(이모지·ZWJ·variation selector·구두점)를 제거**한다 → `## 🙋‍♂️ 관련` = `## 관련`.
+  2. `할 일` 앵커만 **동의어 `해결 방안`을 추가로 허용**한다 → `## 🛠 해결 방안`·`## 해결 방안` 모두 통과. `관련` 앵커엔 동의어가 없다.
+  - `type: work` 한정(2026-07-30 리뷰 반영): `10_Areas/` 아래에도 `type: reference` 분석 노트가 있고 업무사안 템플릿을 쓰지 않는 것이 정상이다 — 무한정 적용 시 해당 종류 2/2건 전수 오탐이었다.
+  - 근거(실측 202건): `## 🙋‍♂️ 관련` 116건·`## 🛠 해결 방안` 115건으로 이모지 별칭이 다수 관행이고, 템플릿 5섹션 외 자유 섹션 보유 노트가 136건이다. "템플릿 그대로"를 강요하면 오탐 145건(72%)이 된다. 앵커 2개 + `type: work` 한정이면 잔여 20/200건(10%)이고 **전부 앵커 없는 구형 분석 노트**다. 훅은 `Write|Edit` 양쪽에 발동하므로 status-sync 등이 구형 노트를 편집하면 이 경고가 다시 뜬다 — GP#1상 구조 수정은 금지이므로 **경고를 무시하고 백로그로 넘기는 것이 정상 동작**이다.
   - 이 검사가 없어서 지불한 비용: 구조 이탈 판정을 `note-evaluator`(LLM)가 대신 수행 → 노트 1건당 약 101k 토큰. 게다가 템플릿 문자 그대로 채점해 다수 관행을 위반으로 오판했다.
+- **Check 5 — `#업무/` 태그 존재 (`10_Areas/` + `type: work`만):** 본문에 `#업무/`가 하나도 없으면 warn (2026-07-30). `validate-tags.sh`는 **발견한 태그의 형식**만 검증하므로 태그가 전무한 노트는 무음 통과한다 — `eval-criteria.md` 기준 2가 "tag missing entirely"를 1점으로 규정하는데도 기계 검사가 비어 있던 구멍이다. `#부서/`는 검사하지 않는다: 실측 미보유 56/201(28%)로 관행이 아니어서 기계화하면 오탐이 된다 — 평가자 판단으로 남긴다.
 
 Skips: `99_Template`, `docs`, `.claude`, `90_Archive`, `_Wiki`, `_Sources`, `01_Inbox`, `_work`, `backlog.md`, `tasks.md`, `AGENTS.md`, `CLAUDE.md`. Warning-only, exit 0.
 
@@ -142,6 +147,7 @@ All three layers are now active. Promotion log:
 12. ✅ Rule 3이 첨부를 직속 자식만 세어 하위 폴더에 첨부를 둔 래퍼를 "무첨부"로 오탐하던 문제 → 훅·스윕 양쪽 `rglob` 재귀 카운트 (2026-07-29). 스윕 도입 시 훅과의 판정 차등 테스트로 발견 — 실볼트 오탐 5건이 0건이 됐다. 판정 로직이 두 곳에 있으면 이런 차등 테스트가 가능하다는 게 부수 효과.
 13. ✅ 노트 구조 검사를 기계 검사 없이 `note-evaluator`(LLM)에 맡겨 노트 1건당 약 101k 토큰을 쓰면서도, 템플릿 문자 그대로 채점해 다수 관행(`## 🙋‍♂️ 관련` 116건·`## 🛠 해결 방안` 115건)을 위반으로 오판하던 문제 → `check-template.py` Check 4(필수 앵커 2개, 별칭·자유 섹션 허용) + `eval-criteria.md` Template Adherence 기준 재정의 + `inbox-process` note-evaluator 조건부 호출 (2026-07-30). **교훈: `eval-criteria.md`의 5개 기준은 전부 "How to test"가 기계적이다 — 기준을 새로 쓸 때 훅이 없으면 그 비용은 매 노트마다 LLM 토큰으로 청구된다.**
 14. ✅ `#` 제목 날짜 프리픽스 규칙이 준수율 64/202(32%)로 관행이 아니었고, 기록하는 값이 **노트 작성일**이라 업무 발생 시점을 못 담고 Linter `date created`와 의미가 겹치던 문제 → 프리픽스 규칙 폐기 + `doc_date`(공문 시행일)·`recv_date`(다를 때만) frontmatter 신설, `check-template.py` Check 2c로 `YYYY-MM-DD` 형식 기계 검사 (2026-07-30). 기존 64건은 GP#1로 불변 — 신규 노트에만 적용. 반영: `_메타데이터 규칙.md`(SSOT)·`conventions.md`·`eval-criteria.md`·`action-branch.md`·`incident-analyze`·`improvement-plan`.
+15. ✅ #13이 만든 "훅 무음 = 기준 1~4 통과" 규칙에 **기계 검사가 비어 있는 구멍 3개**가 남아 있던 문제 → (1) Check 3을 `14_Changes/improvement/`로 확장(개선 노트 `change_type` 무검사였음), (2) Check 5(`#업무/` 태그 존재) 신설 — `validate-tags.sh`는 태그가 전무하면 무음이다, (3) 기준 5(Wiki Feedback Loop)를 `moc_gate.py` 실행으로 `inbox-process` 3-a 기계 검사에 편입. 더불어 Check 2c 빈 값 오탐(다음 키를 값으로 오인)·Check 4 `type: reference` 전수 오탐 수정 (2026-07-30, PR #18 리뷰). **교훈: "훅이 검사한다"를 근거로 LLM 게이트를 걷어낼 때는 훅이 *무엇을 검사하지 않는지*를 같이 실측해야 한다 — 형식 검증기는 대개 "값이 아예 없는 경우"에 무음이다.**
 
 ## Generator Config (not version-controlled)
 

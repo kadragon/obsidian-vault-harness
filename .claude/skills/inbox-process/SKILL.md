@@ -162,13 +162,19 @@ Glob으로 네 영역을 각각 스캔:
    > 근거: 규칙표 대조는 `validate_tag.py`로 결정론적으로 끝난다. status-sync·vault-cleanup이 쓰는 "스크립트 우선 → 애매한 것만 에이전트" 패턴과 동일하게 맞춘다.
 3. **품질 게이트 — 기계 검사 먼저, `note-evaluator`는 조건부** (2026-07-30 개정). 워커는 서브에이전트를 호출할 수 없으므로 이 게이트는 오케스트레이터 책임이다. reference 갈래는 해당 없음.
 
-   **3-a. 기계 검사 (항상)**: `check-template.py`·`validate-tags.sh`는 워커의 Write에 PostToolUse로 이미 발동했다. 워커 반환 시점에 훅 경고가 없었으면 `docs/eval-criteria.md` 기준 1~4는 통과다. 확실치 않으면 직접 재실행한다:
+   **3-a. 기계 검사 (항상)**: `check-template.py`·`validate-tags.sh`는 워커의 Write에 PostToolUse로 이미 발동했다. 확실치 않으면 **절대경로로** 직접 재실행한다 (상대경로면 훅이 파일을 못 찾아 무음 종료한다):
 
    ```bash
    printf '{"tool_input":{"file_path":"<노트 절대경로>"}}' | python .claude/hooks/check-template.py
+   printf '{"tool_input":{"file_path":"<노트 절대경로>"}}' | bash .claude/hooks/validate-tags.sh
+   python3 .claude/skills/vault-cleanup/scripts/moc_gate.py . --json   # 기준 5 임계 검출
    ```
 
-   무출력 = 통과. 경고가 나오면 지적 항목을 직접 Edit으로 수정한다.
+   앞 둘이 무출력 = `docs/eval-criteria.md` 기준 1·3·4 + 기준 2의 형식·`#업무/` 존재분 통과. 경고가 나오면 지적 항목을 직접 Edit으로 수정한다.
+
+   **훅 무음이 통과가 아닌 잔여분 2개는 여기서 직접 확인한다** (`eval-criteria.md` §기계 검사 커버리지 표):
+   - `#부서/` 태그 부재 — 어느 훅도 잡지 않는다(관행 아님, 실측 28% 미보유). 담당 부서가 특정되는 건이면 채운다.
+   - **기준 5 MOC 순방향 등록** — `moc_gate.py`가 이번 노트의 도메인을 임계 도달로 보고했으면, 해당 MOC가 있는지, 그리고 **노트가 MOC를 링크하고 MOC가 노트를 등록했는지** grep으로 확인한다. 없으면 `_Wiki/index.md`·`_Wiki/log.md` 등록까지 마친 뒤 진행한다. `note-evaluator` 호출 여부와 무관하게 **항상** 돌린다 — 원본 삭제(4단계) 전에 끝내야 한다.
 
    **3-b. `note-evaluator` 호출 (아래 중 하나라도 해당할 때만)**:
    - 3-a 기계 검사 경고가 남아 있고 수정 방향이 자명하지 않다
@@ -177,7 +183,7 @@ Glob으로 네 영역을 각각 스캔:
    - `## 열린 질문`이 남아 있다 (Grill 2차로 해소되지 않은 건)
    - 회차성 반복 공문에서 **선례를 참조해 작성**했다 → stale 값(공문번호·기한·회차) 혼입 검증
 
-   해당 없으면 **호출하지 않는다.** 실측 약 100k 토큰이며, 기준 1~4는 훅이 이미 검사했다.
+   해당 없으면 **호출하지 않는다.** 실측 약 100k 토큰이며, 훅이 검사하는 범위는 3-a에서 이미 끝났고 훅이 못 잡는 잔여분도 3-a에서 직접 확인했다.
 
    호출할 때는 스코프를 **원본 대조 사실검증 + Wiki Feedback Loop**로 한정하고, 구조·태그 재채점을 금지하며, 워커가 반환한 추출 PDF 경로를 넘겨 **재추출을 막는다**. 근거: `docs/eval-criteria.md` → §기계 검사 커버리지.
 
