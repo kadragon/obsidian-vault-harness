@@ -80,6 +80,8 @@ Full context manifest → `docs/delegation.md`
 
 Vault search order: `qmd` (semantic) → `rg`/grep (keyword) → `_Wiki/index.md` (topic map). Delegate to `vault-navigator` when scope is unclear or requires semantic matching. `qmd` index auto-refreshes via PostToolUse hook after every write.
 
+**`rg`와 `Grep` 툴은 `--no-ignore` 없이는 노트를 못 본다** — `.gitignore`가 `*`로 전부 무시하고 하네스 파일만 화이트리스트하므로 볼트 노트는 비추적이고, `.gitignore`를 따르는 `rg`·Claude Code `Grep` 툴은 0건을 반환한다. 실측(2026-07-31): `rg -l 'type: change' 14_Changes/improvement` → 0건, `--no-ignore` 추가 → 97건. **결과 0건을 "없음"으로 오독하지 말 것.** 순수 `grep`은 `.gitignore`와 무관하다(`--no-ignore` 옵션 자체가 없음 — 붙이면 exit 2). 파일 경로에 한글·공백이 많아 Bash 단어 분할이 깨지므로 대량 스캔은 python/PowerShell로 한다.
+
 ## Branching
 
 Direct-to-main: allowed — notes-only vault; no feature branches required.
