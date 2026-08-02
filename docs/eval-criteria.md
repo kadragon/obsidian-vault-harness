@@ -30,21 +30,23 @@ Required frontmatter by note kind (per `99_Template/_메타데이터 규칙.md` 
 
 `#업무/` and `#부서/` tags follow `docs/conventions.md` → tag rules.
 
+**선택 필드 `#부서/`** (2026-08-02 강등) — 실측 미보유 56/201(28%)로 관행이 아니다. 있으면 `validate-tags.sh`가 형식을 검증하지만 **부재는 감점 아님**. 아래 채점표의 "tag missing entirely"는 `#업무/` 기준이다.
+
 | Score | Description |
 |-------|-------------|
 | 5 | Tags pass `validate-tags.sh` and are semantically correct |
 | 3 | Mechanical form correct; area assignment questionable |
-| 1 | Forbidden prefix, unknown area, or tag missing entirely |
+| 1 | Forbidden prefix, unknown area, or `#업무/` missing entirely |
 
 **How to test:** 훅에 노트 **절대경로**를 PostToolUse JSON으로 먹인다 — `printf '{"tool_input":{"file_path":"<절대경로>"}}' | bash .claude/hooks/validate-tags.sh` (인자 없이 호출하거나 상대경로면 stdin이 비어 무음 통과한다). 그 다음 area 배정이 노트 내용과 맞는지 판단한다.
 
-> **훅 무음 ≠ 태그 존재.** `validate-tags.sh`는 **발견한 태그의 형식**만 검증하므로 태그가 하나도 없으면 무음이다. `#업무/` 부재는 `check-template.py` Check 5가 별도로 잡는다. `#부서/` 부재는 **어느 훅도 잡지 않는다** — 실측 미보유 56/201(28%)로 관행이 아니라 기계화하지 않았다. 이 한 가지는 평가자 판단으로 남는다.
+> **훅 무음 ≠ 태그 존재.** `validate-tags.sh`는 **발견한 태그의 형식**만 검증하므로 태그가 하나도 없으면 무음이다. `#업무/` 부재는 `check-template.py` Check 5가 별도로 잡는다(단 `20_Training/`은 검사 범위 밖 — 미보유 71%로 관행이 아니라 2026-08-02 제외됐다. 교육 노트의 `#업무/` 부재만 평가자 판단으로 남는다). `#부서/` 부재는 **어느 훅도 잡지 않으며 감점 대상도 아니다** — 선택 필드로 강등됐다(2026-08-02).
 
 ### 3. Template Adherence (25%)
 
 **이 기준은 `check-template.py` Check 4가 기계적으로 판정한다. 평가자는 훅 결과를 신뢰하고 재판정하지 않는다** (2026-07-30). 훅 경고가 없으면 5점이다.
 
-**적용 범위: `10_Areas/`의 `type: work` 노트뿐이다.** `type: reference` 등 다른 종류는 업무사안 템플릿을 쓰지 않는 것이 정상이라 검사하지 않는다.
+**적용 범위: `10_Areas/`의 `type: work` 노트뿐이며, `10_Areas/과업심의/`는 제외한다.** `type: reference` 등 다른 종류는 업무사안 템플릿을 쓰지 않는 것이 정상이라 검사하지 않는다. 과업심의 폴더는 회차마다 재생산되는 **심의 서식**(`사업 개요`/`과업내용 적정성` 구조)이라 업무사안 앵커가 의미 없다 — 평가자도 이 경로에 앵커 부재를 지적하지 않는다 (2026-08-02).
 
 채점 대상은 **필수 앵커 2개의 존재**뿐이다. 허용 표기는 **두 장치**가 만든다 — (1) 비교 전 선행 기호(이모지·ZWJ·variation selector·구두점) 제거, (2) `할 일`만 동의어 `해결 방안` 추가 허용:
 
@@ -107,8 +109,8 @@ Below threshold → findings become fixes in same session before note is committ
 | 기준 | 기계 검사 | 기계가 **못 잡는** 잔여분 |
 |------|-----------|-----------|
 | 1 Frontmatter | `check-template.py` Check 2·2b·2c·3 (Check 3은 incident·improvement 양쪽) | — |
-| 2 Tag | `validate-tags.sh` → `validate_tag.py` (형식) + `check-template.py` Check 5 (`#업무/` **구체** 태그 존재 — `10_Areas`+`type: work`·`14_Changes`·`20_Training`) | `#부서/` 부재(관행 아님, 28%), area 배정의 문맥 적합성 |
-| 3 Template Adherence | `check-template.py` Check 1b·4 — **Check 4는 `10_Areas/`+`type: work` 전용** | **`14_Changes/`·`20_Training/`·`12_Projects/`·`11_Routines/` 노트의 섹션 구조는 기계 검사가 없다** — 해당 종류는 평가자가 직접 본다 |
+| 2 Tag | `validate-tags.sh` → `validate_tag.py` (형식) + `check-template.py` Check 5 (`#업무/` **구체** 태그 존재 — `10_Areas`+`type: work`·`14_Changes`) | `20_Training/`의 `#업무/` 부재(검사 제외, 미보유 71%), area 배정의 문맥 적합성. `#부서/` 부재는 **감점 대상 아님**(선택 필드) |
+| 3 Template Adherence | `check-template.py` Check 1b·4 — **Check 4는 `10_Areas/`+`type: work` 전용, `10_Areas/과업심의/` 제외** | **`14_Changes/`·`20_Training/`·`12_Projects/`·`11_Routines/` 노트의 섹션 구조는 기계 검사가 없다** — 해당 종류는 평가자가 직접 본다. 과업심의 서식은 앵커 검사 대상 아님 |
 | 4 Wikilink Style | `check-template.py` Check 1 | — |
 | 5 Wiki Feedback Loop | `moc_gate.py` (임계 도달 도메인 검출) | MOC **순방향 등록** 여부 — 노트가 MOC를 링크했는지는 grep |
 

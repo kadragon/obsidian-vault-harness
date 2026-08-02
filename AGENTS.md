@@ -72,7 +72,7 @@ Full context manifest → `docs/delegation.md`
 4. **검증자 ≥ 생성자.** 품질 게이트 에이전트의 모델은 생성자와 같거나 강해야 한다.
 5. **품질 게이트는 메인 스레드 책임 — 단 기계 검사가 1차, `note-evaluator`는 조건부** (2026-07-30 개정). 노트 생성 에이전트(`improvement-planner`·`incident-analyst`·`training-note-manager`·`inbox-action-worker`)가 반환하면 메인 스레드가 게이트를 돌린다. 생성자가 스스로 부를 수 없고(규칙 #1), 불러서도 안 된다(self-preference).
 
-   `docs/eval-criteria.md` 5개 기준 대부분은 **`check-template.py`·`validate-tags.sh`·`moc_gate.py`가 기계적으로 판정**한다. 훅 경고가 없는데 `note-evaluator`를 부르면 훅이 한 계산을 LLM으로 재실행하는 것이다(실측 노트 1건당 약 100k 토큰). **단 훅 무음 = 전면 통과가 아니다** — 형식 검증기는 값이 아예 없으면 무음이고 검사 범위도 노트 종류로 좁혀져 있으므로, `#부서/` 부재·area 배정 적합성·MOC 순방향 등록·**`10_Areas` 업무사안이 아닌 노트(incident·improvement·training)의 섹션 구조**는 메인 스레드가 직접 확인한다(커버리지 표 → `docs/eval-criteria.md` §기계 검사 커버리지). 그 뒤 게이트가 잡아야 할 나머지는 **원본 대조 사실검증**(공문번호·기한·담당자·회차) 하나다.
+   `docs/eval-criteria.md` 5개 기준 대부분은 **`check-template.py`·`validate-tags.sh`·`moc_gate.py`가 기계적으로 판정**한다. 훅 경고가 없는데 `note-evaluator`를 부르면 훅이 한 계산을 LLM으로 재실행하는 것이다(실측 노트 1건당 약 100k 토큰). **단 훅 무음 = 전면 통과가 아니다** — 형식 검증기는 값이 아예 없으면 무음이고 검사 범위도 노트 종류로 좁혀져 있으므로, area 배정 적합성·MOC 순방향 등록·`20_Training/`의 `#업무/` 부재·**`10_Areas` 업무사안이 아닌 노트(incident·improvement·training)의 섹션 구조**는 메인 스레드가 직접 확인한다(커버리지 표 → `docs/eval-criteria.md` §기계 검사 커버리지). 그 뒤 게이트가 잡아야 할 나머지는 **원본 대조 사실검증**(공문번호·기한·담당자·회차) 하나다.
 
    호출 조건·스코프 한정은 `inbox-process/SKILL.md` 5단계-3. 호출 시에도 구조·태그 재채점 금지, 원본 재추출 금지(워커가 반환한 추출 경로 재사용).
 
