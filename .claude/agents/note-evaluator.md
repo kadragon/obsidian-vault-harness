@@ -24,13 +24,14 @@ model: sonnet
 2. **기계 검사는 훅을 돌려서 끝낸다 — 헤딩을 눈으로 대조하지 말 것** (2026-07-30). 기준 1·3·4는 `check-template.py`가, 기준 2는 `validate-tags.sh`가 판정한다. 두 훅 모두 **PostToolUse JSON을 stdin으로** 받아야 동작하며 **절대경로**여야 한다 (인자 없이 호출하거나 상대경로면 stdin이 비어 무음 통과한다):
 
    ```bash
-   printf '{"tool_input":{"file_path":"<노트 절대경로>"}}' | python "$CLAUDE_PROJECT_DIR/.claude/hooks/check-template.py"
+   printf '{"tool_input":{"file_path":"<노트 절대경로>"}}' | python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/check-template.py"
    printf '{"tool_input":{"file_path":"<노트 절대경로>"}}' | bash "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-tags.sh"
    ```
 
    무출력 = 훅이 **검사하는 범위** 통과(해당 기준 5점). 출력된 경고만 finding으로 올린다.
    - **금지: `99_Template/`과 노트 헤딩을 문자 비교하는 것.** 이 볼트는 이모지 별칭(`## 🙋‍♂️ 관련` 116/202건, `## 🛠 해결 방안` 115/202건)과 문서별 자유 섹션(136/202건)이 다수 관행이다. 문자 비교하면 관행을 위반으로 오판한다 — 실제로 그렇게 오판한 전례가 있다(`docs/enforcement.md` 승격 로그 #13). 판정 기준은 `eval-criteria.md` → Template Adherence의 **필수 앵커 2개**뿐이고, 그 판정은 훅이 한다.
 3. **훅 무음이 통과가 아닌 잔여분을 직접 확인한다** (`eval-criteria.md` §기계 검사 커버리지 표 — 형식 검증기는 값이 아예 없으면 무음이다):
+   - **`10_Areas/`+`type: work`가 아닌 노트의 섹션 구조** — Check 4는 업무사안 노트 전용이다. incident·improvement·training 노트는 훅이 구조를 보지 않으므로 해당 `99_Template/` 템플릿(`_인시던트`·`_개선`·`_교육`)과 직접 대조한다. 이 종류엔 이모지 별칭 오탐 이력이 없다 — 위 "문자 비교 금지"는 `10_Areas` 업무사안에 대한 규칙이다.
    - `#부서/` 태그 **부재** — 어느 훅도 잡지 않는다(관행 아님, 실측 56/201 미보유). 담당 부서가 특정되는 건인데 없으면 finding.
    - 태그 **area 배정이 내용과 맞는지** (문맥 판단이라 기계가 못 한다).
    - 기준 5 위키 피드백: `python3 .claude/skills/vault-cleanup/scripts/moc_gate.py . --json`으로 임계 도달 도메인을 검출하고, 해당하면 MOC 존재 + **노트↔MOC 양방향 등록**을 grep으로 확인한다.

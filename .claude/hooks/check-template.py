@@ -71,10 +71,13 @@ if any(f in fp_norm for f in note_folders):
         #   제목 날짜 프리픽스 규칙을 대체한 필드. 공문 표기 '2026. 7. 20.'를 그대로 넣으면
         #   정렬·Dataview 쿼리가 깨지므로 YYYY-MM-DD로 고정한다.
         #   `\s*`를 쓰면 개행까지 먹어 빈 값일 때 다음 키를 값으로 잡는다 — 한 줄로 고정한다.
+        #   값 뒤 인라인 주석(`doc_date: 2026-07-20  # 공문 시행일`)은 값이 아니다 — 떼고 비교한다.
         for fld in ("doc_date", "recv_date"):
             dm = re.search(rf'^{fld}:[ \t]*(\S.*?)[ \t]*$', fm, re.MULTILINE)
             if dm:
-                val = dm.group(1).strip('"\'')
+                val = dm.group(1).split('#')[0].strip().strip('"\'')
+                if not val:
+                    continue
                 if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', val):
                     violations.append(
                         f"{fld} 형식 위반: '{val}' — YYYY-MM-DD 고정 "
@@ -85,7 +88,9 @@ if any(f in fp_norm for f in note_folders):
         #   개선 노트의 change_type 누락이 기계 검사를 무음 통과한다.
         for seg, ct in (("/14_Changes/incident/", "incident"),
                         ("/14_Changes/improvement/", "improvement")):
-            if seg in fp_norm and not re.search(rf'^change_type:[ \t]*{ct}\b', fm, re.MULTILINE):
+            #   값 따옴표(`change_type: "improvement"`)는 YAML상 합법 — 다른 검사(type·status)가
+            #   `.strip('"\'')`로 허용하는 것과 맞춘다.
+            if seg in fp_norm and not re.search(rf'^change_type:[ \t]*["\']?{ct}\b', fm, re.MULTILINE):
                 violations.append(
                     f"{ct} frontmatter에 'change_type: {ct}' 없음 "
                     f"(99_Template/_{'인시던트' if ct == 'incident' else '개선'}.md 사용)")
@@ -102,7 +107,8 @@ if any(f in fp_norm for f in note_folders):
 #   기준 동기화 대상: docs/eval-criteria.md → Template Adherence
 if "/10_Areas/" in fp_norm and note_type == "work":
     # 앵커 비교는 두 단계다:
-    #   (1) 선행 기호(이모지·ZWJ·variation selector·번호 기호)를 떼고 한글 본문으로 비교
+    #   (1) 선행 기호(이모지·ZWJ·variation selector·구두점)를 떼고 한글 본문으로 비교.
+    #       `\W`는 숫자를 포함하지 않으므로 번호 프리픽스(`## 1. 관련`)는 떼이지 않는다 — 의도된 동작이다.
     #   (2) '할 일' 앵커는 동의어 '해결 방안'도 받는다 (관련 앵커엔 동의어 없음)
     heads = {re.sub(r'^[\W_]+', '', h).strip()
              for h in re.findall(r'^##[ \t]+(.+?)[ \t]*$', text_no_code, re.MULTILINE)}
@@ -114,14 +120,22 @@ if "/10_Areas/" in fp_norm and note_type == "work":
                 f"필수 섹션 '## {label}' 없음 (이모지 별칭 허용: '{alias_example}') "
                 "— 자유 섹션 추가는 위반 아님 (docs/eval-criteria.md → Template Adherence)")
 
-    # Check 5: `#업무/` 태그 존재 (10_Areas `type: work`만)
-    #   validate-tags.sh는 **발견한 태그의 형식**만 본다 — 태그가 하나도 없으면 무음 통과한다.
-    #   eval-criteria.md 기준 2는 "tag missing entirely"를 1점으로 규정하므로 그 구멍을 여기서 막는다.
-    #   `#부서/`는 검사하지 않는다: 실측 미보유 56/201(28%)로 관행이 아니다 — 평가자 판단으로 남긴다.
-    if not re.search(r'#업무/', text_no_code):
+
+# Check 5: `#업무/` 태그 존재 — 템플릿이 요구하는 모든 노트 종류
+#   대상: 10_Areas(`type: work`) · 14_Changes/ · 20_Training/. 네 템플릿(_업무사안·_개선·
+#   _인시던트·_교육) 모두 `## 관련`에 `- #업무/`를 두므로 종류를 가릴 이유가 없다.
+#   10_Areas만 검사하면 incident·improvement·training 노트가 무게이트로 남는다 (PR #20 리뷰).
+#   validate-tags.sh는 **발견한 태그의 형식**만 보고, 게다가 중괄호 플레이스홀더(`grep -v '[{}]'`)와
+#   인라인 코드를 제거한 뒤 검사하므로 `#업무/{영역}/...`만 있는 노트는 양쪽 다 무음이었다 —
+#   그래서 여기서는 **중괄호도 인라인 코드도 아닌 구체 태그**를 요구한다.
+#   `#부서/`는 검사하지 않는다: 실측 미보유 56/201(28%)로 관행이 아니다 — 평가자 판단으로 남긴다.
+if (("/10_Areas/" in fp_norm and note_type == "work")
+        or "/14_Changes/" in fp_norm or "/20_Training/" in fp_norm):
+    text_no_inline = re.sub(r'`[^`\n]*`', '', text_no_code)
+    if not re.search(r'#업무/(?![{\s])', text_no_inline):
         violations.append(
-            "#업무/ 태그 없음 — `## 관련`에 `#업무/{영역}/{하위영역}/{메뉴명}` 필요 "
-            "(docs/eval-criteria.md 기준 2: 태그 전무는 1점)")
+            "#업무/ 구체 태그 없음 — `## 관련`에 `#업무/{영역}/{하위영역}/{메뉴명}` 형태로, "
+            "중괄호를 실제 값으로 채워 작성 (docs/eval-criteria.md 기준 2: 태그 전무는 1점)")
 
 if violations:
     msg = ("[GP#2 템플릿 경고] " + p.name + "\n"
