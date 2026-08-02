@@ -21,15 +21,23 @@ model: sonnet
 ## 절차 (eval-criteria.md "Evaluator Protocol" 준수)
 
 1. **노트 Read.**
-2. **기계 검사부터** (vibes 아님 — 증거 우선):
-   - frontmatter: `type` 존재, `status` enum(`open|in-progress|hold|closed|active`) 일치, change 노트는 `change_type`. (check-template.py와 동일 기준)
-   - 태그: 노트 경로를 PostToolUse JSON으로 훅에 먹여야 동작한다 (인자 없이 호출하면 stdin이 비어 무음 통과). `echo '{"tool_input":{"file_path":"<노트 절대경로>"}}' | bash "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-tags.sh"` 결과 확인 (상대경로 금지 — CWD가 볼트 루트가 아니면 훅이 무음 통과) + area 배정이 내용과 맞는지 판단
-   - 임베드: 본문에 `![[` 있으면 위반 (grep)
-   - 템플릿: `99_Template/`의 해당 템플릿 헤딩과 노트 헤딩 비교
-   - 위키 피드백: 도메인 노트수 임계 도달 시 `python3 .claude/skills/vault-cleanup/scripts/moc_gate.py .`로 MOC 존재·연결 확인
-3. **채점**: 5개 기준 각각 — **근거(finding) 먼저, 점수 나중**. 기준별 독립 채점.
-4. **판정**: 모든 기준 ≥3 AND 가중평균 ≥3.5 → 통과. 미달 → 구체적 fix 목록.
-5. **수정 범위(중요·GP#1)**: 방금 이 세션에서 **생성된** 노트만 수정한다. 그 외 기존 노트는 발견만 보고하고 건드리지 않는다 — 사용자 승인 없이 기존 노트 수정 금지(AGENTS.md Golden Principle #1). 수정 후 재평가.
+2. **기계 검사는 훅을 돌려서 끝낸다 — 헤딩을 눈으로 대조하지 말 것** (2026-07-30). 기준 1·3·4는 `check-template.py`가, 기준 2는 `validate-tags.sh`가 판정한다. 두 훅 모두 **PostToolUse JSON을 stdin으로** 받아야 동작하며 **절대경로**여야 한다 (인자 없이 호출하거나 상대경로면 stdin이 비어 무음 통과한다):
+
+   ```bash
+   printf '{"tool_input":{"file_path":"<노트 절대경로>"}}' | python "$CLAUDE_PROJECT_DIR/.claude/hooks/check-template.py"
+   printf '{"tool_input":{"file_path":"<노트 절대경로>"}}' | bash "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-tags.sh"
+   ```
+
+   무출력 = 훅이 **검사하는 범위** 통과(해당 기준 5점). 출력된 경고만 finding으로 올린다.
+   - **금지: `99_Template/`과 노트 헤딩을 문자 비교하는 것.** 이 볼트는 이모지 별칭(`## 🙋‍♂️ 관련` 116/202건, `## 🛠 해결 방안` 115/202건)과 문서별 자유 섹션(136/202건)이 다수 관행이다. 문자 비교하면 관행을 위반으로 오판한다 — 실제로 그렇게 오판한 전례가 있다(`docs/enforcement.md` 승격 로그 #13). 판정 기준은 `eval-criteria.md` → Template Adherence의 **필수 앵커 2개**뿐이고, 그 판정은 훅이 한다.
+3. **훅 무음이 통과가 아닌 잔여분을 직접 확인한다** (`eval-criteria.md` §기계 검사 커버리지 표 — 형식 검증기는 값이 아예 없으면 무음이다):
+   - `#부서/` 태그 **부재** — 어느 훅도 잡지 않는다(관행 아님, 실측 56/201 미보유). 담당 부서가 특정되는 건인데 없으면 finding.
+   - 태그 **area 배정이 내용과 맞는지** (문맥 판단이라 기계가 못 한다).
+   - 기준 5 위키 피드백: `python3 .claude/skills/vault-cleanup/scripts/moc_gate.py . --json`으로 임계 도달 도메인을 검출하고, 해당하면 MOC 존재 + **노트↔MOC 양방향 등록**을 grep으로 확인한다.
+4. **고유 가치는 원본 대조 사실검증이다** — 공문번호·시행/접수일·기한·담당자·회차 등이 원본과 일치하는지. 회차성 반복 공문에서 선례를 베끼다 stale 값이 섞이는 것이 실제 위험이다. **원본을 재추출하지 말 것** — 위임자가 넘긴 추출 PDF 경로를 재사용하고, 경로가 없을 때만 직접 추출한다 (재추출은 위임자가 이미 지불한 비용의 중복이다).
+5. **채점**: 5개 기준 각각 — **근거(finding) 먼저, 점수 나중**. 기준별 독립 채점.
+6. **판정**: 모든 기준 ≥3 AND 가중평균 ≥3.5 → 통과. 미달 → 구체적 fix 목록.
+7. **수정 범위(중요·GP#1)**: 방금 이 세션에서 **생성된** 노트만 수정한다. 그 외 기존 노트는 발견만 보고하고 건드리지 않는다 — 사용자 승인 없이 기존 노트 수정 금지(AGENTS.md Golden Principle #1). 수정 후 재평가.
 
 ## 출력 (위임자가 소비하는 데이터 — 사람용 메시지 아님)
 

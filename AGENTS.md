@@ -66,11 +66,21 @@ Full context manifest → `docs/delegation.md`
 2. **스크립트 우선.** 규칙표 대조·경로 계산·해시 비교처럼 결정론적인 일은 스크립트로 끝내고, **판단이 필요한 잔여분만** 에이전트로 에스컬레이션한다 (status-sync·vault-cleanup·syncthing-cleanup이 이 패턴).
 3. **소규모 편집은 직접.** 수 줄·1~2파일 수정에 풀에이전트 왕복(수만 토큰·수십 초)은 금지. `_Wiki/log.md` 한 줄 append도 직접 Edit.
 4. **검증자 ≥ 생성자.** 품질 게이트 에이전트의 모델은 생성자와 같거나 강해야 한다.
-5. **품질 게이트는 메인 스레드 책임.** 노트를 생성하는 에이전트(`improvement-planner`·`incident-analyst`·`training-note-manager`·`inbox-action-worker`)가 반환하면 **메인 스레드가** `note-evaluator`를 호출해 `docs/eval-criteria.md` 루브릭으로 채점한다. 생성자가 스스로 부를 수 없고(규칙 #1), 불러서도 안 된다(self-preference). FAIL이면 지적 항목을 수정한 뒤 사용자에게 보고한다. 자주 걸리는 항목: MOC 순방향 등록(Wiki Feedback Loop).
+5. **품질 게이트는 메인 스레드 책임 — 단 기계 검사가 1차, `note-evaluator`는 조건부** (2026-07-30 개정). 노트 생성 에이전트(`improvement-planner`·`incident-analyst`·`training-note-manager`·`inbox-action-worker`)가 반환하면 메인 스레드가 게이트를 돌린다. 생성자가 스스로 부를 수 없고(규칙 #1), 불러서도 안 된다(self-preference).
+
+   `docs/eval-criteria.md` 5개 기준 대부분은 **`check-template.py`·`validate-tags.sh`·`moc_gate.py`가 기계적으로 판정**한다. 훅 경고가 없는데 `note-evaluator`를 부르면 훅이 한 계산을 LLM으로 재실행하는 것이다(실측 노트 1건당 약 100k 토큰). **단 훅 무음 = 전면 통과가 아니다** — 형식 검증기는 값이 아예 없으면 무음이므로, `#부서/` 부재·area 배정 적합성·MOC 순방향 등록은 메인 스레드가 직접 확인한다(커버리지 표 → `docs/eval-criteria.md` §기계 검사 커버리지). 그 뒤 게이트가 잡아야 할 나머지는 **원본 대조 사실검증**(공문번호·기한·담당자·회차) 하나다.
+
+   호출 조건·스코프 한정은 `inbox-process/SKILL.md` 5단계-3. 호출 시에도 구조·태그 재채점 금지, 원본 재추출 금지(워커가 반환한 추출 경로 재사용).
+
+   FAIL이면 지적 항목을 수정한 뒤 사용자에게 보고한다. 자주 걸리는 항목: MOC 순방향 등록(Wiki Feedback Loop).
+
+6. **기준을 쓸 때 "How to test"가 결정론적이면 훅/스크립트로 만든다.** 안 만들면 그 비용은 매 산출물마다 LLM 토큰으로 청구된다 — `eval-criteria.md` Template Adherence가 헤딩 대조 훅 없이 운영돼 노트 1건당 101k를 태운 사례(2026-07-30, `docs/enforcement.md` 승격 로그 #13). 동시에 **기준은 실측 관행과 대조해 쓴다**: 같은 사례에서 LLM 평가자가 템플릿 문자 그대로 채점해 다수 관행(`## 🙋‍♂️ 관련` 116/202건)을 위반으로 오판했다.
 
 ## Search Priority
 
 Vault search order: `qmd` (semantic) → `rg`/grep (keyword) → `_Wiki/index.md` (topic map). Delegate to `vault-navigator` when scope is unclear or requires semantic matching. `qmd` index auto-refreshes via PostToolUse hook after every write.
+
+**`rg`와 `Grep` 툴은 `--no-ignore` 없이는 노트를 못 본다** — `.gitignore`가 `*`로 전부 무시하고 하네스 파일만 화이트리스트하므로 볼트 노트는 비추적이고, `.gitignore`를 따르는 `rg`·Claude Code `Grep` 툴은 0건을 반환한다. 실측(2026-07-31): `rg -l 'type: change' 14_Changes/improvement` → 0건, `--no-ignore` 추가 → 97건. **결과 0건을 "없음"으로 오독하지 말 것.** 순수 `grep`은 `.gitignore`와 무관하다(`--no-ignore` 옵션 자체가 없음 — 붙이면 exit 2). 파일 경로에 한글·공백이 많아 Bash 단어 분할이 깨지므로 대량 스캔은 python/PowerShell로 한다.
 
 ## Branching
 
