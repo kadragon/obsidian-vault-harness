@@ -46,7 +46,7 @@ Required frontmatter by note kind (per `99_Template/_메타데이터 규칙.md` 
 
 **이 기준은 `check-template.py` Check 4가 기계적으로 판정한다. 평가자는 훅 결과를 신뢰하고 재판정하지 않는다** (2026-07-30). 훅 경고가 없으면 5점이다.
 
-**적용 범위: `10_Areas/`의 `type: work` 노트뿐이며, `10_Areas/과업심의/`는 제외한다.** `type: reference` 등 다른 종류는 업무사안 템플릿을 쓰지 않는 것이 정상이라 검사하지 않는다. 과업심의 폴더는 회차마다 재생산되는 **심의 서식**(`사업 개요`/`과업내용 적정성` 구조)이라 업무사안 앵커가 의미 없다 — 평가자도 이 경로에 앵커 부재를 지적하지 않는다 (2026-08-02).
+**적용 범위: `10_Areas/`의 `type: work` 노트뿐이며, `10_Areas/과업심의/`의 심의 서식은 제외한다.** `type: reference` 등 다른 종류는 업무사안 템플릿을 쓰지 않는 것이 정상이라 검사하지 않는다. 과업심의 폴더에서 제외되는 것은 회차마다 재생산되는 **심의 서식**(파일명에 `심의의견`·`사업목록`·`검토의견`·`과업심의_프로세스` — `사업 개요`/`과업내용 적정성` 구조)뿐이다. 같은 폴더의 회차 위원회 노트·서류 요청 노트는 **진짜 업무사안이라 계속 검사한다** (실측 18건 중 3건, 회차마다 새로 생김 — 폴더째 제외하면 이 갈래가 영구 무게이트가 된다. 2026-08-02, PR #21 리뷰 반영).
 
 채점 대상은 **필수 앵커 2개의 존재**뿐이다. 허용 표기는 **두 장치**가 만든다 — (1) 비교 전 선행 기호(이모지·ZWJ·variation selector·구두점) 제거, (2) `할 일`만 동의어 `해결 방안` 추가 허용:
 
@@ -110,7 +110,7 @@ Below threshold → findings become fixes in same session before note is committ
 |------|-----------|-----------|
 | 1 Frontmatter | `check-template.py` Check 2·2b·2c·3 (Check 3은 incident·improvement 양쪽) | — |
 | 2 Tag | `validate-tags.sh` → `validate_tag.py` (형식) + `check-template.py` Check 5 (`#업무/` **구체** 태그 존재 — `10_Areas`+`type: work`·`14_Changes`) | `20_Training/`의 `#업무/` 부재(검사 제외, 미보유 71%), area 배정의 문맥 적합성. `#부서/` 부재는 **감점 대상 아님**(선택 필드) |
-| 3 Template Adherence | `check-template.py` Check 1b·4 — **Check 4는 `10_Areas/`+`type: work` 전용, `10_Areas/과업심의/` 제외** | **`14_Changes/`·`20_Training/`·`12_Projects/`·`11_Routines/` 노트의 섹션 구조는 기계 검사가 없다** — 해당 종류는 평가자가 직접 본다. 과업심의 서식은 앵커 검사 대상 아님 |
+| 3 Template Adherence | `check-template.py` Check 1b·4 — **Check 4는 `10_Areas/`+`type: work` 전용, `10_Areas/과업심의/`의 심의 서식(파일명 기준) 제외** | **`14_Changes/`·`20_Training/`·`12_Projects/`·`11_Routines/` 노트의 섹션 구조는 기계 검사가 없다** — 해당 종류는 평가자가 직접 본다. 과업심의 **서식**만 앵커 검사 대상 아님(같은 폴더의 업무사안 노트는 검사됨) |
 | 4 Wikilink Style | `check-template.py` Check 1 | — |
 | 5 Wiki Feedback Loop | `moc_gate.py` (임계 도달 도메인 검출) | MOC **순방향 등록** 여부 — 노트가 MOC를 링크했는지는 grep |
 
