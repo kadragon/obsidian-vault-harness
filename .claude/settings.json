@@ -23,6 +23,11 @@
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-nested-delegation.py\"",
             "statusMessage": "중첩 위임 검사 중..."
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-bare-python.py\"",
+            "statusMessage": "맨 python 호출 검사 중..."
           }
         ]
       },

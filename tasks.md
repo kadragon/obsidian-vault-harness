@@ -15,7 +15,6 @@ Out-of-scope findings routed here from review cycles. Items touching existing no
 Check 5가 `14_Changes/`·`20_Training/`으로 확장되면서 새로 검출되는 분량. 네 템플릿 모두 `- #업무/`를 요구하므로 경고 자체는 정확하지만, GP#1상 일괄 수정은 사용자 승인이 필요하다.
 
 - [ ] `14_Changes/` **24/203건**에 구체 `#업무/` 태그 없음 → area 배정 판단이 필요해 `tag-validator` 경유 권장
-- [ ] [harness] 문서·스킬의 **맨 `python` 호출 금지 가드** — cd30915에서 한 번 정리했는데 PR #20에서 3곳이 재발했다. 비대화형 셸엔 `python` 별칭이 없어 `command not found`가 되고, 그 무출력이 "훅 통과"로 오독된다(이번엔 무출력을 통과로 읽으라는 문서와 겹쳐 특히 위험했다). `.claude/`·`docs/` 대상 grep 가드(`\| python[^3]`) 필요
 - [ ] `20_Training/` **25/35건**에 구체 `#업무/` 태그 없음 → 미보유가 다수(71%)다. 교육 노트에 `#업무/`를 요구하는 규칙(`_교육.md`)을 **유지할지 강등할지 결정 필요** — 유지면 백필, 강등이면 Check 5에서 `20_Training/` 제외
 
 > 참고 — 이 PR과 무관한 선행 백로그가 더 크다. 볼트 477건 전수 스캔 시 `status:` 누락 **220건**(2026-07-31 재측정 — improvement 백필로 57건 해소), incident `change_type` 누락 79건. 전부 이번 변경 이전부터 있던 것으로, 위 항목과 함께 일괄 처리 여부를 결정하는 편이 낫다.
