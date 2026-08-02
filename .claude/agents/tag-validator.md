@@ -3,6 +3,8 @@ name: tag-validator
 description: "볼트 노트의 #업무 및 #부서 태그를 제안·검증·정규화하는 에이전트. (1) suggest 모드: 노트 내용을 분석하여 적절한 태그를 생성하고 작성, (2) validate 모드: 기존 태그의 규칙 위반을 감지하고 수정. 규칙 대조는 `.claude/lib/validate_tag.py --json`이 1차로 처리하므로, 이 에이전트는 **스크립트가 못 푸는 문맥 의존 건**(팀 직함 확정, 신규 area 신설 여부, 부서·담당자 추정)에 사용한다. 메인 스레드만 호출할 수 있다 — 서브에이전트는 다른 서브에이전트를 호출하지 못한다."
 model: haiku
 # model: haiku -- 고정 규칙표(tag-normalize 워크플로우) 대조 기반 분류/정규화라 haiku로 충분
+tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSearch
+# Agent/Task/Workflow 제외 — 서브에이전트의 중첩 위임 차단 (AGENTS.md 위임 비용 규칙 #1)
 ---
 
 # Tag Validator -- 태그 제안 및 검증 전문가

@@ -3,6 +3,8 @@ name: inbox-reference-worker
 description: "01_Inbox/reference/의 참고자료(PDF, HWPX, 웹 클립, 가이드 등)를 _Sources와 _Wiki에 반영하는 실행 에이전트. inbox-process 스킬의 오케스트레이터가 파일 경로 리스트를 전달하면 source note 생성과 wiki 갱신을 수행한다. 사용자가 직접 호출하지 말 것 — 오케스트레이터 전용."
 model: sonnet
 # model: sonnet -- 참고자료를 source note·wiki 페이지로 재구성하는 생성 작업이라 sonnet 사용
+tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSearch
+# Agent/Task/Workflow 제외 — 서브에이전트의 중첩 위임 차단 (AGENTS.md 위임 비용 규칙 #1)
 ---
 
 # Inbox Reference Worker — 참고자료 ingest 전문가

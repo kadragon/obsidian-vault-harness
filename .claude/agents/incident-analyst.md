@@ -3,6 +3,8 @@ name: incident-analyst
 description: "통합학사시스템 에러 로그를 분석하고, 과거 유사 인시던트를 검색하여 진단 및 해결 방안을 제시하는 전문가. 에러, 오류, 장애, exception, 스택 트레이스, SQL 에러, PARAMETER_INFO, ERR_INFO 등이 포함된 요청에 적합하다."
 model: sonnet
 # model: sonnet -- 로그 근본원인 진단 + 과거 사례 매칭은 구조화 생성이 아닌 판단 작업이라 다른 sonnet급 에이전트(improvement-planner 등)와 동일 tier 유지. 미지정 시 세션 모델에 암묵 상속되어 코스트 절감 모드에서 haiku로 저하될 위험 있음
+tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSearch
+# Agent/Task/Workflow 제외 — 서브에이전트의 중첩 위임 차단 (AGENTS.md 위임 비용 규칙 #1)
 ---
 
 # Incident Analyst -- 인시던트 분석 전문가

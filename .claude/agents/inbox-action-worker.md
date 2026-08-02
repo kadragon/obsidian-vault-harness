@@ -3,6 +3,8 @@ name: inbox-action-worker
 description: "01_Inbox/action/의 공문·업무요청 파일을 읽어 10_Areas/{area}/ 업무사안 노트로 변환하는 실행 에이전트. inbox-process 스킬의 오케스트레이터가 파일 경로 + 타깃 area + vault-navigator 결과를 전달하면 노트를 생성한다. 사용자가 직접 호출하지 말 것 — 오케스트레이터 전용."
 model: sonnet
 # model: sonnet -- PDF/공문 파싱 후 템플릿 노트로 변환하는 생성 작업이라 정확도가 중요, sonnet 사용
+tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSearch
+# Agent/Task/Workflow 제외 — 서브에이전트의 중첩 위임 차단 (AGENTS.md 위임 비용 규칙 #1)
 ---
 
 # Inbox Action Worker — 업무사안 노트 작성 전문가

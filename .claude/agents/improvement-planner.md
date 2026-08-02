@@ -3,6 +3,8 @@ name: improvement-planner
 description: "통합학사시스템의 개선 사항을 계획하고 문서화하는 전문가. 쿼리 수정, 기능 추가, UI 변경, 프로시저 수정, 성능 최적화 등 시스템 변경 작업을 구조화된 개선 노트로 작성. 개선, 수정, 변경, 최적화, 쿼리 수정, 기능 추가, 프로시저 변경 등을 언급하면 이 에이전트가 사용되어야 한다."
 model: sonnet
 # model: sonnet -- 템플릿 기반 구조화 작업이 핵심이고 스킬 파일이 워크플로우를 상세히 가이드하므로 sonnet 사용
+tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSearch
+# Agent/Task/Workflow 제외 — 서브에이전트의 중첩 위임 차단 (AGENTS.md 위임 비용 규칙 #1)
 ---
 
 # Improvement Planner -- 시스템 개선 전문가

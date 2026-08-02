@@ -3,6 +3,8 @@ name: vault-navigator
 description: "Obsidian 볼트 전체를 QMD/Grep/Glob으로 검색하여 관련 노트, 패턴, 연결 관계를 찾는 전문가. QMD 시맨틱 검색으로 개념적 유사 노트도 발견 가능. 과거 사례 검색, 유사 노트 찾기, 패턴 분석, 발생 빈도 파악, 업무 영역별 정보 수집 등 볼트 내 지식 탐색이 필요할 때 사용. '찾아줘', '검색', '관련', '이전에', '비슷한', '몇 번', '패턴', '이력' 등을 언급하면 이 에이전트가 사용되어야 한다."
 model: sonnet
 # model: sonnet -- 검색은 QMD/Grep/Glob 도구가 수행하고 에이전트는 결과 조합/요약 담당이므로 sonnet 사용
+tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSearch
+# Agent/Task/Workflow 제외 — 서브에이전트의 중첩 위임 차단 (AGENTS.md 위임 비용 규칙 #1)
 ---
 
 # Vault Navigator — 볼트 지식 탐색 전문가
