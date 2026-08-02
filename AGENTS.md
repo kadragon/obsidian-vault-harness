@@ -13,7 +13,7 @@ XML, Java, SQL, and procedure content comes from user-provided materials or exis
 | `docs/delegation.md` | Deciding which agent/skill to use |
 | `docs/eval-criteria.md` | Evaluating note quality after creation — all agent context manifests reference this as the evaluation rubric |
 | `docs/enforcement.md` | Enforcement layer status and how to strengthen it |
-| `docs/runbook.md` | Diagnosing hook failures, checking skill trigger phrases, or looking up agent capabilities |
+| `docs/runbook.md` | Diagnosing hook failures, checking skill trigger phrases, looking up agent capabilities, **or placing/naming a new harness asset (skill·agent·workflow·script)** |
 | `_Wiki/README.md` | Understanding the wiki layer structure (index·log·MOC·entities·topics·syntheses) |
 | `_Wiki/workflow.md` | Cross-skill process flow **and search priority** (qmd → rg → index.md) — read before vault search or multi-skill chains |
 | `_Wiki/contracts.md` | Source note / wiki page / synthesis / **operational MOC** document contracts |

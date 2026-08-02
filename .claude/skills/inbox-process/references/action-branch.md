@@ -1,5 +1,8 @@
 # Action Branch — 공문/업무요청 → `10_Areas/{area}/` 업무사안 노트
 
+> 파일명이 `mode-*` 규약을 따르지 않는 이유: action/reference는 사용자가 고르는 실행 모드가 아니라
+> 스킬이 문서를 판별한 **분류 결과**다 (`docs/runbook.md` § Harness Asset Placement & Naming).
+
 `01_Inbox/action/`의 파일·폴더를 구조화된 업무사안 노트로 변환한 뒤 원본을 정리한다.
 노트는 `99_Template/_업무사안.md` 템플릿 구조를 따른다. 템플릿이 변경되면 이 절차의 노트 생성도 그에 맞춰야 하므로, 노트 작성 전 항상 `99_Template/_업무사안.md`를 Read로 확인한다.
 
