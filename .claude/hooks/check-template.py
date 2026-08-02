@@ -27,6 +27,19 @@ p = pathlib.Path(fp)
 if not p.exists():
     sys.exit(0)
 
+# `10_Areas/과업심의/`의 **심의 서식** 판별 (2026-08-02 사용자 결정).
+#   회차마다 재생산되는 `심의의견_*`·`*_사업목록`·`위원별_검토의견_수집`·`과업심의_프로세스`는
+#   `사업 개요`/`과업내용 적정성` 구조의 서식이지 업무사안이 아니다. 앵커(Check 4)뿐 아니라
+#   `status:`(Check 2b)·`#업무/`(Check 5)도 의미가 없어 회차마다 같은 경고가 재발했다
+#   (실측 2026-08-02: 서식 10건이 status·#업무/ 양쪽 경고, 두 집합이 동일).
+#   **폴더째 제외하지 않는 이유**: 같은 폴더 18건 중 3건은 앵커·status·태그를 갖춘 진짜
+#   업무사안(`202602_..._과업심의위원회.md` 등)이고 회차마다 새로 생긴다 — 폴더를 통째로
+#   빼면 그 갈래가 영구히 무게이트가 된다. 그래서 **파일명 어휘**로 서식만 골라낸다.
+#   기준 동기화 대상: docs/eval-criteria.md → 기계 검사 커버리지
+SIMUI_FORM = ("심의의견", "사업목록", "검토의견", "과업심의_프로세스")
+is_simui_form = ("/10_Areas/과업심의/" in fp_norm
+                 and any(k in fp_norm.rsplit("/", 1)[-1] for k in SIMUI_FORM))
+
 try:
     text = p.read_text(encoding="utf-8")
 except Exception:
@@ -60,10 +73,16 @@ if any(f in fp_norm for f in note_folders):
             violations.append("frontmatter에 type: 없음 — 99_Template/ 해당 템플릿 사용 필요 (GP#2)")
         # Check 2b: status required + enum-valid (모든 note-bearing 폴더)
         #   허용 어휘 5개 고정 — 99_Template/_메타데이터 규칙.md 와 동일
+        #   심의 서식은 **부재만** 면제한다 — 진행 상태를 갖는 업무사안이 아니므로 없는 게 정상이지만
+        #   (위 is_simui_form 주석), 값이 있으면 어휘는 지켜야 한다. 통째로 끄면 서식 15건 중 status를
+        #   가진 5건의 `done`/`resolved` 드리프트가 무검사가 된다 — 제외 근거는 "상태 개념이 없다"이지
+        #   "아무 값이나 된다"가 아니다.
         valid_status = {"open", "in-progress", "hold", "closed", "active"}
         sm = re.search(r'^status:\s*(\S+)', fm, re.MULTILINE)
         status_val = sm.group(1).strip('"\'') if sm else None
-        if not sm:
+        if not sm and is_simui_form:
+            pass
+        elif not sm:
             violations.append("frontmatter에 status: 없음 — open|in-progress|hold|closed|active 중 하나 필요")
         elif status_val not in valid_status:
             violations.append(
@@ -106,18 +125,10 @@ if any(f in fp_norm for f in note_folders):
 #   필수 앵커 2개의 존재만 본다 (별칭 허용, 자유 섹션 추가 허용).
 #   `type: work`으로 한정한다 — 10_Areas 아래에도 `type: reference` 분석 노트가 있고
 #   (실측 2/2건 전수 오탐) 업무사안 템플릿을 쓰지 않는 것이 정상이다.
-#   `10_Areas/과업심의/`의 **심의 서식**은 제외한다 (2026-08-02 사용자 결정): 회차마다 재생산되는
-#   `심의의견_*`·`*_사업목록`·`위원별_검토의견_수집`·`과업심의_프로세스`는 `사업 개요`/`과업내용
-#   적정성` 구조라 업무사안 앵커가 의미 없다. 제외 전 미통과 20건 중 15건이 이 서식이었고
-#   회차가 열릴 때마다 같은 경고가 재발했다.
-#   **폴더째 제외하지 않는 이유** (PR #21 리뷰 실측): 같은 폴더의 18건 중 3건은 앵커를 갖춘
-#   진짜 업무사안(`202602_..._과업심의위원회.md` 등)이고 회차마다 새로 생긴다 — 폴더째 빼면
-#   그 갈래가 영구히 무게이트가 된다. 그래서 **파일명 어휘**로 서식만 골라낸다.
+#   `10_Areas/과업심의/`의 **심의 서식**은 제외한다 — 판별과 근거는 위 `is_simui_form`.
+#   제외 전 미통과 20건 중 15건이 이 서식이었고 회차가 열릴 때마다 같은 경고가 재발했다.
 #   기준 동기화 대상: docs/eval-criteria.md → Template Adherence
-SIMUI_FORM = ("심의의견", "사업목록", "검토의견", "과업심의_프로세스")
-if ("/10_Areas/" in fp_norm and note_type == "work"
-        and not ("/10_Areas/과업심의/" in fp_norm
-                 and any(k in fp_norm.rsplit("/", 1)[-1] for k in SIMUI_FORM))):
+if "/10_Areas/" in fp_norm and note_type == "work" and not is_simui_form:
     # 앵커 비교는 두 단계다:
     #   (1) 선행 기호(이모지·ZWJ·variation selector·구두점)를 떼고 한글 본문으로 비교.
     #       `\W`는 숫자를 포함하지 않으므로 번호 프리픽스(`## 1. 관련`)는 떼이지 않는다 — 의도된 동작이다.
@@ -136,16 +147,18 @@ if ("/10_Areas/" in fp_norm and note_type == "work"
 # Check 5: `#업무/` 태그 존재
 #   대상: 10_Areas(`type: work`) · 14_Changes/. 두 갈래 모두 미보유가 소수라(각 13/201·24/203)
 #   요구가 관행에 부합한다. 10_Areas만 검사하면 incident·improvement가 무게이트로 남는다 (PR #20 리뷰).
-#   `20_Training/`은 제외한다 (2026-08-02 사용자 결정): `_교육.md` 템플릿이 `- #업무/`를 두지만
-#   실측 미보유 25/35(71%)로 **관행이 아니다** — 기계화하면 다수가 오탐이 된다. 교육 노트의
-#   `#업무/` 부재는 평가자 판단으로 남긴다.
+#   `20_Training/`은 제외한다 (2026-08-02 사용자 결정): 실측 미보유 25/35(71%)로 **관행이
+#   아니다** — 기계화하면 다수가 오탐이 된다. 같은 결정으로 `_교육.md` 템플릿의 `- #업무/`도
+#   제거해 템플릿과 관행을 정렬했으므로, 교육 노트의 `#업무/` 부재는 더 이상 위반이 아니다.
+#   `10_Areas/과업심의/`의 심의 서식도 제외한다 — 근거는 위 `is_simui_form`.
 #   validate-tags.sh는 **발견한 태그의 형식**만 보고, 게다가 중괄호 플레이스홀더(`grep -v '[{}]'`)와
 #   인라인 코드를 제거한 뒤 검사하므로 `#업무/{영역}/...`만 있는 노트는 양쪽 다 무음이었다 —
 #   그래서 여기서는 **중괄호도 인라인 코드도 아닌 구체 태그**를 요구한다.
 #   `#부서/`는 검사하지 않는다: 실측 미보유 56/201(28%)로 관행이 아니라 **선택 필드로 강등**됐다
 #   (2026-08-02 사용자 결정) — 부재는 위반도 감점도 아니다.
-if (("/10_Areas/" in fp_norm and note_type == "work")
-        or "/14_Changes/" in fp_norm):
+if ((("/10_Areas/" in fp_norm and note_type == "work")
+     or "/14_Changes/" in fp_norm)
+        and not is_simui_form):
     text_no_inline = re.sub(r'`[^`\n]*`', '', text_no_code)
     if not re.search(r'#업무/(?![{\s])', text_no_inline):
         violations.append(
