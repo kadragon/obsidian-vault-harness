@@ -29,7 +29,7 @@ If any trigger applies, delegate first — do not proceed without it.
 | Syncthing conflict files present | `syncthing-conflict-cleanup` skill | — |
 | `.hwpx` 문서 작업 | `productivity:hwpx` skill | File path, operation type |
 | 개선 완료/결과 안내 공문 초안 작성 | `draft-gongmun` skill | 개선 노트 경로 |
-| Note created by agent (모든 생성 경로) | **메인 스레드가** 게이트 실행: 1차는 기계 검사(`check-template.py`·`validate-tags.sh`·`moc_gate.py`) + 훅이 못 잡는 잔여분 직접 확인, `note-evaluator`는 **조건 해당 시에만** 호출 (조건 목록 → `inbox-process/SKILL.md` 5단계-3-b). 생성자는 자기 노트를 평가하지 않는다 (AGENTS.md 위임 비용 규칙 #5) | note path, 워커가 반환한 추출본 경로 |
+| Note created by agent (모든 생성 경로) | **메인 스레드가** 게이트 실행: 1차는 기계 검사(`check-template.py`·`validate-tags.sh`·`moc_gate.py`) + 훅이 못 잡는 잔여분 직접 확인(`#부서/` 부재·area 적합성·MOC 순방향 등록·**`10_Areas` 업무사안 외 노트 종류의 섹션 구조**), `note-evaluator`는 **조건 해당 시에만** 호출 (조건 목록 → `inbox-process/SKILL.md` 5단계-3-b). 생성자는 자기 노트를 평가하지 않는다 (AGENTS.md 위임 비용 규칙 #5) | note path, 워커가 반환한 추출본 경로 |
 
 ### Escalation
 
