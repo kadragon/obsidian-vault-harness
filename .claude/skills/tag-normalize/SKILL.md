@@ -73,14 +73,14 @@ Delegate rule-based transformations (forbidden prefix removal, bracket substitut
 
 ```bash
 # Single tag
-python3 .claude/skills/tag-normalize/scripts/validate_tag.py '#업무/학사/수업성적/강좌관리'
+python3 .claude/lib/validate_tag.py '#업무/학사/수업성적/강좌관리'
 
 # Multiple tags (stdin, one per line)
 printf '%s\n' '#업무/공통/시스템/권한관리' '#부서/학사관리과/행정주사보_김영희' \
-  | python3 .claude/skills/tag-normalize/scripts/validate_tag.py -
+  | python3 .claude/lib/validate_tag.py -
 
 # JSON output
-python3 .claude/skills/tag-normalize/scripts/validate_tag.py --json '<tag>'
+python3 .claude/lib/validate_tag.py --json '<tag>'
 ```
 
 스크립트 `[FIX]` 출력: 제안된 `→` 값을 적용한다.

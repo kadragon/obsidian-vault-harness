@@ -11,7 +11,7 @@ Convert 공문·요청 into 업무사안 notes, and reference materials into `_S
 1. Run `inbox-process` skill.
 2. Skill scans four areas: `01_Inbox/` root, `action/`, `reference/`, `scraps/` (web-clip inbox, routed through the reference branch).
 3. Root files → skill reads headers and proposes action/reference classification → moves to the appropriate subfolder after user confirmation.
-4. **Action branch** (`01_Inbox/action/`): creates 업무사안 note using `99_Template/_업무사안.md`. Tags: validate with `tag-normalize/scripts/validate_tag.py --json` first; escalate only context-dependent cases to `tag-validator` (AGENTS.md 위임 비용 규칙 #2).
+4. **Action branch** (`01_Inbox/action/`): creates 업무사안 note using `99_Template/_업무사안.md`. Tags: validate with `.claude/lib/validate_tag.py --json` first; escalate only context-dependent cases to `tag-validator` (AGENTS.md 위임 비용 규칙 #2).
    - **No attachments** → single `10_Areas/{area}/YYYYMM_{summary}.md`, no wrapper folder
    - **With attachments** → `10_Areas/{area}/YYYYMM_{summary}/_YYYYMM_{summary}.md` + attachments in same folder. Folder uses the full title; no length cap. Canonical rule: `docs/conventions.md` → `10_Areas/ Depth Rules` (generator: `new_work_path.py`)
 5. **Reference branch** (`01_Inbox/reference/` + `01_Inbox/scraps/`): creates/updates `_Sources/` source note and relevant `_Wiki/` pages; updates `_Wiki/index.md` and `_Wiki/log.md`.
@@ -26,7 +26,7 @@ When a 통합학사시스템 error occurs.
 1. Delegate error log to `incident-analyst` agent — provide: PARAMETER_INFO, ERR_INFO, stack trace.
 2. After diagnosis, use `obsidian-operator` agent to create incident note.
    - Template: `99_Template/_인시던트.md` · Path: `14_Changes/incident/{year}/`
-3. Tags: validate with `tag-normalize/scripts/validate_tag.py --json` first; escalate only context-dependent cases to `tag-validator` (AGENTS.md 위임 비용 규칙 #2).
+3. Tags: validate with `.claude/lib/validate_tag.py --json` first; escalate only context-dependent cases to `tag-validator` (AGENTS.md 위임 비용 규칙 #2).
 4. After resolution, update note `status: closed` (on user request).
 
 ---
@@ -65,7 +65,7 @@ Find similar incidents, past improvements, related notes.
 
 Create or update a domain MOC when: (a) a domain has 20+ notes, or (b) the same incident type has recurred 3+ times.
 
-**Gate 자동 탐지:** `python3 .claude/skills/vault-cleanup/scripts/moc_gate.py .` — 도메인별 노트/인시던트 수를 세어 임계 넘었는데 운영-MOC 없는 도메인(`gaps`)을 보고한다. 수동으로 20건 도달을 눈치챌 필요 없음. `sweep` 헬스체크에 포함.
+**Gate 자동 탐지:** `python3 .claude/lib/moc_gate.py .` — 도메인별 노트/인시던트 수를 세어 임계 넘었는데 운영-MOC 없는 도메인(`gaps`)을 보고한다. 수동으로 20건 도달을 눈치챌 필요 없음. `sweep` 헬스체크에 포함.
 
 1. Delegate to `vault-navigator` — provide domain name and scope (`10_Areas/{domain}/`, `14_Changes/` filtered by `#업무/{domain}`). Request: note inventory (title·tag·status·1-line summary) + pattern analysis (monthly volume, recurring incident types, open items, related departments).
 2. Review inventory. Identify: seasonal calendar, top-3 recurring incident patterns, open items, key entities.

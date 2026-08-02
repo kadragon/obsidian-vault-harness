@@ -13,6 +13,7 @@
 .claude/.cache/
 .claude/hooks/**/__pycache__/
 .claude/skills/**/__pycache__/
+.claude/lib/**/__pycache__/
 !.agents/
 !.agents/**
 .agents/~syncthing~*

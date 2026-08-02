@@ -42,7 +42,7 @@ Never perform these directly without the designated agent/skill:
 | Error log / incident analysis | `incident-analyst` agent |
 | Improvement plan authoring | `improvement-planner` agent |
 | Vault search / past cases | `vault-navigator` agent |
-| Tag 검증·정규화 | **1차: `tag-normalize/scripts/validate_tag.py --json`** (결정론적) · 문맥 의존 건만 `tag-validator` agent |
+| Tag 검증·정규화 | **1차: `.claude/lib/validate_tag.py --json`** (결정론적) · 문맥 의존 건만 `tag-validator` agent |
 | 노트 품질 평가 (생성 직후 게이트, `docs/eval-criteria.md` 루브릭) | `note-evaluator` agent |
 | `01_Inbox/` document processing (공문·참고자료 모두) | `inbox-process` skill |
 | Training note cleanup | `training-note-manager` agent |

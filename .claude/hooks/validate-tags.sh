@@ -57,7 +57,7 @@ VIOLATIONS=""
 # prefixes, parentheses, unregistered areas) AND the semantic ones a regex
 # cannot do (직급 매핑, 부서명 매핑, P_ 접두어, 퇴직/ 경로). Re-implementing
 # them here would let the two copies drift.
-VALIDATE_TAG="$SCRIPT_DIR/../skills/tag-normalize/scripts/validate_tag.py"
+VALIDATE_TAG="$SCRIPT_DIR/../lib/validate_tag.py"
 [[ -f "$VALIDATE_TAG" ]] || { echo "validate-tags: $VALIDATE_TAG not found — tag validation skipped" >&2; exit 0; }
 
 # Placeholder tags in docs/templates (`#업무/{area}`, `#부서/{부서명}/...`) are
