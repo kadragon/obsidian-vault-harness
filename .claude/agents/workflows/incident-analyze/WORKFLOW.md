@@ -1,7 +1,5 @@
----
-name: incident-analyze
-description: "Workflow reference for incident-analyst agent. Do NOT invoke directly — use the incident-analyst agent instead. Contains step-by-step workflow for parsing error logs and creating incident notes for 통합학사시스템."
----
+> **Agent workflow — not a skill.** `incident-analyst` 에이전트가 인시던트 노트 작성 시 Read로 읽는 절차서다.
+> Skill 툴로 호출되지 않는다. 소유 에이전트: `.claude/agents/incident-analyst.md`
 
 # Incident Analysis
 
@@ -61,7 +59,7 @@ Analyze 통합학사시스템 errors and produce a structured incident note.
 반기 판단, 경로 조합, 순번 결정은 모두 `scripts/new_incident_path.py`로 위임한다. LLM이 직접 Glob·카운팅을 수행하지 말 것.
 
 ```bash
-python3 .claude/skills/incident-analyze/scripts/new_incident_path.py {YYYY-MM-DD}
+python3 .claude/agents/workflows/incident-analyze/scripts/new_incident_path.py {YYYY-MM-DD}
 ```
 
 출력 예: `/Users/.../14_Changes/incident/2026/상반기/통합학사시스템 오류 처리 2026-04-10_3.md`

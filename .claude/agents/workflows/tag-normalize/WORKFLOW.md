@@ -1,7 +1,5 @@
----
-name: tag-normalize
-description: "Workflow reference for tag-validator agent. Do NOT invoke directly — use the tag-validator agent instead. Contains normalization rules, mapping tables, and validation logic for #업무 and #부서 tags."
----
+> **Agent workflow — not a skill.** `tag-validator` 에이전트가 태그 제안·검증 시 Read로 읽는 절차서다.
+> Skill 툴로 호출되지 않는다. 소유 에이전트: `.claude/agents/tag-validator.md`
 
 # Tag Normalizer — 태그 정규화 규칙
 
@@ -31,7 +29,7 @@ Do not insert these prefixes before the area segment:
 
 `인트라넷/`, `부속/`, `학사/`, `공통/`, `시스템/`
 
-Tags are based on **business domain**, not system module name (부속, 인트라넷), user type (학생서비스, 교수서비스), or high-level classification (학사, 공통). Note: `행정` IS a valid area (10_Areas/행정) — do not forbid it. The authoritative forbidden set is `FORBIDDEN_PREFIXES` in `scripts/validate_tag.py`.
+Tags are based on **business domain**, not system module name (부속, 인트라넷), user type (학생서비스, 교수서비스), or high-level classification (학사, 공통). Note: `행정` IS a valid area (10_Areas/행정) — do not forbid it. The authoritative forbidden set is `FORBIDDEN_PREFIXES` in `.claude/lib/validate_tag.py`.
 
 ### Special Character Rules
 

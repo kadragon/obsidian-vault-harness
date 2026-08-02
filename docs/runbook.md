@@ -32,7 +32,7 @@ Output: 10_Areas/{area}/ note or _Sources/ entry
 ### Handle Incident
 
 ```
-Run: incident-analyze skill  (or delegate to incident-analyst agent directly)
+Run: incident-analyst agent  (reads .claude/agents/workflows/incident-analyze/WORKFLOW.md)
 Input: PARAMETER_INFO, ERR_INFO, stack trace
 Output: 14_Changes/incident/{year}/ note
 ```
@@ -40,7 +40,7 @@ Output: 14_Changes/incident/{year}/ note
 ### Create Improvement Plan
 
 ```
-Run: improvement-plan skill  (or delegate to improvement-planner agent directly)
+Run: improvement-planner agent  (reads .claude/agents/workflows/improvement-plan/WORKFLOW.md)
 Input: change description, related SQL/procedure
 Output: 14_Changes/improvement/{year}/ note
 ```
@@ -87,8 +87,6 @@ Scope: 10_Areas/ → 90_Archive/
 | Skill | Trigger phrase | Entry point |
 |-------|---------------|-------------|
 | `inbox-process` | inbox 처리, 공문 처리 | `01_Inbox/` scan |
-| `incident-analyze` | 에러 분석, 오류 처리 | → `incident-analyst` agent |
-| `improvement-plan` | 개선 계획, 쿼리 수정 | → `improvement-planner` agent |
 | `draft-gongmun` | 공문 작성, 결과 안내 공문 | 개선 노트 → 공문 본문 |
 | `weekly-report` | 주간업무회의 자료 | Vault scan |
 | `change-log` | 기능 개선 내역 | Vault scan (past week) |
@@ -97,6 +95,24 @@ Scope: 10_Areas/ → 90_Archive/
 | `vault-cleanup` | 아카이브 정리 | Vault scan |
 
 > 복합 볼트 작업(여러 스킬/에이전트 연계)은 `docs/delegation.md` § Multi-step Chains 참조.
+
+## Agent Workflows — `.claude/agents/workflows/`
+
+에이전트 한 곳만 읽는 절차서는 스킬이 아니다. 스킬로 등록하면 사용자용 스킬 목록에
+"직접 호출하지 말 것" 항목이 상주하며 매 세션 description 토큰을 쓴다.
+
+| 워크플로우 | 소유 에이전트 |
+|-----------|-------------|
+| `workflows/improvement-plan/WORKFLOW.md` | `improvement-planner` |
+| `workflows/incident-analyze/WORKFLOW.md` | `incident-analyst` |
+| `workflows/tag-normalize/WORKFLOW.md` | `tag-validator` |
+| `workflows/training-manage/WORKFLOW.md` | `training-note-manager` |
+
+각 폴더의 `references/`·`scripts/`는 해당 워크플로우 전용이다. 소비자가 둘 이상으로
+늘어나면 스크립트는 `.claude/lib/`로 승격한다 (아래).
+
+`check-nested-delegation.py`는 `/.claude/agents/` 경로 전체를 서브에이전트 대상 문서로
+간주하므로, 이 폴더의 파일도 중첩 위임 린트를 그대로 받는다.
 
 ## Shared Scripts — `.claude/lib/`
 

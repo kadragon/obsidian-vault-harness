@@ -52,7 +52,7 @@ CLEANED=$(awk '/^[[:space:]]*```/{f=!f; next} !f' "$FILE_PATH" | sed 's/`[^`]*`/
 VIOLATIONS=""
 
 # --- #업무 / #부서 tag validation (delegated to validate_tag.py) ---
-# Single source of truth for tag rules is the tag-normalize skill's script:
+# Single source of truth for tag rules is the shared script in .claude/lib/:
 # it covers the form checks this hook used to re-implement in regex (forbidden
 # prefixes, parentheses, unregistered areas) AND the semantic ones a regex
 # cannot do (직급 매핑, 부서명 매핑, P_ 접두어, 퇴직/ 경로). Re-implementing

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate and normalize `#업무` / `#부서` tags per tag-normalize skill rules.
+"""Validate and normalize `#업무` / `#부서` tags per the tag-normalize workflow.
 
 Usage:
     python3 validate_tag.py '#업무/학사/수업성적/강좌관리'

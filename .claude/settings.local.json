@@ -42,7 +42,7 @@
       "Bash(rm -rf action/학습동아리)",
       "Bash(rm reference/2026-04-22-클로드-코드로-개발-팀장의-하루를-재설계한-이야기-컬리-기술-블로그.md reference/2026-04-23-how-ai-is-changing-our-work.md reference/2026-04-23-강원대학교-정보시스템-통합관리체계-구축-및-운영.md \"reference/2026-04-24-https-news-hada-io-topic-id-28834.md\" reference/2026-04-25-claude를-해지한-이유-토큰-문제-품질-저하-부실한-지원.md reference/2026-04-25-design-md-ai-코딩-도구를-위한-디자인-시스템-단일-파일-포맷-한국어-정리.md reference/2026-04-25-llm으로-할-수-있는-비전형적인-일-7가지.md)",
       "Bash(python3 *)",
-      "PowerShell($env:PYTHONIOENCODING='utf-8'; python 'C:\\\\dev\\\\Obsidianvault\\\\.claude\\\\skills\\\\incident-analyze\\\\scripts\\\\new_incident_path.py' 2026-04-28)",
+      "PowerShell($env:PYTHONIOENCODING='utf-8'; python 'C:\\\\dev\\\\Obsidianvault\\\\.claude\\\\agents\\\\workflows\\\\incident-analyze\\\\scripts\\\\new_incident_path.py' 2026-04-28)",
       "Bash(obsidian help *)",
       "PowerShell(Get-Command *)",
       "Bash(command -v obsidian)",

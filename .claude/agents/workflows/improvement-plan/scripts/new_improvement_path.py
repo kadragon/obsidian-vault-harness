@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compute the target path for a new improvement note.
 
-Rules (from improvement-plan SKILL.md):
+Rules (from improvement-plan WORKFLOW.md):
   - Directory: `14_Changes/improvement/{YYYY}/{상반기|하반기}/`
   - Half-year: month 1-6 → 상반기, 7-12 → 하반기
   - Filename:  `{제목}.md`, free-form Korean title

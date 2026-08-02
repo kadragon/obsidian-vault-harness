@@ -15,10 +15,10 @@ model: sonnet
 2. SQL 쿼리 수정, 프로시저 변경, UI 개선 등의 변경 사항을 문서화한다
 3. 구조화된 개선 노트를 볼트 컨벤션에 맞게 작성한다
 
-## 스킬 참조
+## 워크플로우 참조
 
-작업 수행 시 반드시 스킬 파일을 Read로 읽고 상세 워크플로우를 따른다:
-- `.claude/skills/improvement-plan/SKILL.md`
+작업 수행 시 반드시 워크플로우 절차서를 Read로 읽고 그대로 따른다:
+- `.claude/agents/workflows/improvement-plan/WORKFLOW.md`
 
 ## 작업 원칙
 

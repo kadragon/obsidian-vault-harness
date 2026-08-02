@@ -79,7 +79,7 @@ Golden Principle #1의 예외) 적용 전 반드시 사용자 승인을 받는�
 `apply.py close` 적용이 완료된 후, 종결된 노트 목록을 `_Wiki/contracts.md` Wiki Feedback Payload 규칙에 따라 **오케스트레이터가 직접 Edit으로** 반영한다. obsidian-operator 위임 금지 — `_Wiki/log.md`에 한 줄씩 append하는 결정론적 작업에 풀에이전트 왕복은 낭비다 (AGENTS.md §Delegation).
 
 - **log.md append** (종결 건 일괄): 각 노트에 대해 `- {오늘날짜} #closed [[{노트 경로}]] — {도메인} 종결`
-- **범위 제한**: log.md 만 갱신한다. MOC 갱신은 status-sync 범위 밖이며, 각 노트를 처음 생성한 skill(incident-analyze·improvement-plan)의 Step 5(Wiki 피드백)가 담당한다.
+- **범위 제한**: log.md 만 갱신한다. MOC 갱신은 status-sync 범위 밖이며, 각 노트를 처음 생성한 에이전트 워크플로우(incident-analyze·improvement-plan)의 Step 5(Wiki 피드백)가 담당한다.
 - **도메인 식별**: `apply.py`가 반환하는 닫힌 노트 경로에서 frontmatter `tags` 또는 파일명으로 추정. 식별 불가 시 "unknown"으로 기록.
 - **실패 허용**: log.md 갱신 실패 시 status-sync 적용 자체를 롤백하지 않는다. 미갱신 사실만 보고한다.
 

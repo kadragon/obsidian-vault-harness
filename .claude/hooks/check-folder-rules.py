@@ -88,7 +88,7 @@ if "/10_Areas/" in fp_norm:
 # Rule 4: 14_Changes/incident/ — single canonical filename pattern
 #   '통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}.md'
 #   과거 드리프트(Error_*, '오류 처리 *', '_통합학사…') 재발 차단.
-#   경로/순번은 incident-analyze 스킬의 scripts/new_incident_path.py가 생성한다.
+#   경로/순번은 incident-analyze 워크플로우의 scripts/new_incident_path.py가 생성한다.
 if "/14_Changes/incident/" in fp_norm:
     name = unicodedata.normalize("NFC", pathlib.Path(fp).name)
     if not re.match(r'^통합학사시스템 오류 처리 \d{4}-\d{2}-\d{2}_\d+\.md$', name):
