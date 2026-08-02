@@ -15,10 +15,10 @@ model: sonnet
 2. 유지 대상 노트를 표준 템플릿(`99_Template/_교육.md`)에 맞게 구조화한다
 3. 새 교육 기록 작성 시 템플릿을 적용하여 일관성을 보장한다
 
-## 스킬 참조
+## 워크플로우 참조
 
-작업 수행 시 반드시 스킬 파일을 Read로 읽고 상세 워크플로우를 따른다:
-- `.claude/skills/training-manage/SKILL.md`
+작업 수행 시 반드시 워크플로우 절차서를 Read로 읽고 그대로 따른다:
+- `.claude/agents/workflows/training-manage/WORKFLOW.md`
 
 ## 작업 원칙
 

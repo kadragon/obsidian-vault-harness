@@ -1,7 +1,5 @@
----
-name: improvement-plan
-description: "Workflow reference for improvement-planner agent. Do NOT invoke directly — use the improvement-planner agent instead. Contains step-by-step workflow for planning and documenting 통합학사시스템 improvements."
----
+> **Agent workflow — not a skill.** `improvement-planner` 에이전트가 개선 노트 작성 시 Read로 읽는 절차서다.
+> Skill 툴로 호출되지 않는다. 소유 에이전트: `.claude/agents/improvement-planner.md`
 
 # Improvement Planning
 
@@ -41,7 +39,7 @@ syntheses 에 기존 분석이 있으면 이후 단계에서 해당 내용을 �
 반기 판단과 동명 파일 suffix 결정은 `scripts/new_improvement_path.py`에 위임한다.
 
 ```bash
-python3 .claude/skills/improvement-plan/scripts/new_improvement_path.py "수강신청 로그 개선"
+python3 .claude/agents/workflows/improvement-plan/scripts/new_improvement_path.py "수강신청 로그 개선"
 # → /Users/.../14_Changes/improvement/2026/상반기/수강신청 로그 개선.md
 ```
 

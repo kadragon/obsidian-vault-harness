@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compute the target path + filename for a new incident note.
 
-Rules (from incident-analyze SKILL.md):
+Rules (from incident-analyze WORKFLOW.md):
   - Directory: `14_Changes/incident/{YYYY}/{상반기|하반기}/`
   - Half-year: month 1-6 → 상반기, 7-12 → 하반기
   - Filename:  `통합학사시스템 오류 처리 {YYYY-MM-DD}_{seq}.md`

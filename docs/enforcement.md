@@ -128,7 +128,7 @@ Skips: `99_Template`, `docs`, `.claude`, `90_Archive`, `_Wiki`, `_Sources`, `01_
    - **첨부는 재귀로 센다 (2026-07-29 수정).** 이전에는 래퍼의 **직속 자식만** 훑어서, 첨부가 `{wrapper}/2026-012/결과물/x.pdf`처럼 한 단계 아래 놓이면 "무첨부"로 읽혔다. 실볼트에서 첨부 37~147개를 가진 `10_Areas/과업심의/` 래퍼 5개가 전부 오탐으로 걸리고 있었다(해당 노트를 편집할 때마다 헛경고). `rglob`으로 바꿔 오탐 5→0.
    - **남아 있는 사각지대 (2026-07-24 실측):** 래퍼 폴더 생성 후 `GRACE_SECONDS`(60초) 이내 Write는 검사를 통째로 건너뛴다. 첨부가 노트보다 늦게 저장되는 경우의 오탐을 막으려는 유예인데, 폴더·노트를 한 번에 만드는 **최초 생성 경로에서는 항상 유예에 걸려** 무첨부 래퍼가 잡히지 않는다(재현 확인: 신규 폴더 + 노트 Write → 무경고). 이후 같은 노트를 편집하면 검사된다. 유예 자체는 의도된 오탐 방지책이라 유지한다.
    - **잔존분 검출 (2026-07-29):** `reorg_archive.py find-bare-wrappers 10_Areas --json`이 `10_Areas/` 전체를 훑어 "첨부 0 + `.md` ≤1"인 래퍼 폴더를 목록화한다. 판정 로직은 Rule 3과 동일하게 맞춰 놨다 — 어긋나면 사각지대를 하나 더 만드는 셈이다. **탐지 전용**(이동 없음); 절차는 `vault-cleanup` 스킬 `references/mode-reorganize.md` Step 5. 1차 방어는 여전히 생성 측 `new_work_path.py --flat`.
-4. **`14_Changes/incident/`** — filename must match `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}.md` (NFC-normalized) → warn. Blocks legacy drift patterns (`Error_*`, `오류 처리 *`, `_통합학사…`). Fires on `Write` only, so editing the ~96 pre-existing legacy notes is not nagged; new incident notes must use `incident-analyze` 스킬의 `new_incident_path.py`.
+4. **`14_Changes/incident/`** — filename must match `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}.md` (NFC-normalized) → warn. Blocks legacy drift patterns (`Error_*`, `오류 처리 *`, `_통합학사…`). Fires on `Write` only, so editing the ~96 pre-existing legacy notes is not nagged; new incident notes must use the `incident-analyze` 워크플로우의 `new_incident_path.py`.
 
 Warning-only, exit 0.
 

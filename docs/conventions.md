@@ -4,8 +4,8 @@
 
 | Note type | Pattern | Example |
 |-----------|---------|---------|
-| Incident | `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}` (generator: `incident-analyze` 스킬 `new_incident_path.py`) | `통합학사시스템 오류 처리 2026-04-10_1` |
-| Improvement | `{제목}` — `14_Changes/improvement/{YYYY}/{반기}/` 디렉터리로 분류 (generator: `improvement-plan` 스킬 `new_improvement_path.py`) | `대학 검색 팝업 조회 기능 개선` |
+| Incident | `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}` (generator: `incident-analyze` 워크플로우의 `new_incident_path.py`) | `통합학사시스템 오류 처리 2026-04-10_1` |
+| Improvement | `{제목}` — `14_Changes/improvement/{YYYY}/{반기}/` 디렉터리로 분류 (generator: `improvement-plan` 워크플로우의 `new_improvement_path.py`) | `대학 검색 팝업 조회 기능 개선` |
 | Work matter | `YYYYMM_{summary}` | `202604_학점교류 신청서류 간소화` |
 | Training | `YYYY-MM-DD {name}` | `2026-04-10 정보보안 교육` |
 | Project | `{identifier}` (folder name) | `2026_과업심의_API분리` |
@@ -46,7 +46,7 @@ recv_date: YYYY-MM-DD                 # 선택 — 접수일, doc_date와 다를
 ### `#업무/` tags
 - Classify work function / menu.
 - Hierarchy: `#업무/{대분류}/{소분류}` — e.g. `#업무/수강신청`, `#업무/학적/생성`
-- Detailed rules → `tag-normalize` skill
+- Detailed rules → `.claude/agents/workflows/tag-normalize/WORKFLOW.md`
 
 ### `#부서/` tags
 - Identify requesting or related department.
@@ -54,7 +54,7 @@ recv_date: YYYY-MM-DD                 # 선택 — 접수일, doc_date와 다를
 - When uncertain, delegate to `tag-validator` agent
 
 ### Tag authoring rules
-- Always check `tag-normalize` skill rules before writing tags on a new note.
+- Always check the `tag-normalize` workflow rules before writing tags on a new note.
 - Never create a tag that doesn't exist without confirmation from `tag-validator` first.
 - Review unresolved manual-check items in `plan.md` periodically.
 

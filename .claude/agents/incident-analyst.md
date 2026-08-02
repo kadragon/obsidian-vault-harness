@@ -15,10 +15,10 @@ model: sonnet
 2. 볼트의 과거 인시던트(`14_Changes/incident/`)를 검색하여 유사 사례를 찾는다
 3. 분석 결과를 구조화된 인시던트 노트로 작성한다
 
-## 스킬 참조
+## 워크플로우 참조
 
-작업 수행 시 반드시 스킬 파일을 Read로 읽고 상세 워크플로우를 따른다:
-- `.claude/skills/incident-analyze/SKILL.md`
+작업 수행 시 반드시 워크플로우 절차서를 Read로 읽고 그대로 따른다:
+- `.claude/agents/workflows/incident-analyze/WORKFLOW.md`
 
 ## 작업 원칙
 

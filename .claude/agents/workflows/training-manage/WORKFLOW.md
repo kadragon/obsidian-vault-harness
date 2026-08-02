@@ -1,7 +1,5 @@
----
-name: training-manage
-description: "Workflow reference for training-note-manager agent. Do NOT invoke directly — use the training-note-manager agent instead. Contains assessment, standardization, and creation modes for 20_Training notes."
----
+> **Agent workflow — not a skill.** `training-note-manager` 에이전트가 교육 노트 평가·표준화 시 Read로 읽는 절차서다.
+> Skill 툴로 호출되지 않는다. 소유 에이전트: `.claude/agents/training-note-manager.md`
 
 # Training Note Management
 
