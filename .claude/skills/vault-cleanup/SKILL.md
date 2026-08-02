@@ -1,6 +1,9 @@
 ---
 name: vault-cleanup
-description: "This skill should be used when the user asks to clean up, reorganize, or archive notes in the Obsidian vault — including 90_Archive document value review, duplicate removal, folder structure normalization ({area}/YYYY/YYYYMM_문서명/), category tag preservation, and archiving stale work notes from 10_Areas to 90_Archive. Korean triggers: '아카이브 정리', '문서 점검', '가치 없는 문서', '중복 정리', '시맨틱 중복', '비슷한 노트', 'deadlink', '폴더 구조 통일', '오래된 노트 정리', '볼트 청소', 'cleanup'. NOT for status flips on completed work (→ status-sync) or .sync-conflict files (→ syncthing-conflict-cleanup)."
+description: |
+  볼트 정리 4개 모드 — 문서 가치 점검(review) · 폴더 구조 통일+중복 제거(reorganize) · 오래된 업무노트 90_Archive 이관(archive) · 시맨틱 중복·deadlink 점검(dedupe).
+  트리거: '아카이브 정리', '문서 점검', '가치 없는 문서', '중복 정리', '시맨틱 중복', '비슷한 노트', 'deadlink', '폴더 구조 통일', '오래된 노트 정리', '볼트 청소', 'cleanup'.
+  완료 업무의 status 플립은 status-sync, .sync-conflict 파일은 syncthing-conflict-cleanup.
 ---
 
 # Vault Cleanup
