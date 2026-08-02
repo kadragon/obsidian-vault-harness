@@ -49,6 +49,7 @@ recv_date: YYYY-MM-DD                 # 선택 — 접수일, doc_date와 다를
 - Detailed rules → `.claude/agents/workflows/tag-normalize/WORKFLOW.md`
 
 ### `#부서/` tags
+- **Optional field** (demoted 2026-08-02) — absence is not a violation and is not scored. Measured non-holding 56/201 (28%), so requiring it would false-positive. When present, `validate-tags.sh` checks its form.
 - Identify requesting or related department.
 - Hierarchy: `#부서/{단과대학}/{학과}` or `#부서/{부서명}` — e.g. `#부서/교무처`, `#부서/공과대학`
 - When uncertain, delegate to `tag-validator` agent
