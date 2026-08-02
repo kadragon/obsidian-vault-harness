@@ -1,6 +1,8 @@
 ---
 name: syncthing-conflict-cleanup
-description: "This skill should be used when the user asks to clean up Syncthing sync conflicts, scan for conflict files, or mentions 'syncthing 충돌', 'conflict 파일 정리', '.sync-conflict 정리', '동기화 충돌 정리', '충돌 파일', 'sync conflict cleanup', 'conflict 치워줘', 'conflict 몇 개야'. Performs vault-wide scan → purge of identical conflicts → haiku-delegated diff review of differing conflicts, with user approval before any deletion."
+description: |
+  Syncthing `.sync-conflict` 파일을 볼트 전체에서 스캔해 동일본은 삭제하고 상이본은 검토 후 처리.
+  트리거: 'syncthing 충돌', 'conflict 파일 정리', '.sync-conflict 정리', '동기화 충돌 정리', '충돌 파일', 'sync conflict cleanup', 'conflict 치워줘', 'conflict 몇 개야'.
 ---
 
 # Syncthing Conflict Cleanup

@@ -1,6 +1,9 @@
 ---
 name: status-sync
-description: "This skill should be used when the user asks to sync or clean up note statuses — 완료된 업무 정리, status 동기화, open 상태 노트 정리, 진행중인데 끝난 거, 업무사안/개선 상태 확인/닫기. Scans 10_Areas/ and 14_Changes/ for notes whose tasks are all done but frontmatter still has `status: open`, then updates them to `status: closed`. Uses checkbox counts and result-section content as signals; delegates ambiguous cases to a status-judge sub-agent. Requires user approval before applying any changes."
+description: |
+  할 일이 모두 끝났는데 frontmatter가 `status: open`인 10_Areas/·14_Changes/ 노트를 찾아 `closed`로 동기화.
+  트리거: "완료된 업무 정리", "status 동기화", "open 상태 노트 정리", "진행중인데 끝난 거", "업무사안 상태 확인", "개선 상태 닫기".
+  아카이브 이동·중복 정리는 vault-cleanup.
 ---
 
 # Status Sync
