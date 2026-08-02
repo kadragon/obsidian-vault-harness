@@ -95,7 +95,7 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 
 (`status-judge`는 이전부터 `tools: Read`로 더 좁게 제한.) **새 에이전트 추가 시 이 줄을 반드시 넣는다** — 빠뜨리면 규칙이 조용히 무효가 된다.
 
-**검사 대상** (서브에이전트가 읽는 파일만): `.claude/agents/*.md` · `description`에 `Do NOT invoke directly`가 있는 **스킬 디렉터리 전체**(`SKILL.md` + `references/` 이하 모든 `.md`) · `inbox-process/references/{action,reference}-branch.md`.
+**검사 대상** (서브에이전트가 읽는 파일만): `.claude/agents/` 이하 모든 `.md` — 에이전트 정의와 `workflows/` 절차서를 함께 포함한다 · `inbox-process/references/{action,reference}-branch.md` · `description`에 `Do NOT invoke directly`가 있는 스킬 디렉터리 전체(2026-08-02 현재 해당 스킬 없음 — 에이전트 전용 절차서는 `agents/workflows/`로 옮겼다. 규약을 어기고 다시 생기는 경우에 대비한 잔여 가드).
 
 **에이전트명 목록**은 `.claude/agents/*.md`에서 **런타임에 유도**한다. 하드코딩하면 에이전트 추가 시 갱신을 잊어 산문 탐지가 조용히 꺼진다 — 훅이 막으려는 바로 그 무음 실패다.
 

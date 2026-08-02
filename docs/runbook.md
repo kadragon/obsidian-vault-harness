@@ -250,6 +250,39 @@ python3 .claude/skills/status-sync/tests/test_contract.py
 **Cause:** `99_Template/` is missing the expected template file.  
 **Fix:** Check `99_Template/` contents. Template name must match exactly what skill expects.
 
+## Harness Asset Placement & Naming
+
+새 하네스 자산(스킬·에이전트·워크플로우·스크립트)을 만들 때 적용한다. 기존 자산은
+그대로 둔다 — 스킬 이름은 곧 호출 경로이고 문서 여러 곳이 참조하므로, 규약을 맞추려고
+바꾸면 트리거 정확도만 잃는다.
+
+**배치 — 소비자 수로 결정한다**
+
+| 소비자 | 위치 |
+|-------|-----|
+| 사용자가 직접 호출 | `.claude/skills/{name}/SKILL.md` |
+| 에이전트 1개만 읽는 절차서 | `.claude/agents/workflows/{name}/WORKFLOW.md` |
+| 에이전트 여러 개가 읽는 절차서 | `.claude/agents/workflows/{name}.md` (예: `tag-writing.md`) |
+| 스킬/에이전트 1개만 쓰는 스크립트 | 그 자산의 `scripts/` |
+| 소비자가 둘 이상인 스크립트 | `.claude/lib/` |
+
+"직접 호출하지 말 것"이라고 써야 하는 스킬은 스킬이 아니다 — 워크플로우로 만든다.
+
+**이름 — `{도메인}-{동사}`, kebab-case, 영문**
+
+`inbox-process` · `status-sync` · `incident-analyze` · `tag-normalize` · `training-manage`
+· `improvement-plan` (여기서 `plan`은 동사).
+
+동사 없이 산출물만 쓰거나(`weekly-report`), 순서를 뒤집거나(`draft-gongmun`),
+로마자 한국어를 섞지 않는다. 기존 자산 중 이 셋이 규약 밖이며 의도적으로 동결 상태다.
+
+**`references/` 파일명**: 모드 분기는 `mode-{모드명}.md`. 모드가 아닌 분기는 예외이며
+파일 상단에 이유를 적는다 (`inbox-process/references/{action,reference}-branch.md` —
+action/reference는 실행 모드가 아니라 문서 분류 결과다).
+
+에이전트 정의를 새로 만들 때는 `tools:` 화이트리스트 줄을 반드시 넣는다
+(`docs/enforcement.md` § `tools:` 화이트리스트).
+
 ## Harness Maintenance
 
 Plugin: `kadragon/dev-tools` (versioned cache — locate current scripts per OS below).

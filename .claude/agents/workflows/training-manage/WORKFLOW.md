@@ -27,7 +27,7 @@
 3. 평균 점수로 KEEP / KEEP(보완) / MERGE / DELETE 분류
 4. 평가 보고서를 사용자에게 제시하고 확인 후 다음 단계 진행
 
-상세 채점 기준 및 보고서 포맷 → `references/assess.md`
+상세 채점 기준 및 보고서 포맷 → `references/mode-assess.md`
 
 ---
 
@@ -40,7 +40,7 @@
 3. Frontmatter 정비 → H1 확인 → 교육 정보 섹션 구성 → 본문 재배치 → 핵심 정리 생성 → 참고자료·할 일 이동
 4. Write 도구로 전체 파일을 한 번에 덮어쓰기
 
-상세 추출 소스 및 재배치 규칙 7단계 → `references/standardize.md`
+상세 추출 소스 및 재배치 규칙 7단계 → `references/mode-standardize.md`
 
 ---
 
@@ -62,13 +62,13 @@
 `20_Training/` 전체를 스캔하여 구조 점검 후 Mode 1 → Mode 2 순차 실행한다.
 5건+ 노트가 누적되고 `_Wiki/topics/교육-운영-MOC.md`가 없으면 MOC 생성을 제안한다.
 
-상세 점검 항목 및 MOC 제안 절차 → `references/sweep.md`
+상세 점검 항목 및 MOC 제안 절차 → `references/mode-sweep.md`
 
 ---
 
 ## 공통 규칙
 
-**DELETE 판단 기준** (단일 출처: `references/assess.md` "DELETE 확정 기준") — 하나라도 해당하면 점수와 무관하게 삭제 후보:
+**DELETE 판단 기준** (단일 출처: `references/mode-assess.md` "DELETE 확정 기준") — 하나라도 해당하면 점수와 무관하게 삭제 후보:
 - 본문 3줄 이하 (제목/헤딩만)
 - 70% 이상 섹션이 비어있음 (제목만 있고 내용 없음)
 - 텍스트 설명 없이 이미지만 나열
@@ -86,6 +86,6 @@
 
 ## References
 
-- `references/assess.md` — Mode 1 채점 기준, 분류표, 보고서 포맷
-- `references/standardize.md` — Mode 2 추출 소스, 재배치 규칙 7단계
-- `references/sweep.md` — Mode 4 점검 항목, MOC 제안 절차
+- `references/mode-assess.md` — Mode 1 채점 기준, 분류표, 보고서 포맷
+- `references/mode-standardize.md` — Mode 2 추출 소스, 재배치 규칙 7단계
+- `references/mode-sweep.md` — Mode 4 점검 항목, MOC 제안 절차
