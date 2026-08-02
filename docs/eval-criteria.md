@@ -40,7 +40,7 @@ Required frontmatter by note kind (per `99_Template/_메타데이터 규칙.md` 
 
 **How to test:** 훅에 노트 **절대경로**를 PostToolUse JSON으로 먹인다 — `printf '{"tool_input":{"file_path":"<절대경로>"}}' | bash .claude/hooks/validate-tags.sh` (인자 없이 호출하거나 상대경로면 stdin이 비어 무음 통과한다). 그 다음 area 배정이 노트 내용과 맞는지 판단한다.
 
-> **훅 무음 ≠ 태그 존재.** `validate-tags.sh`는 **발견한 태그의 형식**만 검증하므로 태그가 하나도 없으면 무음이다. `#업무/` 부재는 `check-template.py` Check 5가 별도로 잡는다(단 `20_Training/`은 검사 범위 밖 — 미보유 71%로 관행이 아니라 2026-08-02 제외됐다. 교육 노트의 `#업무/` 부재만 평가자 판단으로 남는다). `#부서/` 부재는 **어느 훅도 잡지 않으며 감점 대상도 아니다** — 선택 필드로 강등됐다(2026-08-02).
+> **훅 무음 ≠ 태그 존재.** `validate-tags.sh`는 **발견한 태그의 형식**만 검증하므로 태그가 하나도 없으면 무음이다. `#업무/` 부재는 `check-template.py` Check 5가 별도로 잡는다(단 `20_Training/`과 `10_Areas/과업심의/`의 심의 서식은 검사 범위 밖 — 2026-08-02 제외. `20_Training/`은 미보유 71%로 관행이 아니어서 `_교육.md` 템플릿의 `- #업무/`도 함께 제거했으므로 **교육 노트의 `#업무/` 부재는 위반이 아니다**). `#부서/` 부재는 **어느 훅도 잡지 않으며 감점 대상도 아니다** — 선택 필드로 강등됐다(2026-08-02).
 
 ### 3. Template Adherence (25%)
 
@@ -108,8 +108,8 @@ Below threshold → findings become fixes in same session before note is committ
 
 | 기준 | 기계 검사 | 기계가 **못 잡는** 잔여분 |
 |------|-----------|-----------|
-| 1 Frontmatter | `check-template.py` Check 2·2b·2c·3 (Check 3은 incident·improvement 양쪽) | — |
-| 2 Tag | `validate-tags.sh` → `validate_tag.py` (형식) + `check-template.py` Check 5 (`#업무/` **구체** 태그 존재 — `10_Areas`+`type: work`·`14_Changes`) | `20_Training/`의 `#업무/` 부재(검사 제외, 미보유 71%), area 배정의 문맥 적합성. `#부서/` 부재는 **감점 대상 아님**(선택 필드) |
+| 1 Frontmatter | `check-template.py` Check 2·2b·2c·3 (Check 3은 incident·improvement 양쪽) | 심의 서식의 `status:` **부재**는 위반 아님(Check 2b 면제). 값이 있으면 어휘는 계속 검증한다 |
+| 2 Tag | `validate-tags.sh` → `validate_tag.py` (형식) + `check-template.py` Check 5 (`#업무/` **구체** 태그 존재 — `10_Areas`+`type: work`·`14_Changes`, 심의 서식 제외) | area 배정의 문맥 적합성. `20_Training/`의 `#업무/` 부재와 심의 서식의 `#업무/` 부재는 검사 제외이자 **위반 아님**(템플릿·서식 모두 요구하지 않음). `#부서/` 부재는 **감점 대상 아님**(선택 필드) |
 | 3 Template Adherence | `check-template.py` Check 1b·4 — **Check 4는 `10_Areas/`+`type: work` 전용, `10_Areas/과업심의/`의 심의 서식(파일명 기준) 제외** | **`14_Changes/`·`20_Training/`·`12_Projects/`·`11_Routines/` 노트의 섹션 구조는 기계 검사가 없다** — 해당 종류는 평가자가 직접 본다. 과업심의 **서식**만 앵커 검사 대상 아님(같은 폴더의 업무사안 노트는 검사됨) |
 | 4 Wikilink Style | `check-template.py` Check 1 | — |
 | 5 Wiki Feedback Loop | `moc_gate.py` (임계 도달 도메인 검출) | MOC **순방향 등록** 여부 — 노트가 MOC를 링크했는지는 grep |
