@@ -15,6 +15,7 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | #4 Folder rules | `check-folder-rules.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #2 Task date fields | `check-todo-due-date.py` PostToolUse hook (mechanical) | Shell-enforced |
 | #5 Inbox (01_Inbox) via skill | AGENTS.md delegation rule | Doc-enforced |
+| 하네스 파일의 맨 `python` 호출 (검사 무력화) | `check-bare-python.py` PostToolUse hook + `--sweep` 전수 스캔 (mechanical) | Shell-enforced (2026-08-02) |
 
 ### GP#1을 훅으로 막지 않는 이유 (의도적 결정, 2026-06)
 
@@ -105,6 +106,28 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 
 검증: 위반 6종(`Agent(subagent_type:…)`, `…에 위임한다`, `…를 위임할 수 있다`, 명사형 줄끝 `…에 위임`, `…에 위임하거나`, `…에 위임 (`) 탐지 + 부정문·"메인 스레드가 호출하게 한다" 무시 확인, 현행 하네스 전체 파일 스윕 **오탐 0**.
 
+## Bare `python` Invocation Guard
+
+### Active: `check-bare-python.py` (mechanical, 2026-08-02)
+
+`.claude/hooks/check-bare-python.py`, `settings.json`의 `PostToolUse` `Write|Edit`에 등록.
+
+**배경:** 비대화형 셸엔 `python` 별칭이 없어 맨 `python` 호출은 `command not found`로 죽는다. 그런데 이 저장소 문서는 여러 곳에서 **훅의 무출력을 "검사 통과"로 읽으라고** 지시한다 — 두 개가 겹치면 오타 하나가 경고 한 건이 아니라 **게이트 전체를 조용히 끈다.** cd30915에서 한 번 정리했는데 PR #20에서 3곳이 재발해 기계화했다.
+
+**검사 대상:** `.claude/`·`docs/` 이하 `.md`·`.sh`·`.py`. 문서의 예시 명령이 그대로 복사돼 실행되므로 산문 파일도 포함한다.
+
+**두 모드:** 훅(쓰기 직후 실시간, 경고만, 항상 exit 0) + `--sweep`(전수 스캔). 스윕 exit 코드는 `1`=발견 · `0`=검사했고 깨끗함 · `2`=**아무것도 검사 못 함**(경로 오타·읽기 실패). `2`를 분리한 이유가 핵심이다 — 오타 난 경로의 "0건"이 "이상 없음"으로 읽히면 이 훅이 막으려는 오독을 훅 자신이 재현한다.
+
+**검출:** (a) 인터프리터 플래그 `python -c`/`-m`/`--version` · (b) 경로 인자 · (c) 따옴표로 감싼 경로·변수 · (d) 명령 위치의 런처 `xargs`/`exec`/`env`/`nohup`/`sudo`/`time` · (e) 명령치환 `$(which python)` · 셔뱅(들여쓰기 허용). `python3`·`python_files`·`python.org`는 배제. <!-- bare-python-ok: 규칙을 설명하는 예시 -->
+
+**면제는 `bare-python-ok: <이유>` 마커뿐이다 — 이유 필수.** 마크다운 헤딩 줄에 붙이면 다음 헤딩까지, 그 외엔 그 줄만. 키워드 기반 면제는 두지 않는다.
+
+> **키워드 블랭킷 면제를 만들지 말 것.** 초판엔 `금지`·`오탐`·`check-bare-python` 같은 낱말이 들어간 **줄 전체**를 면제하는 `ALLOW_PAT`이 있었다. QA 실측 결과 28개 파일 **75줄**이 조용히 면제됐고, 진짜 위반(`python <이 훅 경로> --sweep`)까지 통과시켰다. 가드가 막으려던 검사 부재를 가드가 재현한 셈이라 통째로 삭제했다.
+
+> **탐지 폭은 오탐과 맞바꾼 값이다.** 경로 인자를 "`/` 포함 토큰"으로 넓게 잡았더니 영어 산문이 줄줄이 걸렸다(`python and/or python3`, `python I/O`, `python A/B testing`). 런처도 위치를 안 보면 `the env python var is unset`이 걸린다. 그래서 경로는 접두사(`./` `/` `~/` `$`) 또는 `.py` 종료로, 런처는 명령 위치로 좁혔다. **알려진 누락은 파일 헤더에 명시**돼 있다(단독 `python`, `python $SCRIPT`, `PYTHON=python`, heredoc, 확장자 없는 상대경로, `python2`). 넓히려면 오탐 실측을 먼저 하라. <!-- bare-python-ok: 규칙을 설명하는 예시 -->
+
+검증: 검출 20종 + 셔뱅 3종 전부 탐지, 영·한 산문 23종 오탐 0, 비정상 훅 페이로드 18종 전부 exit 0, 저장소 전수 스윕 exit 0. 현재 마커는 `docs/runbook.md`의 Windows `python` 해석 항목 1곳과 훅 자신의 규칙 설명 주석 5줄뿐이며, 실행 가능한 호출을 가리는 마커는 없다(억제 무력화 후 원시 스캔으로 확인).
+
 ## Template Check Hook
 
 ### Active: `check-template.py` (mechanical)
@@ -167,6 +190,8 @@ All three layers are now active. Promotion log:
 15. ✅ #13이 만든 "훅 무음 = 기준 1~4 통과" 규칙에 **기계 검사가 비어 있는 구멍 3개**가 남아 있던 문제 → (1) Check 3을 `14_Changes/improvement/`로 확장(개선 노트 `change_type` 무검사였음), (2) Check 5(`#업무/` 태그 존재) 신설 — `validate-tags.sh`는 태그가 전무하면 무음이다, (3) 기준 5(Wiki Feedback Loop)를 `moc_gate.py` 실행으로 `inbox-process` 3-a 기계 검사에 편입. 더불어 Check 2c 빈 값 오탐(다음 키를 값으로 오인)·Check 4 `type: reference` 전수 오탐 수정 (2026-07-30, PR #18 리뷰). **교훈: "훅이 검사한다"를 근거로 LLM 게이트를 걷어낼 때는 훅이 *무엇을 검사하지 않는지*를 같이 실측해야 한다 — 형식 검증기는 대개 "값이 아예 없는 경우"에 무음이다.**
 
 16. ✅ #15가 막은 구멍 옆에 **같은 종류의 구멍 3개**가 더 있던 문제 (2026-08-02, PR #20 리뷰) → (1) Check 5를 `14_Changes/`·`20_Training/`으로 확장 — `10_Areas`만 보던 동안 incident·improvement·training 노트는 무게이트였고, 그 사이 문서는 "훅 무음 = 통과"로 읽으라고 지시하고 있었다, (2) Check 5를 원시 substring에서 **구체 태그 요구**로 교체 — 플레이스홀더 `#업무/{영역}`·인라인 코드 태그가 두 훅 모두를 무음 통과시켰다, (3) Check 2c 인라인 주석 오탐·Check 3 따옴표 값 오탐 수정. 더불어 문서의 `python` 호출을 `python3`로 정정 — 비대화형 셸엔 `python` 별칭이 없어 `command not found`의 무출력이 "통과"로 오독됐다. **교훈: 검사 범위를 노트 종류로 좁혔으면, 좁힌 쪽을 무엇이 지키는지 같이 적어야 한다. 그리고 "값이 있는가"를 묻는 검사는 대부분 "플레이스홀더가 아닌 값이 있는가"를 물었어야 한다.**
+
+17. ✅ 맨 `python` 호출이 문서·스킬에 재발하던 문제 (cd30915에서 정리했으나 PR #20에서 3곳 재발) → `check-bare-python.py` PostToolUse 훅 + `--sweep` 전수 스캔 (2026-08-02). 비대화형 셸엔 `python` 별칭이 없어 `command not found`가 되는데, **무출력을 "검사 통과"로 읽으라는 문서**와 겹치면 오타 하나가 게이트를 통째로 끈다. 도입 시 수동 grep이 놓친 실재 4건(`docs/runbook.md`)을 훅이 검출 — 1건은 진짜 드리프트로 정정, 3건은 Windows `python` 해석 자체가 주제라 이유 필수 마커로 억제. **교훈 두 가지:** (1) **키워드 블랭킷 면제를 만들지 말 것** — 초판 `ALLOW_PAT`이 `금지`·`오탐` 같은 낱말이 든 줄 전체를 면제해 28개 파일 75줄이 조용히 빠졌고 진짜 위반까지 통과시켰다(#13·#15가 반복해 만난 "검사가 비어 있는 구멍"의 또 다른 형태 — 이번엔 가드 스스로 만들었다). 면제는 이유를 강제하는 명시 마커여야 한다. (2) **"0건"은 세 가지 뜻이다** — 검사했고 깨끗함 / 경로가 틀려 아무것도 안 봄 / 읽기 실패. 스윕이 셋을 exit `0`·`2`로 구분하지 않으면, 이 훅이 막으려는 바로 그 오독을 훅 자신이 재현한다. 개발 중 실제로 SyntaxError 난 스크립트가 `2>/dev/null` 뒤에서 "0건"을 반환했다.
 
 ## Generator Config (not version-controlled)
 

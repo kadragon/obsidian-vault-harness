@@ -181,7 +181,9 @@ Scope: 10_Areas/ → 90_Archive/
 **Cause:** `C:\Users\<user>\AppData\Local\Microsoft\WindowsApps\python*.exe` are store-alias stubs, not a real interpreter. `py.exe` launcher mis-encodes non-ASCII argv in some environments.
 **Fix:** Call the real interpreter directly via PowerShell (not Bash), e.g. `& "C:\Users\<user>\AppData\Local\Programs\Python\Python313\python.exe" script.py args...`. Locate installed versions with `py -0p`.
 
-### `pip install <pkg>` succeeds but `python -c "import <pkg>"` fails
+### `pip install <pkg>` succeeds but `python -c "import <pkg>"` fails <!-- bare-python-ok: 맨 `python`의 Windows 해석 자체가 이 항목의 주제다 -->
+
+> 이 항목의 `python`은 **Windows PowerShell 문맥**이다. 이 저장소의 훅·스크립트를 실행할 때는 `python3`를 쓴다.
 
 **Symptom:** Bare `pip install X` reports success (or `python -m pip show X` even lists it installed), but `python -c "import X"` raises `ModuleNotFoundError`.
 **Cause:** Bare `pip` resolves to a different Python than bare `python` — e.g. `pip` → `C:\Users\<user>\AppData\Local\Microsoft\WindowsApps\pip.exe` (store-alias Python) while `python` → `C:\Users\<user>\AppData\Local\Programs\Python\Python313\python.exe`. Two separate site-packages trees.
@@ -238,7 +240,7 @@ echo '{"tool_input":{"file_path":"C:/Dev/ObsidianVault/.claude/agents/incident-a
 
 ### 스킬 contract 테스트가 pytest로 수집되지 않는다
 
-**Symptom:** `python -m pytest .claude/skills/status-sync/tests/test_contract.py` → `no tests ran`.
+**Symptom:** `python3 -m pytest .claude/skills/status-sync/tests/test_contract.py` → `no tests ran`.
 **Cause:** 테스트가 `.claude/`(dot-prefixed) 아래에 있고, pytest 형식(`test_*` 함수)이 아닌 **단독 실행 스크립트**다.
 **Fix:** 직접 실행한다 — 성공 시 `OK — ...` 출력 + exit 0.
 
