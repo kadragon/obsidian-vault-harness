@@ -41,7 +41,7 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 
 `.claude/hooks/validate-tags.sh`, registered in **`settings.json`** (committed) as `PostToolUse` on `Write|Edit`.
 
-훅 자체는 **태그를 추출해 `tag-normalize/scripts/validate_tag.py - --json`에 파이프**하고 결과를 보고할 뿐, 규칙을 스스로 판정하지 않는다 (2026-07-29). 태그 규칙의 단일 진실 원천은 `validate_tag.py` 하나다 — 예전처럼 훅이 정규식으로 같은 규칙을 재구현하면 두 사본이 드리프트한다.
+훅 자체는 **태그를 추출해 `.claude/lib/validate_tag.py - --json`에 파이프**하고 결과를 보고할 뿐, 규칙을 스스로 판정하지 않는다 (2026-07-29). 태그 규칙의 단일 진실 원천은 `validate_tag.py` 하나다 — 예전처럼 훅이 정규식으로 같은 규칙을 재구현하면 두 사본이 드리프트한다.
 
 `validate_tag.py`가 판정하는 것: 금지 `#업무/` 접두어 · 괄호·공백·`&`·`+` · 미등록 area(런타임에 `10_Areas/` 폴더명에서 유도) · **직급 매핑**(`행정주사보`→`주무관`) · **부서명 매핑** · `P_` 접두어 · `퇴직/` 중간 경로 · 학과 조교 경로.
 
@@ -69,7 +69,7 @@ Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-to
 - **중복.** `validate-tags.sh`가 금지 접두어·괄호·미등록 area·`#부서` frontmatter 오배치를 이미 결정론적으로 검사하고, **위반이 있을 때만** "tag-validator 에이전트를 실행하세요" 경고를 낸다 → 필요할 때만 에이전트가 뜨는 구조가 이미 완성.
 - **비용.** 위반이 없어도 태그 포함 쓰기마다 풀에이전트 기동(실측 ~39k 토큰 / 43초).
 
-의미 수준 검증이 필요하면 `tag-normalize/scripts/validate_tag.py --json`으로 먼저 판정하고(직급 매핑·금지 접두어 제거까지 처리), 스크립트가 못 푸는 문맥 의존 건만 `tag-validator`로 에스컬레이션한다.
+의미 수준 검증이 필요하면 `.claude/lib/validate_tag.py --json`으로 먼저 판정하고(직급 매핑·금지 접두어 제거까지 처리), 스크립트가 못 푸는 문맥 의존 건만 `tag-validator`로 에스컬레이션한다.
 
 **해소됨 (2026-07-29):** 이 사각지대는 "`validate_tag.py`를 자동으로 부르는 훅이 없어, 생성 워크플로 밖에서 쓴 노트는 직급 매핑 같은 의미 수준 오류가 통과한다"는 것이었다. `validate-tags.sh`가 태그를 추출해 `validate_tag.py`에 파이프하도록 바뀌면서 경로와 무관하게 의미 수준 검사가 걸린다 (위 §Active 참조).
 

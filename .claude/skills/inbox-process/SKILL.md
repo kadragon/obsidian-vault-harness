@@ -151,7 +151,7 @@ Glob으로 네 영역을 각각 스캔:
 2. **태그 확정 — 스크립트 우선**: action 워커가 각 노트 `## 관련`에 기재한 **후보 태그**를 먼저 스크립트로 검사한다. 워커는 tag-validator를 호출할 수 없으므로 이 단계는 오케스트레이터가 수행한다. (reference 갈래는 태그 노트를 만들지 않으므로 해당 없음.)
 
    ```bash
-   printf '%s\n' '#업무/...' '#부서/...' | python3 .claude/skills/tag-normalize/scripts/validate_tag.py --json -
+   printf '%s\n' '#업무/...' '#부서/...' | python3 .claude/lib/validate_tag.py --json -
    ```
 
    - `valid: true` → 그대로 확정. **에이전트 호출하지 않는다.**
@@ -167,7 +167,7 @@ Glob으로 네 영역을 각각 스캔:
    ```bash
    printf '{"tool_input":{"file_path":"<노트 절대경로>"}}' | python3 .claude/hooks/check-template.py
    printf '{"tool_input":{"file_path":"<노트 절대경로>"}}' | bash .claude/hooks/validate-tags.sh
-   python3 .claude/skills/vault-cleanup/scripts/moc_gate.py . --json   # 기준 5 임계 검출
+   python3 .claude/lib/moc_gate.py . --json   # 기준 5 임계 검출
    ```
 
    앞 둘이 무출력 = `docs/eval-criteria.md` 기준 1·3·4 + 기준 2의 형식·`#업무/` 존재분 통과. 경고가 나오면 지적 항목을 직접 Edit으로 수정한다.

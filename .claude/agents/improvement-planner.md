@@ -44,7 +44,7 @@ model: sonnet
 1. 후보 태그를 정한 뒤 **스크립트로 검증**한다 (결정론적 — AGENTS.md 위임 비용 규칙 #2):
 
    ```bash
-   printf '%s\n' '#업무/...' '#부서/...' | python3 .claude/skills/tag-normalize/scripts/validate_tag.py --json -
+   printf '%s\n' '#업무/...' '#부서/...' | python3 .claude/lib/validate_tag.py --json -
    ```
 
 2. `valid: false`이고 `normalized`가 `original`과 **다르면** 스크립트가 고쳐준 것이다(금지 접두어 제거·직급 매핑 등). 그 `normalized` 값을 노트 `## 관련`에 기재한다.

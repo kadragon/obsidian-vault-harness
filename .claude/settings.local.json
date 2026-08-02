@@ -36,7 +36,7 @@
       "Bash(python3 .claude/skills/inbox-process/scripts/new_work_path.py 교직 \"국가인재원 5월 AI·디지털교육 대상자 확정 및 입교 안내\" --yyyymm 202604 --json)",
       "Bash(python3 .claude/skills/inbox-process/scripts/new_work_path.py 교직 \"2026년 자기주도적 역량개발 동호회·학습동아리 지원 계획\" --yyyymm 202603 --json)",
       "Bash(qmd search *)",
-      "Bash(python3 .claude/skills/tag-normalize/scripts/validate_tag.py -)",
+      "Bash(python3 .claude/lib/validate_tag.py -)",
       "Bash(rm \"[본문] 국가인재원 5월 AI·디지털교육 대상자 확정 및 입교 안내.pdf\")",
       "Bash(rm action/\"[본문] 국가인재원 5월 AI·디지털교육 대상자 확정 및 입교 안내.pdf\" action/\"붙임1 5월 AI·디지털교육 과정 확정자 명단_교육부xlsx\\(link\\).html\" action/\"붙임2 5월 AI·디지털교육 과정 입교 안내hwpx\\(link\\).html\")",
       "Bash(rm -rf action/학습동아리)",

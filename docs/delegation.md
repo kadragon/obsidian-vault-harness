@@ -13,7 +13,7 @@ If any trigger applies, delegate first — do not proceed without it.
 | Error log present (PARAMETER_INFO, ERR_INFO, stack trace) | `incident-analyst` | Full error log, menu path, date/time |
 | Improvement/change plan requested | `improvement-planner` | Change description, related menu/procedure |
 | File to process in `01_Inbox/` (action or reference) | `inbox-process` skill | File path or subfolder (`action/`/`reference/`) |
-| Tag 검증 | **1차 `tag-normalize/scripts/validate_tag.py --json`** (결정론적). 스크립트가 못 푸는 문맥 의존 건만 `tag-validator` | Note content, mode: `suggest` or `validate` |
+| Tag 검증 | **1차 `.claude/lib/validate_tag.py --json`** (결정론적). 스크립트가 못 푸는 문맥 의존 건만 `tag-validator` | Note content, mode: `suggest` or `validate` |
 | Obsidian note create(템플릿)/open/프로퍼티 | `obsidian-operator` | Template name, save path, initial content |
 | 기존 노트 소규모 수정 (수 줄·1~2파일) | **직접 Edit — 위임 금지** (AGENTS.md 위임 비용 규칙 #3) | — |
 | Training note cleanup requested | `training-note-manager` | Training info, note path |

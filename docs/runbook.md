@@ -98,6 +98,18 @@ Scope: 10_Areas/ → 90_Archive/
 
 > 복합 볼트 작업(여러 스킬/에이전트 연계)은 `docs/delegation.md` § Multi-step Chains 참조.
 
+## Shared Scripts — `.claude/lib/`
+
+소비자가 한 스킬을 넘어서는 결정론적 스크립트는 스킬 폴더가 아니라 `.claude/lib/`에 둔다.
+스킬 안에 두면 그 스킬을 옮기거나 없앨 때 훅·에이전트·docs가 조용히 깨진다.
+
+| 스크립트 | 호출처 |
+|---------|-------|
+| `.claude/lib/validate_tag.py` | `validate-tags.sh` 훅 · `incident-analyst`·`improvement-planner`·`training-note-manager` 에이전트 · `inbox-process`·`improvement-plan` 스킬 |
+| `.claude/lib/moc_gate.py` | `note-evaluator` 에이전트 · `inbox-process` 스킬 · `docs/workflows.md` sweep 헬스체크 |
+
+단일 스킬만 쓰는 스크립트는 그대로 `{skill}/scripts/`에 남긴다 (`reorg_archive.py`, `new_*_path.py`, `ocr_pdf.py` 등).
+
 ## Agent Reference
 
 | Agent | Use when |
