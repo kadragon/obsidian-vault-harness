@@ -87,7 +87,7 @@ Scope: 10_Areas/ → 90_Archive/
 | Skill | Trigger phrase | Entry point |
 |-------|---------------|-------------|
 | `inbox-process` | inbox 처리, 공문 처리 | `01_Inbox/` scan |
-| `draft-gongmun` | 공문 작성, 결과 안내 공문 | 개선 노트 → 공문 본문 |
+| `gongmun-draft` | 공문 작성, 결과 안내 공문 | 개선 노트 → 공문 본문 |
 | `weekly-report` | 주간업무회의 자료 | Vault scan |
 | `change-log` | 기능 개선 내역 | Vault scan (past week) |
 | `status-sync` | status 동기화 | Vault scan |
@@ -121,10 +121,12 @@ Scope: 10_Areas/ → 90_Archive/
 
 | 스크립트 | 호출처 |
 |---------|-------|
-| `.claude/lib/validate_tag.py` | `validate-tags.sh` 훅 · `incident-analyst`·`improvement-planner`·`training-note-manager` 에이전트 · `inbox-process`·`improvement-plan` 스킬 |
+| `.claude/lib/validate_tag.py` | `validate-tags.sh` 훅 · `incident-analyst`·`improvement-planner`·`training-note-manager` 에이전트 · `inbox-process` 스킬 · `improvement-plan` 워크플로우 |
 | `.claude/lib/moc_gate.py` | `note-evaluator` 에이전트 · `inbox-process` 스킬 · `docs/workflows.md` sweep 헬스체크 |
 
-단일 스킬만 쓰는 스크립트는 그대로 `{skill}/scripts/`에 남긴다 (`reorg_archive.py`, `new_*_path.py`, `ocr_pdf.py` 등).
+소비자가 하나뿐인 스크립트는 그 자산의 `scripts/`에 남긴다 — 스킬이면 `{skill}/scripts/`
+(`reorg_archive.py`, `ocr_pdf.py`), 워크플로우면 `workflows/{name}/scripts/`
+(`new_improvement_path.py`, `new_incident_path.py`).
 
 ## Agent Reference
 
@@ -273,8 +275,10 @@ python3 .claude/skills/status-sync/tests/test_contract.py
 `inbox-process` · `status-sync` · `incident-analyze` · `tag-normalize` · `training-manage`
 · `improvement-plan` (여기서 `plan`은 동사).
 
-동사 없이 산출물만 쓰거나(`weekly-report`), 순서를 뒤집거나(`draft-gongmun`),
-로마자 한국어를 섞지 않는다. 기존 자산 중 이 셋이 규약 밖이며 의도적으로 동결 상태다.
+동사 없이 산출물만 쓰지 않는다(`weekly-report`·`change-log`가 이 경우다 — 트리거 문구가
+촘촘하고 서로 구분이 미묘해, 이름을 고쳐 얻는 일관성보다 트리거 정확도를 잃을 위험이 커
+의도적으로 동결했다). 순서를 뒤집거나 로마자 한국어를 섞는 형태는 쓰지 않는다
+(`draft-gongmun` → `gongmun-draft`로 정리 완료).
 
 **`references/` 파일명**: 모드 분기는 `mode-{모드명}.md`. 모드가 아닌 분기는 예외이며
 파일 상단에 이유를 적는다 (`inbox-process/references/{action,reference}-branch.md` —
