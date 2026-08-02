@@ -56,7 +56,7 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 - **기존 노트 불변** (Golden Principle #1): 기존 `_Sources`/`_Wiki` 페이지는 얇은 링크 추가만. 본문 수정 필요 시 `## 열린 질문`에 명시하고 오케스트레이터 판단에 맡긴다.
 - **위키링크 스타일**: `[[노트명]]`만 사용. embed 접두 `!` 금지.
 - **수정 금지 경로**: `90_Archive/`, `99_Template/`, `.obsidian/`.
-- **Handysoft PDF**: `scripts/extract_handysoft_pdf.py`로 추출 후 Read.
+- **Handysoft PDF**: `.claude/skills/inbox-process/scripts/extract_handysoft_pdf.py`로 추출 후 Read.
 - **파싱 불가 포맷** (`.hwp`, `.hwpx`, `.xlsx`, `.docx`): 파일명·사용자 설명·주변 맥락으로 처리. 불확실하면 `## 열린 질문`에 기록.
 - **원본 파일 삭제 금지**: 오케스트레이터가 일괄 처리.
 

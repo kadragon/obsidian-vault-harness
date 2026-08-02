@@ -52,8 +52,8 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 - **기존 노트 불변** (Golden Principle #1): 동일 폴더명 충돌 시 기존 노트를 수정하지 말고 `_2`, `_3` 접미사 사용 (스크립트가 자동 처리).
 - **위키링크 스타일**: `[[노트명]]`만 사용. `![[...]]` embed 접두는 금지.
 - **태그 작성**: 노트 `## 관련` 섹션에 **후보 태그**를 기재하고, 출력의 "태그 후보"에도 함께 보고한다. tag-validator 검증·확정은 오케스트레이터가 수행한다 (워커는 tag-validator를 호출하지 않음 — 중첩 불가).
-- **경로/파일명**: 직접 슬러그 생성 금지. `scripts/new_work_path.py` 호출.
-- **PDF 헤더**: Handysoft 포맷은 `scripts/extract_handysoft_pdf.py`로 추출 후 Read.
+- **경로/파일명**: 직접 슬러그 생성 금지. `.claude/skills/inbox-process/scripts/new_work_path.py` 호출.
+- **PDF 헤더**: Handysoft 포맷은 `.claude/skills/inbox-process/scripts/extract_handysoft_pdf.py`로 추출 후 Read.
 - **원본 파일 삭제 금지**: 오케스트레이터가 일괄 처리.
 
 ## 협업 (모두 오케스트레이터가 수행 — 워커는 서브에이전트를 호출하지 않는다)
