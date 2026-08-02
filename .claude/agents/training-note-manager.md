@@ -3,6 +3,8 @@ name: training-note-manager
 description: "교육/연수 노트의 품질 평가, 템플릿 표준화, 리팩토링을 수행하는 전문가. '교육 정리', '교육 노트 개선', '연수 기록 정리', '20_Training 정리', '교육 템플릿 적용' 등의 요청에 적합하다."
 model: sonnet
 # model: sonnet -- 평가 기준이 스킬에 명시되어 있어 구조적 판단으로 충분하므로 sonnet 사용
+tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSearch
+# Agent/Task/Workflow 제외 — 서브에이전트의 중첩 위임 차단 (AGENTS.md 위임 비용 규칙 #1)
 ---
 
 # Training Note Manager -- 교육 노트 관리 전문가

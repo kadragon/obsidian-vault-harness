@@ -11,7 +11,7 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | #1 Existing notes immutable | AGENTS.md rule + Hard Stop + 대량편집 dry-run 규율 | Doc-enforced (의도적) |
 | #2 Follow templates | `check-template.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #3 Normalize tags (form + semantic) | `validate-tags.sh` PostToolUse hook이 태그를 추출해 `validate_tag.py --json`에 파이프 (mechanical) → 문맥 의존 건만 `tag-validator` | Shell-enforced (form: committed · semantic: 2026-07-29) |
-| 위임 비용 규칙 #1 (중첩 위임 금지) | `check-nested-delegation.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
+| 위임 비용 규칙 #1 (중첩 위임 금지) | `.claude/agents/*.md` `tools:` 화이트리스트 (런타임 차단) + `check-nested-delegation.py` PostToolUse hook (산문 린터) | Shell-enforced (committed) |
 | #4 Folder rules | `check-folder-rules.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #2 Task date fields | `check-todo-due-date.py` PostToolUse hook (mechanical) | Shell-enforced |
 | #5 Inbox (01_Inbox) via skill | AGENTS.md delegation rule | Doc-enforced |
@@ -79,7 +79,21 @@ Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-to
 
 `.claude/hooks/check-nested-delegation.py`, `settings.json`의 `PostToolUse` `Write|Edit`에 등록.
 
-**배경 (2026-07-24 실측):** 서브에이전트의 도구 목록에 `Agent`·`Task`가 **없다**(`Skill`·`Read`·`Write`·`Edit`·`Bash`·`Grep`·`Glob`는 있음). 그런데 `improvement-planner`·`incident-analyst`·`training-note-manager` 3개 정의가 `Agent(subagent_type: "tag-validator")`를 호출하도록 지시하고 있었다 → 런타임 **무음 실패**로 태그 작성이 조용히 누락됐다.
+**배경 (2026-07-24 실측):** `improvement-planner`·`incident-analyst`·`training-note-manager` 3개 정의가 `Agent(subagent_type: "tag-validator")`를 호출하도록 지시하고 있었다 → 도구가 없는 상태에서 런타임 **무음 실패**로 태그 작성이 조용히 누락됐다.
+
+**정정 (2026-08-02 실측):** "서브에이전트에 `Agent`·`Task`가 없다"는 **자동이 아니다.** 정의 frontmatter에 `tools:`가 없으면 `Agent`를 그대로 **상속**한다. 이 상태에서 `inbox-reference-worker`가 자기 자신을 자식으로 띄운 뒤 **결과를 기다리지 않고 즉시 반환** → 메인 스레드가 산출물 0건으로 오판하고 재디스패치 → 두 워커가 같은 배치를 중복 처리(228k 토큰 + 중복 노트 생성 후 정리). 실제 실패 모드는 무음 실패가 아니라 **고아 자식**이다.
+
+**이 훅은 문서 린터다** — 서브에이전트가 읽는 `.md`의 **산문 위임 지시**만 검출하며, 런타임 `Agent` 호출은 검사 범위 밖이다. 위 사고에서도 산문 지시는 0건이었고 훅은 정상적으로 무음이었다.
+
+### Active: `tools:` 화이트리스트 (mechanical, 2026-08-02)
+
+런타임 차단 담당. `.claude/agents/*.md` 전부에 다음을 명시해 `Agent`·`Task`·`Workflow`를 제외한다:
+
+```yaml
+tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSearch
+```
+
+(`status-judge`는 이전부터 `tools: Read`로 더 좁게 제한.) **새 에이전트 추가 시 이 줄을 반드시 넣는다** — 빠뜨리면 규칙이 조용히 무효가 된다.
 
 **검사 대상** (서브에이전트가 읽는 파일만): `.claude/agents/*.md` · `description`에 `Do NOT invoke directly`가 있는 **스킬 디렉터리 전체**(`SKILL.md` + `references/` 이하 모든 `.md`) · `inbox-process/references/{action,reference}-branch.md`.
 

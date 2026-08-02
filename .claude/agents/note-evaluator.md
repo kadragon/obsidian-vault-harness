@@ -4,6 +4,8 @@ description: "갓 생성·수정된 볼트 노트의 품질을 docs/eval-criteri
 model: sonnet
 # model: sonnet -- 검증자는 생성자(sonnet 워커) 이상이어야 한다. haiku는 rubric 기계 대조는 통과하나
 # 원문 대비 사실 왜곡·누락 판정에서 약하다(검증자 < 생성자 = 역방향 게이트). 호출 빈도가 낮아 비용 영향 제한적.
+tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSearch
+# Agent/Task/Workflow 제외 — 서브에이전트의 중첩 위임 차단 (AGENTS.md 위임 비용 규칙 #1)
 ---
 
 # Note Evaluator — 노트 품질 평가 전문가
