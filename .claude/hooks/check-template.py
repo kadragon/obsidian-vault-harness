@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # PostToolUse hook: GP#2 template check
 # Write 후 (1) ![[...]] embed 감지, (2) note-bearing 폴더에서 type: frontmatter 누락 감지
-import json, sys, re, pathlib
+import json, sys, re, pathlib, unicodedata
 
 try:
     d = json.loads(sys.stdin.read())
@@ -12,7 +12,9 @@ fp = (d.get("tool_input") or {}).get("file_path", "")
 if not fp or not fp.endswith(".md"):
     sys.exit(0)
 
-fp_norm = fp.replace("\\", "/")
+# macOS는 한글 파일명을 NFD로 저장한다 — 한글 경로 리터럴(`/과업심의/`)과 비교하려면
+# NFC로 정규화해야 한다. ASCII 경로 비교에는 영향이 없다.
+fp_norm = unicodedata.normalize("NFC", fp.replace("\\", "/"))
 
 # Skip harness/meta dirs and non-note paths
 skip = ["/99_Template/", "/docs/", "/.claude/", "/90_Archive/",
@@ -104,8 +106,18 @@ if any(f in fp_norm for f in note_folders):
 #   필수 앵커 2개의 존재만 본다 (별칭 허용, 자유 섹션 추가 허용).
 #   `type: work`으로 한정한다 — 10_Areas 아래에도 `type: reference` 분석 노트가 있고
 #   (실측 2/2건 전수 오탐) 업무사안 템플릿을 쓰지 않는 것이 정상이다.
+#   `10_Areas/과업심의/`의 **심의 서식**은 제외한다 (2026-08-02 사용자 결정): 회차마다 재생산되는
+#   `심의의견_*`·`*_사업목록`·`위원별_검토의견_수집`·`과업심의_프로세스`는 `사업 개요`/`과업내용
+#   적정성` 구조라 업무사안 앵커가 의미 없다. 제외 전 미통과 20건 중 15건이 이 서식이었고
+#   회차가 열릴 때마다 같은 경고가 재발했다.
+#   **폴더째 제외하지 않는 이유** (PR #21 리뷰 실측): 같은 폴더의 18건 중 3건은 앵커를 갖춘
+#   진짜 업무사안(`202602_..._과업심의위원회.md` 등)이고 회차마다 새로 생긴다 — 폴더째 빼면
+#   그 갈래가 영구히 무게이트가 된다. 그래서 **파일명 어휘**로 서식만 골라낸다.
 #   기준 동기화 대상: docs/eval-criteria.md → Template Adherence
-if "/10_Areas/" in fp_norm and note_type == "work":
+SIMUI_FORM = ("심의의견", "사업목록", "검토의견", "과업심의_프로세스")
+if ("/10_Areas/" in fp_norm and note_type == "work"
+        and not ("/10_Areas/과업심의/" in fp_norm
+                 and any(k in fp_norm.rsplit("/", 1)[-1] for k in SIMUI_FORM))):
     # 앵커 비교는 두 단계다:
     #   (1) 선행 기호(이모지·ZWJ·variation selector·구두점)를 떼고 한글 본문으로 비교.
     #       `\W`는 숫자를 포함하지 않으므로 번호 프리픽스(`## 1. 관련`)는 떼이지 않는다 — 의도된 동작이다.
@@ -121,16 +133,19 @@ if "/10_Areas/" in fp_norm and note_type == "work":
                 "— 자유 섹션 추가는 위반 아님 (docs/eval-criteria.md → Template Adherence)")
 
 
-# Check 5: `#업무/` 태그 존재 — 템플릿이 요구하는 모든 노트 종류
-#   대상: 10_Areas(`type: work`) · 14_Changes/ · 20_Training/. 네 템플릿(_업무사안·_개선·
-#   _인시던트·_교육) 모두 `## 관련`에 `- #업무/`를 두므로 종류를 가릴 이유가 없다.
-#   10_Areas만 검사하면 incident·improvement·training 노트가 무게이트로 남는다 (PR #20 리뷰).
+# Check 5: `#업무/` 태그 존재
+#   대상: 10_Areas(`type: work`) · 14_Changes/. 두 갈래 모두 미보유가 소수라(각 13/201·24/203)
+#   요구가 관행에 부합한다. 10_Areas만 검사하면 incident·improvement가 무게이트로 남는다 (PR #20 리뷰).
+#   `20_Training/`은 제외한다 (2026-08-02 사용자 결정): `_교육.md` 템플릿이 `- #업무/`를 두지만
+#   실측 미보유 25/35(71%)로 **관행이 아니다** — 기계화하면 다수가 오탐이 된다. 교육 노트의
+#   `#업무/` 부재는 평가자 판단으로 남긴다.
 #   validate-tags.sh는 **발견한 태그의 형식**만 보고, 게다가 중괄호 플레이스홀더(`grep -v '[{}]'`)와
 #   인라인 코드를 제거한 뒤 검사하므로 `#업무/{영역}/...`만 있는 노트는 양쪽 다 무음이었다 —
 #   그래서 여기서는 **중괄호도 인라인 코드도 아닌 구체 태그**를 요구한다.
-#   `#부서/`는 검사하지 않는다: 실측 미보유 56/201(28%)로 관행이 아니다 — 평가자 판단으로 남긴다.
+#   `#부서/`는 검사하지 않는다: 실측 미보유 56/201(28%)로 관행이 아니라 **선택 필드로 강등**됐다
+#   (2026-08-02 사용자 결정) — 부재는 위반도 감점도 아니다.
 if (("/10_Areas/" in fp_norm and note_type == "work")
-        or "/14_Changes/" in fp_norm or "/20_Training/" in fp_norm):
+        or "/14_Changes/" in fp_norm):
     text_no_inline = re.sub(r'`[^`\n]*`', '', text_no_code)
     if not re.search(r'#업무/(?![{\s])', text_no_inline):
         violations.append(
