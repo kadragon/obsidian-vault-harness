@@ -131,14 +131,16 @@ text = "\n".join(page.get_text() for page in doc)
     uv run .claude/skills/inbox-process/scripts/classify_pdf.py "파일1.pdf" "파일2.pdf"
     ```
   Handysoft 추출과 스캔본 판별을 이 호출이 함께 처리한다. 반환된 `action`에 따라 분기하며(`type`이 아님 — `mixed`인데 OCR 대상 페이지가 없을 수 있다), 원본이 아니라 항상 `read_path`를 읽는다. 절차 상세·`action` 표는 `action-branch.md` → PDF 읽기 절차.
-  - `read`: Read 도구로 `read_path`를 읽는다. 10페이지 초과는 `pages: "1-5"`로 먼저 앞부분만 확인.
-    - **Handysoft 추출본은 Read 도구가 pdftoppm 부재로 실패**하므로 fitz(PyMuPDF) Bash 명령으로 읽는다:
+  - `read`: **Read 도구는 이 머신에서 PDF를 못 읽는다** — Handysoft 추출본뿐 아니라 일반 PDF도 poppler(`pdftoppm`) 부재로 실패한다(2026-08-18 실측). fitz(PyMuPDF)로 읽는다:
       ```python
       import fitz
-      doc = fitz.open(read_path)
-      text = "\n".join(page.get_text() for page in doc)
+      doc = fitz.open(read_path)          # classify_pdf.py 가 반환한 경로
+      text = "
+".join(page.get_text() for page in doc)
+      doc.close()
       ```
-  - `ocr` / `read+ocr`: `uv run scripts/ocr_pdf.py "<read_path>" --pages <구간>`. `--pages`는 단일 페이지나 연속 구간 하나만 받으므로 `ocr_ranges` 항목마다 한 번씩 호출한다. **이 머신은 Tesseract 미설치라 현재 실패한다**(`brew install tesseract tesseract-lang` 필요) — 실패 시 건너뛰고 열린 질문으로 보고한다.
+    10페이지 초과는 앞 1~5p만 먼저 뽑아 핵심을 확인한다.
+  - `ocr` / `read+ocr`: `uv run scripts/ocr_pdf.py "<read_path>" --pages <구간>`. `--pages`는 단일 페이지나 연속 구간 하나만 받으므로 `ocr_ranges` 항목마다 한 번씩 호출한다. **이 머신은 Tesseract 미설치라 현재 실패한다** — Windows이므로 `winget install UB-Mannheim.TesseractOCR` + 한국어 traineddata + `TESSDATA_PREFIX` 설정이 필요하다. 실패 시 건너뛰고 열린 질문으로 보고한다.
   - `error` 필드가 있으면 해당 파일은 건너뛰고 보고에 기록한다.
 - `.txt`, `.md`: Read 도구로 읽는다.
 - `.hwp`, `.hwpx`, `.xlsx`, `.docx`: 내용 직접 파싱 불가. 파일명·사용자 설명·주변 맥락으로 판단. 불확실하면 보고의 열린 질문으로 "핵심 내용 확인 필요"를 반환한다 (워커가 사용자에게 직접 묻지 않음).

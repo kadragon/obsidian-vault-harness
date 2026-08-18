@@ -13,17 +13,26 @@ Output:
 """
 import hashlib
 import sys
+import tempfile
 from pathlib import Path
 
 
 def out_path_for(data: bytes) -> Path:
-    """Deterministic /tmp path for a source file's extracted PDF.
+    """Deterministic, absolute temp path for a source file's extracted PDF.
 
-    Hashing the source bytes (not the slice) keeps concurrent workers from
-    colliding while letting a repeat call reuse the same file.
+    Hashes the WHOLE source, not a 1 KiB prefix: Handysoft wrapper headers are
+    template-generated, so a prefix hash collides across unrelated documents
+    (measured on 897 vault PDFs: 786 distinct 8-hex prefixes, one prefix
+    covering 20 files of 14 different sizes). classify_pdf.py writes and
+    returns this path per file, so a collision would hand the caller document
+    B's text under document A's name, with no error.
+
+    Built from `tempfile.gettempdir()` so the result is drive-qualified on
+    Windows — a bare `/tmp/...` resolves to `\\tmp\\...`, which is correct only
+    while the process CWD happens to sit on the same drive.
     """
-    file_hash = hashlib.md5(data[:1024]).hexdigest()[:8]
-    return Path(f"/tmp/extracted_{file_hash}.pdf")
+    file_hash = hashlib.md5(data).hexdigest()[:8]
+    return Path(tempfile.gettempdir()) / f"extracted_{file_hash}.pdf"
 
 
 def unwrap(data: bytes) -> tuple[bytes, bool]:

@@ -68,7 +68,7 @@
 
 ```bash
 # 제시 기간·인력으로 소화 가능한 규모 상한
-python3 scripts/cost_check.py period --months 3 --headcount 3   # → 약 171 FP 이하
+python3 .claude/skills/gwaeop-simui/scripts/cost_check.py period --months 3 --headcount 3   # → 약 171 FP 이하
 ```
 이 상한을 요구사항 건수·역산 FP와 나란히 놓으면 기간 산정의 성립 여부가 드러난다.
 

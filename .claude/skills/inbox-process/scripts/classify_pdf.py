@@ -12,9 +12,10 @@ classifier separates the two cases exactly — the 146 `scanned` files yield
 branch is mechanical, and a scanned file no longer costs a wasted Read first.
 
 Handysoft wrappers are unwrapped in memory before classification. When the
-source is a wrapper, the embedded PDF is also written to /tmp (same path
-convention as extract_handysoft_pdf.py) and reported as `read_path`, so one
-call covers both the unwrap and the classify step.
+source is a wrapper, the embedded PDF is also written to the system temp dir
+(same path convention as extract_handysoft_pdf.py) and reported as `read_path`
+— an absolute, drive-qualified path — so one call covers both the unwrap and
+the classify step.
 
 Usage:
     uv run .claude/skills/inbox-process/scripts/classify_pdf.py <file.pdf> [more.pdf ...]
@@ -25,7 +26,7 @@ Usage:
 Output (JSON array on stdout, one object per input):
     path       source path as given
     handysoft  true when the source was a Handysoft wrapper
-    read_path  path to read text from (extracted /tmp copy, or the source)
+    read_path  path to read text from (extracted temp copy, or the source)
     type       text_based | scanned | mixed | image_based
     pages      page count
     ocr_pages  1-based page numbers needing OCR
@@ -36,7 +37,7 @@ Output (JSON array on stdout, one object per input):
 
 Follow `action`, not `type` — a `mixed` file may list no OCR pages at all,
 so `type` alone does not determine the branch:
-    read       Read tool / PyMuPDF on read_path
+    read       PyMuPDF on read_path (the Read tool needs poppler, absent here)
     ocr        ocr_pdf.py read_path
     read+ocr   read normally, then ocr_pdf.py --pages once per ocr_ranges entry
 

@@ -34,6 +34,21 @@ PRODUCTIVITY_BANDS = [
 SIMPLIFIED_REVIEW_LIMIT = 100_000_000  # 지침 §10②·대학 운영지침 §5③1호: 1억원
 
 
+def positive_float(value: str) -> float:
+    """0 이하를 argparse 단계에서 거른다 — 기간·인력 0은 ZeroDivisionError."""
+    v = float(value)
+    if v <= 0:
+        raise argparse.ArgumentTypeError(f"0보다 커야 함: {value}")
+    return v
+
+
+def positive_int(value: str) -> int:
+    v = int(value)
+    if v <= 0:
+        raise argparse.ArgumentTypeError(f"0보다 커야 함: {value}")
+    return v
+
+
 def supply_price(amount: float, vat_included: bool) -> float:
     """부가가치세를 제외한 공급가."""
     return amount / (1 + VAT_RATE) if vat_included else float(amount)
@@ -90,15 +105,20 @@ def cmd_maint(args: argparse.Namespace) -> int:
     print(f"  개발비 공급가       {won(dev_supply)}")
     print(f"  유지관리비 공급가   {won(maint_supply)}  ({args.months}개월 = {years:.2f}년)")
     print()
-    print(f"  요율제 환산 범위    {won(lo)} ~ {won(hi)}")
-    if maint_supply > hi:
-        over = maint_supply / hi
-        print(f"  → 상한 대비 {over:.0%} — **요율제 기준 과다**")
-    elif maint_supply < lo:
-        under = maint_supply / lo
-        print(f"  → 하한 대비 {under:.0%} — **요율제 기준 과소**")
+    if hi > 0:
+        print(f"  요율제 환산 범위    {won(lo)} ~ {won(hi)}")
+        if maint_supply > hi:
+            over = maint_supply / hi
+            print(f"  → 상한 대비 {over:.0%} — **요율제 기준 과다**")
+        elif maint_supply < lo:
+            under = maint_supply / lo
+            print(f"  → 하한 대비 {under:.0%} — **요율제 기준 과소**")
+        else:
+            print("  → 요율제 범위 내")
     else:
-        print("  → 요율제 범위 내")
+        # 개발비 0 = 운영유지관리 단독 사업. 요율제는 성립하지 않는다.
+        print("  요율제 환산 범위    산정 불가 (개발비 0 — 개발 선행이 없는 사업)")
+        print("  → 요율제로는 검증 불가. 아래 투입공수로만 판단할 것.")
     print()
     print(f"  월 단가(공급가)     {won(monthly)}")
     if args.monthly_rate:
@@ -134,11 +154,20 @@ def cmd_sum(args: argparse.Namespace) -> int:
             print(f"  → **불일치 {won(abs(diff))}** ({'항목 초과' if diff > 0 else '항목 부족'})")
 
     base = args.total if args.total is not None else total_items
+    est_price = base / (1 + VAT_RATE) if args.vat_included else base
     if args.vat_included:
-        print(f"  추정가격(÷1.1)      {won(base / (1 + VAT_RATE))}")
+        print(f"  추정가격(÷1.1)      {won(est_price)}")
     else:
-        print(f"  추정가격            {won(base)}  (이미 VAT 제외)")
+        print(f"  추정가격            {won(est_price)}  (이미 VAT 제외)")
         print(f"  VAT 포함 환산       {won(base * (1 + VAT_RATE))}")
+
+    print()
+    if est_price > SIMPLIFIED_REVIEW_LIMIT:
+        print(f"  심의 구분: 추정가격이 {won(SIMPLIFIED_REVIEW_LIMIT)} 초과 → **정식 심의**")
+        print("            (적정 사업기간 산정 주체도 과업심의위원회 — 지침 §10②③)")
+    else:
+        print(f"  심의 구분: 추정가격 {won(SIMPLIFIED_REVIEW_LIMIT)} 이하 → 간소화 심의 대상")
+        print("            (대학 운영지침 §5③1호 — 서면심의 가능 여부 확인)")
 
     print()
     print("  확인: 항목별로 VAT 포함 여부가 명시되어 있는지, 단가 × 수량 형식인지,")
@@ -152,6 +181,26 @@ def productivity_for(fp: float) -> int:
         if lo <= fp < hi:
             return val
     return PRODUCTIVITY_BANDS[-1][2]
+
+
+def capacity_for(capacity_mm: float) -> tuple[float, int]:
+    """투입공수(MM)로 소화 가능한 FP 상한과 그때의 1인 생산성.
+
+    PRODUCTIVITY_BANDS 는 단조가 아니라(19/22/24/22) `capacity_mm * prod` 이
+    그 구간 안에 떨어지는 자기정합 해가 아예 없는 공수 구간이 존재한다
+    (약 125~136 MM). 구간마다 도달 가능한 최댓값 `min(capacity_mm*prod, hi)`
+    을 구해 그중 최대를 택하면 해가 항상 존재하고, 첫 일치 구간에서 break 해
+    상한을 과소보고하던 문제(90MM → 1,980 대신 2,160)도 없어진다.
+    """
+    best = (0.0, PRODUCTIVITY_BANDS[0][2])
+    for lo, hi, prod in PRODUCTIVITY_BANDS:
+        reach = capacity_mm * prod
+        if reach < lo:                        # 이 구간에는 도달조차 못 함
+            continue
+        candidate = min(reach, hi)
+        if candidate > best[0]:
+            best = (candidate, prod)
+    return best
 
 
 def cmd_period(args: argparse.Namespace) -> int:
@@ -169,17 +218,7 @@ def cmd_period(args: argparse.Namespace) -> int:
     elif args.months is not None:
         # 역산: 제시된 기간·인력으로 소화 가능한 FP 상한
         capacity_mm = args.months * args.headcount
-        # 생산성이 규모에 따라 달라지므로 구간을 순회하며 자기정합 해를 찾는다.
-        fp_cap = None
-        for lo, hi, prod in PRODUCTIVITY_BANDS:
-            candidate = capacity_mm * prod
-            if lo <= candidate < hi:
-                fp_cap = (candidate, prod)
-                break
-        if fp_cap is None:                    # 구간 경계에 걸리면 보수적으로 최저 생산성
-            prod = min(b[2] for b in PRODUCTIVITY_BANDS)
-            fp_cap = (capacity_mm * prod, prod)
-        cap, prod = fp_cap
+        cap, prod = capacity_for(capacity_mm)
         print(f"  제시 개발기간       {args.months} 개월")
         print(f"  적정 개발인력 수    {args.headcount} 명")
         print(f"  총 투입공수         {capacity_mm:,.1f} MM")
@@ -222,7 +261,7 @@ def main(argv: list[str] | None = None) -> int:
     m = sub.add_parser("maint", help="유지관리·운영비 → 요율제/투입공수 양방향 검증")
     m.add_argument("--dev-amount", type=float, required=True, help="개발비")
     m.add_argument("--maint-amount", type=float, required=True, help="유지관리·운영비 총액")
-    m.add_argument("--months", type=int, required=True, help="유지관리·운영 기간(개월)")
+    m.add_argument("--months", type=positive_int, required=True, help="유지관리·운영 기간(개월)")
     m.add_argument("--vat-included", action="store_true", help="두 금액이 부가세 포함이면 지정")
     m.add_argument("--monthly-rate", type=float, default=None,
                    help="SW기술자 월 노임단가 (주면 MM 환산까지 계산)")
@@ -236,9 +275,9 @@ def main(argv: list[str] | None = None) -> int:
 
     pd = sub.add_parser("period", help="적정 개발기간 산정/역산 (지침 별표 1)")
     g = pd.add_mutually_exclusive_group(required=True)
-    g.add_argument("--fp", type=float, help="사업규모(FP) → 전체 개발기간 산정")
-    g.add_argument("--months", type=float, help="제시된 개발기간(개월) → 소화 가능 FP 상한 역산")
-    pd.add_argument("--headcount", type=float, default=1.0, help="적정 개발인력 수 (기본 1명)")
+    g.add_argument("--fp", type=positive_float, help="사업규모(FP) → 전체 개발기간 산정")
+    g.add_argument("--months", type=positive_float, help="제시된 개발기간(개월) → 소화 가능 FP 상한 역산")
+    pd.add_argument("--headcount", type=positive_float, default=1.0, help="적정 개발인력 수 (기본 1명)")
     pd.set_defaults(func=cmd_period)
 
     args = p.parse_args(argv)
