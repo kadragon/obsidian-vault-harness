@@ -49,13 +49,23 @@ uv run .claude/skills/inbox-process/scripts/classify_pdf.py "파일경로.pdf" [
 
 | `action` | 처리 |
 |---|---|
-| `read` | `read_path`를 Read 도구로 읽는다 |
-| `ocr` | 전 페이지 스캔본. Read 건너뛰고 바로 OCR (아래) |
+| `read` | `read_path`를 PyMuPDF로 읽는다 (아래 2단계) |
+| `ocr` | 전 페이지 스캔본. 읽기 건너뛰고 바로 OCR (3단계) |
 | `read+ocr` | 먼저 읽고, `ocr_ranges` 항목마다 한 번씩 추가 OCR |
 
-`read_path`는 Handysoft면 추출된 `/tmp/extracted_*.pdf`, 아니면 원본 경로다 — **원본이 아니라 항상 `read_path`를 읽는다.** `error` 필드가 있으면 그 항목은 건너뛰고 보고에 기록한다.
+`read_path`는 Handysoft면 추출된 임시 PDF(`extracted_*.pdf`), 아니면 원본 경로다 — **원본이 아니라 항상 `read_path`를 읽는다.** `error` 필드가 있으면 그 항목은 건너뛰고 보고에 기록한다.
 
-**2단계 — 대용량 PDF 대응.** Read 도구의 `pages` 파라미터를 쓴다. 10페이지 초과면 먼저 `pages: "1-5"`로 앞부분만 읽어 핵심(제목·발신부서·요청사항)을 파악하고, 필요 시 추가로 읽는다.
+**2단계 — 본문 읽기.** **Read 도구는 이 머신에서 PDF를 못 읽는다** — Handysoft 추출본뿐 아니라 일반 PDF도 `pdftoppm is not installed`로 실패한다(poppler 미설치, 2026-08-18 실측). PyMuPDF로 읽는다:
+
+```python
+import fitz
+doc = fitz.open(read_path)          # classify_pdf.py 가 반환한 경로
+text = "
+".join(page.get_text() for page in doc)
+doc.close()
+```
+
+대용량이면 `doc[start:end]` 대신 페이지 인덱스를 잘라 앞부분(1~5p)만 먼저 뽑아 핵심(제목·발신부서·요청사항)을 파악하고, 필요 시 범위를 넓힌다. poppler가 깔리면 Read 도구의 `pages` 파라미터를 그대로 써도 된다.
 
 **3단계 — OCR.** `action`이 `ocr`·`read+ocr`일 때만 호출한다.
 
@@ -67,7 +77,7 @@ uv run .claude/skills/inbox-process/scripts/ocr_pdf.py "<read_path>" --pages 1-5
 
 OCR은 페이지당 수 초라 범위가 넓으면 비용이 크다 — 대용량은 앞부분을 먼저 샘플하고 필요한 범위만 추가한다. 표·순서가 흐트러질 수 있으니 핵심 사실 위주로 정리한다.
 
-> **현재 이 머신에서 OCR은 실패한다** (2026-08-04 실측). PyMuPDF는 `uv run`이 공급하지만 Tesseract 바이너리는 파이썬 패키지가 아니라 `uv`가 못 준다. `brew install tesseract tesseract-lang` 전까지 `action`이 `ocr`인 파일은 본문 추출이 불가하니 **건너뛰고 열린 질문으로 보고한다** — 실패는 `ERROR: OCR failed: ...`로 크게 드러나므로 빈 추출을 성공으로 오독할 일은 없다.
+> **현재 이 머신에서 OCR은 실패한다** (2026-08-04 실측). PyMuPDF는 `uv run`이 공급하지만 Tesseract 바이너리는 파이썬 패키지가 아니라 `uv`가 못 준다. 이 머신은 Windows이므로 `winget install UB-Mannheim.TesseractOCR`(또는 UB-Mannheim 인스톨러)로 설치하고 한국어 traineddata를 받은 뒤 `TESSDATA_PREFIX`를 그 `tessdata` 폴더로 지정해야 한다. 그 전까지 `action`이 `ocr`인 파일은 본문 추출이 불가하니 **건너뛰고 열린 질문으로 보고한다** — 실패는 `ERROR: OCR failed: ...`로 크게 드러나므로 빈 추출을 성공으로 오독할 일은 없다.
 
 > 스캔본을 Read로 먼저 읽어보고 "텍스트가 안 나온다"를 확인하는 절차는 없앴다. 볼트 PDF 545건 실측에서 분류기와 실제 텍스트 수확량이 완전히 일치했다(`scanned` 146건 전부 0자/페이지, `text_based` 380건 중 50자 미만 0건). 헛된 Read 왕복 없이 바로 분기한다.
 
@@ -81,7 +91,7 @@ OCR은 페이지당 수 초라 범위가 넓으면 비용이 크다 — 대용�
 python3 .claude/skills/inbox-process/scripts/extract_handysoft_pdf.py "원본파일.pdf"
 ```
 
-`%PDF-` ~ `%%EOF` 구간을 잘라 `/tmp/extracted_{md5앞8자}.pdf`에 저장하고 stdout 첫 줄에 경로를 찍는다. 파일별 해시라 동시 처리 시에도 충돌하지 않는다. exit code 1(임베딩 PDF 없음 등)이면 해당 항목을 건너뛰고 사용자에게 알린다.
+`%PDF-` ~ `%%EOF` 구간을 잘라 시스템 임시폴더의 `extracted_{md5앞8자}.pdf`에 저장하고 stdout 첫 줄에 절대경로를 찍는다. 해시는 원본 전체 바이트 기준이라 서로 다른 문서가 같은 경로를 쓰는 일이 없다. exit code 1(임베딩 PDF 없음 등)이면 해당 항목을 건너뛰고 사용자에게 알린다.
 
 ## 2. 문서 내용 분석
 

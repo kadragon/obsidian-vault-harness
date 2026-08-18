@@ -12,8 +12,11 @@ runs Tesseract OCR (kor+eng) via PyMuPDF's get_textpage_ocr.
 Requirements:
     - PyMuPDF — supplied by the PEP 723 header above when run with `uv run`.
     - Tesseract binary + kor/eng traineddata. NOT a Python package, so `uv`
-      cannot supply it; it must be installed system-wide:
-          brew install tesseract tesseract-lang
+      cannot supply it; it must be installed system-wide. This machine is
+      Windows, so Homebrew is not an option:
+          winget install UB-Mannheim.TesseractOCR
+      then drop `kor.traineddata` into the install's `tessdata` folder and
+      point `TESSDATA_PREFIX` at it (see `_ensure_tess_env`).
       Verified absent on this machine as of 2026-08-04, so OCR fails until
       that runs. `classify_pdf.py` still correctly routes files here — the
       failure is loud (`ERROR: OCR failed: ...`), never a silent empty read.
