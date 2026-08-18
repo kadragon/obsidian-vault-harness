@@ -53,13 +53,11 @@
 
 **감지 조건**: 파일명에 `인사발령` 포함. 감지되지 않으면 건너뛴다.
 
-한국교원대학교 인사발령 공문은 Handysoft 포맷이므로 `scripts/extract_handysoft_pdf.py`로 내부 PDF를 먼저 추출한 뒤, PyMuPDF(`fitz`)로 텍스트를 읽는다:
+한국교원대학교 인사발령 공문은 Handysoft 포맷이다. `scripts/classify_pdf.py`가 추출까지 처리하므로 반환된 `read_path`를 PyMuPDF(`fitz`)로 읽는다:
 
 ```python
 import fitz
-from pathlib import Path
-drive = Path(vault_root).drive  # 볼트 경로에서 드라이브 추출 (예: "C:")
-doc = fitz.open(drive + 추출경로)  # 추출 경로가 \tmp\... 형태이므로 드라이브 접두
+doc = fitz.open(read_path)  # classify_pdf.py 가 반환한 경로
 text = "\n".join(page.get_text() for page in doc)
 ```
 
@@ -128,16 +126,20 @@ text = "\n".join(page.get_text() for page in doc)
 
 ## 파일 형식 주의
 
-- `.pdf`: Read 도구로 직접 읽는다. 10페이지 초과는 `pages: "1-5"`로 먼저 앞부분만 확인.
-  - **Handysoft 포맷** (한컴 공문 PDF — Read 도구가 텍스트를 뽑지 못하거나 pdftoppm 오류가 나는 경우): `scripts/extract_handysoft_pdf.py`로 내부 PDF 추출 후, **Read 도구 대신 fitz(PyMuPDF) Bash 명령**으로 읽는다. Read 도구는 추출 후에도 pdftoppm 부재로 실패한다.
-    ```python
-    import fitz
-    from pathlib import Path
-    drive = Path(vault_root).drive  # 볼트 경로에서 드라이브 추출 (예: "C:")
-    doc = fitz.open(drive + 추출경로)  # 추출 경로가 \tmp\... 형태이므로 드라이브 접두
-    text = "\n".join(page.get_text() for page in doc)
+- `.pdf`: **읽기 전에 `scripts/classify_pdf.py`로 분류한다.** 여러 파일을 한 번에 넘길 수 있다.
+    ```bash
+    uv run .claude/skills/inbox-process/scripts/classify_pdf.py "파일1.pdf" "파일2.pdf"
     ```
-  - **이미지 기반 `.pdf`** (스캔본 — 텍스트 레이어 없음): `scripts/ocr_pdf.py`로 OCR 시도. 단, Tesseract 설치 여부는 실행 환경마다 다를 수 있으므로 실패 시 fitz로 재시도하고, 둘 다 실패하면 열린 질문으로 보고한다.
+  Handysoft 추출과 스캔본 판별을 이 호출이 함께 처리한다. 반환된 `action`에 따라 분기하며(`type`이 아님 — `mixed`인데 OCR 대상 페이지가 없을 수 있다), 원본이 아니라 항상 `read_path`를 읽는다. 절차 상세·`action` 표는 `action-branch.md` → PDF 읽기 절차.
+  - `read`: Read 도구로 `read_path`를 읽는다. 10페이지 초과는 `pages: "1-5"`로 먼저 앞부분만 확인.
+    - **Handysoft 추출본은 Read 도구가 pdftoppm 부재로 실패**하므로 fitz(PyMuPDF) Bash 명령으로 읽는다:
+      ```python
+      import fitz
+      doc = fitz.open(read_path)
+      text = "\n".join(page.get_text() for page in doc)
+      ```
+  - `ocr` / `read+ocr`: `uv run scripts/ocr_pdf.py "<read_path>" --pages <구간>`. `--pages`는 단일 페이지나 연속 구간 하나만 받으므로 `ocr_ranges` 항목마다 한 번씩 호출한다. **이 머신은 Tesseract 미설치라 현재 실패한다**(`brew install tesseract tesseract-lang` 필요) — 실패 시 건너뛰고 열린 질문으로 보고한다.
+  - `error` 필드가 있으면 해당 파일은 건너뛰고 보고에 기록한다.
 - `.txt`, `.md`: Read 도구로 읽는다.
 - `.hwp`, `.hwpx`, `.xlsx`, `.docx`: 내용 직접 파싱 불가. 파일명·사용자 설명·주변 맥락으로 판단. 불확실하면 보고의 열린 질문으로 "핵심 내용 확인 필요"를 반환한다 (워커가 사용자에게 직접 묻지 않음).
 

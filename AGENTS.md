@@ -45,6 +45,7 @@ Never perform these directly without the designated agent/skill:
 | Tag 검증·정규화 | **1차: `.claude/lib/validate_tag.py --json`** (결정론적) · 문맥 의존 건만 `tag-validator` agent |
 | 노트 품질 평가 (생성 직후 게이트, `docs/eval-criteria.md` 루브릭) | `note-evaluator` agent |
 | `01_Inbox/` document processing (공문·참고자료 모두) | `inbox-process` skill |
+| 과업심의 요청 검토 (위원 관점 지적·판정) | `gwaeop-simui` skill |
 | Training note cleanup | `training-note-manager` agent |
 | Obsidian note **create**(템플릿 적용)·open·프로퍼티·앱 내 JS | `obsidian-operator` agent |
 | 기존 노트 본문 **소규모 수정**(수 줄·1~2파일) | 직접 Edit — 위임 금지 (§Delegation 비용 규칙) |
