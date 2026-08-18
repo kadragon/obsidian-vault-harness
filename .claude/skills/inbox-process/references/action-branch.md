@@ -32,40 +32,66 @@
 | 확장자 | 처리 방법 |
 |--------|-----------|
 | `.txt` | Read 도구로 직접 읽는다 |
-| `.pdf` | 선제 헤더 검사 → 일반 PDF 또는 Handysoft 추출 (아래) |
+| `.pdf` | `classify_pdf.py`로 분류 후 분기 (아래) |
 | `.xlsx`, `.docx`, `.hwp` 등 | 내용 분석 없이 첨부파일로만 처리한다 |
 
 ### PDF 읽기 절차
 
-1. **선제 헤더 검사**: Read 전에 Bash로 파일 헤더를 확인한다.
-   ```bash
-   head -c 50 "파일경로.pdf"
-   ```
-   - `%PDF-`로 시작하면 → 일반 PDF. Read 도구로 바로 읽는다.
-   - `Handysoft`로 시작하면 → Handysoft 전자결재 파일. 아래 추출 절차를 따른다.
-   - 그 외 → 알 수 없는 형식. 건너뛰고 사용자에게 알린다.
+**1단계 — 분류.** Read 전에 반드시 분류부터 한다. 헤더 검사·Handysoft 추출·스캔본 판별을 이 한 번의 호출이 모두 처리한다. 여러 파일을 한꺼번에 넘길 수 있다.
 
-2. **대용량 PDF 대응**: Read 도구로 PDF를 읽을 때 `pages` 파라미터를 활용한다. 10페이지 초과 PDF는 먼저 `pages: "1-5"`로 앞부분만 읽어 핵심 내용(제목, 발신부서, 요청사항)을 파악한다. 필요 시 추가 페이지를 읽는다.
+```bash
+uv run .claude/skills/inbox-process/scripts/classify_pdf.py "파일경로.pdf" ["파일2.pdf" ...]
+```
 
-3. **이미지 기반(스캔) PDF**: Read가 텍스트를 거의 못 뽑으면 미파싱으로 건너뛰지 말고 OCR한다. 번들 스크립트를 직접 호출한다(매번 코드 재작성 금지):
-   ```bash
-   python3 .claude/skills/inbox-process/scripts/ocr_pdf.py "파일경로.pdf" --pages 1-5
-   ```
-   대용량은 `--pages`로 앞부분 샘플 후 필요 범위만 추가 OCR(페이지당 수 초). 표·순서가 흐트러질 수 있으니 핵심 사실 위주로 정리한다. Tesseract+kor 데이터는 이 머신에 설치됨(`TESSDATA_PREFIX` 영구 등록).
+`uv run`이 PEP 723 헤더에서 `pdf-inspector`를 자동 해석하므로 설치 절차가 없다(초회 ~0.5초, 이후 캐시). `uv`가 없으면 `python3`로 실행하되 패키지가 깔려 있어야 한다.
 
-### Handysoft 전자결재 파일 추출
+파일별 JSON이 나온다. **`type`이 아니라 `action`을 따른다** — `mixed`인데 OCR 대상 페이지가 없는 경우가 있어 `type`만으로는 분기가 결정되지 않는다.
 
-한국교원대학교의 전자결재 시스템(Handysoft)에서 내보낸 파일은 `.pdf` 확장자이지만 실제로는 독자 포맷이다. 내부에 PDF가 임베딩되어 있으므로 추출이 필요하다.
+| `action` | 처리 |
+|---|---|
+| `read` | `read_path`를 PyMuPDF로 읽는다 (아래 2단계) |
+| `ocr` | 전 페이지 스캔본. 읽기 건너뛰고 바로 OCR (3단계) |
+| `read+ocr` | 먼저 읽고, `ocr_ranges` 항목마다 한 번씩 추가 OCR |
 
-추출 로직은 결정론적이므로 번들 스크립트를 직접 호출한다 (매번 코드를 재작성하지 말 것):
+`read_path`는 Handysoft면 추출된 임시 PDF(`extracted_*.pdf`), 아니면 원본 경로다 — **원본이 아니라 항상 `read_path`를 읽는다.** `error` 필드가 있으면 그 항목은 건너뛰고 보고에 기록한다.
+
+**2단계 — 본문 읽기.** **Read 도구는 이 머신에서 PDF를 못 읽는다** — Handysoft 추출본뿐 아니라 일반 PDF도 `pdftoppm is not installed`로 실패한다(poppler 미설치, 2026-08-18 실측). PyMuPDF로 읽는다:
+
+```python
+import fitz
+doc = fitz.open(read_path)          # classify_pdf.py 가 반환한 경로
+text = "
+".join(page.get_text() for page in doc)
+doc.close()
+```
+
+대용량이면 `doc[start:end]` 대신 페이지 인덱스를 잘라 앞부분(1~5p)만 먼저 뽑아 핵심(제목·발신부서·요청사항)을 파악하고, 필요 시 범위를 넓힌다. poppler가 깔리면 Read 도구의 `pages` 파라미터를 그대로 써도 된다.
+
+**3단계 — OCR.** `action`이 `ocr`·`read+ocr`일 때만 호출한다.
+
+```bash
+uv run .claude/skills/inbox-process/scripts/ocr_pdf.py "<read_path>" --pages 1-5
+```
+
+`--pages`는 단일 페이지(`7`) 또는 연속 구간(`3-5`) **하나만** 받는다. 흩어진 페이지를 콤마로 나열하면 실패하므로, `read+ocr`이면 `ocr_ranges` 항목마다 한 번씩 호출한다(예: `["3-5", "9"]` → 2회). `ocr_ranges`가 이미 `--pages`에 넣을 수 있는 형태로 압축돼 나온다.
+
+OCR은 페이지당 수 초라 범위가 넓으면 비용이 크다 — 대용량은 앞부분을 먼저 샘플하고 필요한 범위만 추가한다. 표·순서가 흐트러질 수 있으니 핵심 사실 위주로 정리한다.
+
+> **현재 이 머신에서 OCR은 실패한다** (2026-08-04 실측). PyMuPDF는 `uv run`이 공급하지만 Tesseract 바이너리는 파이썬 패키지가 아니라 `uv`가 못 준다. 이 머신은 Windows이므로 `winget install UB-Mannheim.TesseractOCR`(또는 UB-Mannheim 인스톨러)로 설치하고 한국어 traineddata를 받은 뒤 `TESSDATA_PREFIX`를 그 `tessdata` 폴더로 지정해야 한다. 그 전까지 `action`이 `ocr`인 파일은 본문 추출이 불가하니 **건너뛰고 열린 질문으로 보고한다** — 실패는 `ERROR: OCR failed: ...`로 크게 드러나므로 빈 추출을 성공으로 오독할 일은 없다.
+
+> 스캔본을 Read로 먼저 읽어보고 "텍스트가 안 나온다"를 확인하는 절차는 없앴다. 볼트 PDF 545건 실측에서 분류기와 실제 텍스트 수확량이 완전히 일치했다(`scanned` 146건 전부 0자/페이지, `text_based` 380건 중 50자 미만 0건). 헛된 Read 왕복 없이 바로 분기한다.
+
+### Handysoft 전자결재 파일
+
+한국교원대학교 전자결재(Handysoft)에서 내보낸 파일은 `.pdf` 확장자이지만 실제로는 독자 포맷이며, 내부에 PDF가 임베딩되어 있다. **위 `classify_pdf.py`가 추출까지 처리하므로 별도 호출은 불필요하다** — `handysoft: true`와 함께 추출본 경로가 `read_path`로 나온다.
+
+추출만 따로 필요하면:
 
 ```bash
 python3 .claude/skills/inbox-process/scripts/extract_handysoft_pdf.py "원본파일.pdf"
 ```
 
-스크립트는 `%PDF-` ~ `%%EOF` 구간을 잘라 `/tmp/extracted_{md5앞8자}.pdf`에 저장하고, 성공 시 stdout 첫 줄에 출력 경로를 찍는다. 파일별 해시로 경로가 달라 동시 처리 시에도 충돌하지 않는다.
-
-추출된 PDF를 Read 도구로 읽는다. 스크립트가 exit code 1로 실패하면(임베딩 PDF 없음 등) 해당 항목을 건너뛰고 사용자에게 알린다.
+`%PDF-` ~ `%%EOF` 구간을 잘라 시스템 임시폴더의 `extracted_{md5앞8자}.pdf`에 저장하고 stdout 첫 줄에 절대경로를 찍는다. 해시는 원본 전체 바이트 기준이라 서로 다른 문서가 같은 경로를 쓰는 일이 없다. exit code 1(임베딩 PDF 없음 등)이면 해당 항목을 건너뛰고 사용자에게 알린다.
 
 ## 2. 문서 내용 분석
 

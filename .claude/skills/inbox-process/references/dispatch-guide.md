@@ -7,11 +7,15 @@
 | 확장자 | 읽는 방법 |
 |--------|----------|
 | `.txt`, `.md` | Read 앞부분(~100줄) |
-| `.pdf` | `head -c 50`으로 헤더 확인 — `%PDF-`면 일반 PDF(Read `pages: "1-2"`), 그 외 포맷이면 파일명·맥락으로 추정 |
+| `.pdf` | `classify_pdf.py`에 triage 대상 PDF를 **한 번에 모두** 넘긴 뒤, `action`이 `read`면 `read_path`를 Read(`pages: "1-2"`), `ocr`·`read+ocr`면 파일명·맥락으로 추정(triage 단계에서 OCR 돌리지 않는다) |
 | `.hwpx`, `.xlsx`, `.docx` | 파싱 불가. 파일명·맥락으로 추정. 모호하면 사용자에게 문의 |
 | `.hwp` | 0단계에서 `.hwpx`로 사전 변환됨. 루트 triage 시 남아 있는 `.hwp`는 변환 실패 건 — 파일명·맥락으로만 추정 |
 
-> **Note:** PDF 내 특수 포맷(Handysoft 등) 추출은 오케스트레이터가 직접 처리하지 않는다. 워커(inbox-action-worker)가 action-branch.md 절차에 따라 처리한다.
+```bash
+uv run .claude/skills/inbox-process/scripts/classify_pdf.py 01_Inbox/*.pdf
+```
+
+> **Note:** triage 단계의 `classify_pdf.py` 호출은 **분류 판단용**이다 — Handysoft 언랩이 포함되므로 예전처럼 파일명만으로 추정하지 않아도 되지만, 본문 추출·OCR·노트 작성은 워커(inbox-action-worker)가 `action-branch.md` 절차에 따라 수행한다. 워커가 같은 파일을 다시 분류해도 `/tmp` 추출본 경로가 해시 기반이라 재사용된다.
 
 ## 분류 힌트
 

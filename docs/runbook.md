@@ -15,7 +15,7 @@ Syncthing으로 다중 기기 동기화. OS별 경로:
 이미지(스캔) PDF는 Read/`pdftotext`로 텍스트가 안 나온다. OCR로 추출한다.
 
 - **도구**: PyMuPDF(`fitz`) + Tesseract 5.x. `pdftoppm` 불필요.
-- **스크립트**: `python3 .claude/skills/inbox-process/scripts/ocr_pdf.py "<pdf>" --pages 1-5` (페이지당 수 초; 대용량은 범위 샘플)
+- **스크립트**: `uv run .claude/skills/inbox-process/scripts/ocr_pdf.py "<pdf>" --pages 1-5` (페이지당 수 초; 대용량은 범위 샘플)
 - **언어 데이터**: `kor`+`eng` → `%TESSDATA_PREFIX%` (`~/tessdata/`). 사용자 env에 영구 등록됨.
 - **재구축** (새 머신): `winget install UB-Mannheim.TesseractOCR` → `kor.traineddata`(tessdata_best)를 쓰기 가능 디렉터리에 두고 `TESSDATA_PREFIX` 지정 + Tesseract를 PATH에. Program Files tessdata는 쓰기 권한 없음 — 홈에 둘 것.
 
@@ -43,6 +43,16 @@ Output: 14_Changes/incident/{year}/ note
 Run: improvement-planner agent  (reads .claude/agents/workflows/improvement-plan/WORKFLOW.md)
 Input: change description, related SQL/procedure
 Output: 14_Changes/improvement/{year}/ note
+```
+
+### Review a 과업심의 Request
+
+```
+Run: gwaeop-simui skill
+Input: 심의자료 폴더 (01_Inbox/action/ 또는 10_Areas/과업심의/{회차}/{번호}/심의자료/)
+Output: 지적사항 + 판정(안) → 10_Areas/과업심의/{회차}/..._심의의견.md (+ 요청 시 PDF)
+Note: 회차 폴더 셋팅·서식 생성은 이 스킬이 아니라
+      10_Areas/과업심의/과업심의_프로세스.md (Step 1~11)
 ```
 
 ### Weekly Report
@@ -87,6 +97,7 @@ Scope: 10_Areas/ → 90_Archive/
 | Skill | Trigger phrase | Entry point |
 |-------|---------------|-------------|
 | `inbox-process` | inbox 처리, 공문 처리 | `01_Inbox/` scan |
+| `gwaeop-simui` | 과업심의 검토, 심의위원이라면 | 심의자료 폴더 → 지적사항·판정(안) |
 | `gongmun-draft` | 공문 작성, 결과 안내 공문 | 개선 노트 → 공문 본문 |
 | `weekly-report` | 주간업무회의 자료 | Vault scan |
 | `change-log` | 기능 개선 내역 | Vault scan (past week) |
