@@ -1,17 +1,31 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.9"
+# dependencies = ["pymupdf"]
+# ///
 """OCR an image-based PDF to plain text using PyMuPDF + Tesseract.
 
 For PDFs whose pages are scanned images (little or no embedded text layer),
 `Read` / `pdftotext` return almost nothing. This script renders each page and
 runs Tesseract OCR (kor+eng) via PyMuPDF's get_textpage_ocr.
 
-Requirements (already provisioned on this machine):
-    - PyMuPDF (import fitz)
-    - Tesseract installed; kor+eng traineddata under TESSDATA_PREFIX
-      (default fallback: ~/tessdata, and Tesseract on PATH)
+Requirements:
+    - PyMuPDF — supplied by the PEP 723 header above when run with `uv run`.
+    - Tesseract binary + kor/eng traineddata. NOT a Python package, so `uv`
+      cannot supply it; it must be installed system-wide. This machine is
+      Windows, so Homebrew is not an option:
+          winget install UB-Mannheim.TesseractOCR
+      then drop `kor.traineddata` into the install's `tessdata` folder and
+      point `TESSDATA_PREFIX` at it (see `_ensure_tess_env`).
+      Verified absent on this machine as of 2026-08-04, so OCR fails until
+      that runs. `classify_pdf.py` still correctly routes files here — the
+      failure is loud (`ERROR: OCR failed: ...`), never a silent empty read.
 
 Usage:
-    python3 ocr_pdf.py <source.pdf> [--pages 1-5] [--lang kor+eng] [--dpi 200]
+    uv run ocr_pdf.py <source.pdf> [--pages 1-5] [--lang kor+eng] [--dpi 200]
+
+    `--pages` takes ONE page (`7`) or ONE contiguous range (`3-5`) — a comma
+    list is rejected. Call once per entry in classify_pdf.py's `ocr_ranges`.
 
 Output:
     Prints OCR'd text to stdout. Page breaks marked with form-feed.

@@ -51,6 +51,9 @@
       "Bash(cmd.exe *)"
     ]
   },
+  "enabledMcpjsonServers": [
+    "korean-law"
+  ],
   "hooks": {
     "PostToolUse": [
       {
@@ -64,8 +67,7 @@
       }
     ]
   },
-  "enabledPlugins": {},
-  "enabledMcpjsonServers": [
-    "korean-law"
-  ]
+  "enabledPlugins": {
+    "insane-search@gptaku-plugins": true
+  }
 }
