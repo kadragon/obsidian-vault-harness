@@ -3,15 +3,16 @@
 
 Subcommands:
   close <path>...            Frontmatter `status: open` → `closed`, bump `date modified`.
-  add-todo <path> <todo>     Insert `- [ ] <todo> ➕ YYYY-MM-DD 📅 YYYY-MM-DD` at the
-                             end of the `## 할 일` section (before the next `## ` or EOF).
+  add-todo <path> <todo>     Insert `- [ ] <todo> ➕ YYYY-MM-DD` at the end of the
+                             `## 할 일` section. Add `--due YYYY-MM-DD` only when a
+                             deadline is explicitly known.
 
 All paths are vault-relative. Exits non-zero if any target could not be updated.
 """
 from __future__ import annotations
 import re
 import sys
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 VAULT = Path(__file__).resolve().parents[4]
@@ -58,11 +59,24 @@ def close_note(path: Path) -> tuple[bool, str]:
     return True, "ok"
 
 
-def add_todo(path: Path, todo: str) -> tuple[bool, str]:
+def _valid_date(value: str) -> bool:
+    """Accept only an ISO calendar date, including real month/day values."""
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        return False
+    try:
+        date.fromisoformat(value)
+    except ValueError:
+        return False
+    return True
+
+
+def add_todo(path: Path, todo: str, due: str | None = None) -> tuple[bool, str]:
     text = path.read_text(encoding="utf-8")
     m = TODO_SECTION_RE.search(text)
     if not m:
         return False, "no '## 할 일' section"
+    if due is not None and not _valid_date(due):
+        return False, f"invalid due date: {due}"
     today = datetime.now().strftime("%Y-%m-%d")
     body = m.group(2).rstrip("\n")
     # If the 할 일 section is a `> [!todo]` callout, keep the new item inside
@@ -71,7 +85,9 @@ def add_todo(path: Path, todo: str) -> tuple[bool, str]:
     # flat checkboxes must NOT push the new item into a quote.
     in_callout = any(ln.lstrip().startswith("> [!") for ln in body.splitlines())
     prefix = "> " if in_callout else ""
-    line = f"{prefix}- [ ] {todo.strip()} ➕ {today} 📅 {today}"
+    line = f"{prefix}- [ ] {todo.strip()} ➕ {today}"
+    if due is not None:
+        line += f" 📅 {due}"
     # Preserve a single blank line between the new item and the next section.
     new_block = m.group(1) + body + "\n" + line + "\n\n"
     new_text = text[:m.start()] + new_block + text[m.end():]
@@ -98,14 +114,15 @@ def cmd_close(args: list[str]) -> int:
 
 
 def cmd_add_todo(args: list[str]) -> int:
-    if len(args) != 2:
-        print("usage: apply.py add-todo <path> <todo-text>", file=sys.stderr)
+    if len(args) not in {2, 4} or (len(args) == 4 and args[2] != "--due"):
+        print("usage: apply.py add-todo <path> <todo-text> [--due YYYY-MM-DD]", file=sys.stderr)
         return 2
-    rel, todo = args
+    rel, todo = args[:2]
+    due = args[3] if len(args) == 4 else None
     p = _resolve(rel)
     if p is None:
         return 1
-    ok, msg = add_todo(p, todo)
+    ok, msg = add_todo(p, todo, due)
     print(f"{'OK ' if ok else 'ERR'} add-todo {rel}  — {msg}")
     return 0 if ok else 1
 

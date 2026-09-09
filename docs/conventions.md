@@ -41,6 +41,14 @@ recv_date: YYYY-MM-DD                 # 선택 — 접수일, doc_date와 다를
 
 `doc_date`는 **`#` 제목의 날짜 프리픽스를 대체한다** (2026-07-30). 제목엔 날짜를 붙이지 않는다 — 폐기 근거·전체 필드 규칙은 SSOT인 `99_Template/_메타데이터 규칙.md`. 형식(`YYYY-MM-DD`)은 `check-template.py` Check 2c가 검사한다.
 
+## Task dates
+
+Use `➕ YYYY-MM-DD` for the date a task was added. `📅 YYYY-MM-DD` is optional:
+omit it when no deadline is known, and preserve an explicitly supplied weekend
+date. `✅ YYYY-MM-DD` records completion on checked items. Every supplied date must
+be a valid calendar date in `YYYY-MM-DD` form; the date hook checks this without
+requiring an unknown deadline.
+
 ## Tag System
 
 ### `#업무/` tags

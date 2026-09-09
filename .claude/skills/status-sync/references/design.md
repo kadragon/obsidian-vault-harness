@@ -15,6 +15,13 @@
 승인 루프 중간에 메인이 본문을 재확인하지 않는다 — scan 결과와 judge TSV만으로
 적용한다.
 
+## Task dates
+
+`apply.py add-todo` records the creation date (`➕`) as today and leaves the due date
+(`📅`) out when no deadline is known. Callers may pass `--due YYYY-MM-DD` for an
+explicit deadline; the value must be a valid calendar date, and weekend dates are
+preserved. Existing task dates are never normalized by status-sync.
+
 ## 알려진 한계 — 구식 14_Changes 템플릿 발췌 실패 (2026-07-10 확인)
 
 `14_Changes/incident/` 초기 노트 일부는 현재 템플릿(`## 발생 정보` / `## 할 일` /

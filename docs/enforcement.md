@@ -67,8 +67,10 @@ python3 .claude/lib/vault_lint.py --strict           # 발견 시 exit 1
 `.claude/hooks/check-todo-due-date.py`, registered in `settings.json` as `PostToolUse` on `Write|Edit`. Invoked via `$CLAUDE_PROJECT_DIR`-anchored path so CWD at hook fire time is irrelevant. Checks:
 
 - Target: 모든 `.md` 파일 (templates/docs/harness/archive 제외)
-- `- [ ]` 체크박스: `➕ YYYY-MM-DD` (추가일) + `📅 YYYY-MM-DD` (마감일) 필요
-- `- [x]` 완료 체크박스: 위 두 필드 + `✅ YYYY-MM-DD` (완료일) 필요
+- `- [ ]` 체크박스: `➕ YYYY-MM-DD` (추가일) 필요; `📅 YYYY-MM-DD` (마감일)은
+  알고 있을 때만 기록
+- `- [x]` 완료 체크박스: 추가일 + `✅ YYYY-MM-DD` (완료일) 필요; 마감일은 선택
+- 명시된 날짜는 `YYYY-MM-DD` 형식과 실제 달력 날짜여야 하며, 주말 마감일은 보존
 - Warning-only (does not block). Zero token cost.
 
 `validate-due-date.sh` (bash, `settings.local.json`)는 2026-05-27 retired — PS hook으로 통합 후 `check-todo-due-date.ps1` → `.py` 재작성 (2026-06, 인코딩 안정성).

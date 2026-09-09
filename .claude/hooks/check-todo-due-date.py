@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
-import json, sys, re, pathlib, datetime
+import datetime
+import json
+import pathlib
+import re
+import sys
 
-WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"]
+DATE_MARKERS = {
+    "➕": "추가일",
+    "📅": "마감일",
+    "✅": "완료일",
+}
+DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 try:
     d = json.loads(sys.stdin.read())
@@ -21,20 +30,28 @@ p = pathlib.Path(fp)
 if not p.exists():
     sys.exit(0)
 
-def has_dated(line, emoji):
-    return bool(re.search(re.escape(emoji) + r"\s*\d{4}-\d{2}-\d{2}", line))
+def _date_token(line, marker):
+    """Return marker presence and the token following it, if any."""
+    m = re.search(re.escape(marker) + r"(?:[ \t]+(\S+))?", line)
+    return (m is not None, None if not m else m.group(1))
 
-def due_date_is_weekend(line):
-    m = re.search(r"📅\s*(\d{4}-\d{2}-\d{2})", line)
-    if not m:
+
+def _date_issue(line, marker, required):
+    """Return a warning fragment for a missing or invalid required date."""
+    present, token = _date_token(line, marker)
+    label = DATE_MARKERS[marker]
+    if not present:
+        if required:
+            return f"{marker} YYYY-MM-DD ({label}) 누락"
         return None
+    if token is None:
+        return f"{marker} 값 누락 ({label})"
+    if not DATE_RE.fullmatch(token):
+        return f"{marker} 값 {token!r}은 YYYY-MM-DD 형식이 아님"
     try:
-        d = datetime.date.fromisoformat(m.group(1))
-        wd = d.weekday()
-        if wd >= 5:
-            return (m.group(1), WEEKDAY_KO[wd])
+        datetime.date.fromisoformat(token)
     except ValueError:
-        pass
+        return f"{marker} 날짜 {token}은 유효하지 않음"
     return None
 
 try:
@@ -49,22 +66,23 @@ for line in text.splitlines():
     if not (is_open or is_done):
         continue
 
-    missing = []
-    if not has_dated(line, "➕"):
-        missing.append("➕ YYYY-MM-DD (추가일)")
-    if not has_dated(line, "📅"):
-        missing.append("📅 YYYY-MM-DD (마감일)")
-    if is_done and not has_dated(line, "✅"):
-        missing.append("✅ YYYY-MM-DD (완료일)")
+    issues = []
+    created_issue = _date_issue(line, "➕", required=True)
+    if created_issue:
+        issues.append(created_issue)
+    # A deadline is optional when the source does not specify one. When the
+    # marker is present, however, its value must be a real calendar date.
+    due_issue = _date_issue(line, "📅", required=False)
+    if due_issue:
+        issues.append(due_issue)
+    if is_done:
+        completed_issue = _date_issue(line, "✅", required=True)
+        if completed_issue:
+            issues.append(completed_issue)
 
-    if missing:
-        warnings.append(f"  {line.strip()}\n    → 필요: {', '.join(missing)}")
-
-    weekend = due_date_is_weekend(line)
-    if weekend:
-        date_str, day_ko = weekend
-        warnings.append(f"  {line.strip()}\n    → 마감일 {date_str}({day_ko})은 휴일(주말). 평일로 변경 필요.")
+    if issues:
+        warnings.append(f"  {line.strip()}\n    → 점검: {'; '.join(issues)}")
 
 if warnings:
-    msg = "[WARNING] 할일 날짜 누락:\n" + "\n".join(warnings)
+    msg = "[WARNING] 할일 날짜 점검:\n" + "\n".join(warnings)
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": msg}}))

@@ -74,8 +74,9 @@ Golden Principle #1의 예외) 적용 전 반드시 사용자 승인을 받는�
    - **닫기**: `apply.py close <path> ...` — 프론트매터 `status: closed`,
      `date modified` 갱신. 폴더 구분 없이 동작.
    - **체크박스 추가**: `apply.py add-todo <path> "<TODO 문구>"` — 할 일 섹션
-     끝에 `- [ ] <TODO> ➕ YYYY-MM-DD 📅 YYYY-MM-DD` (두 날짜 모두 오늘)을
-     삽입. 10_Areas의 `## 할 일`과 14_Changes의 `## 🏷 Todo` 모두 대상.
+     끝에 `- [ ] <TODO> ➕ YYYY-MM-DD` (추가일은 오늘, 마감일은 생략)을
+     삽입. 명시된 마감일이 있을 때만 `--due YYYY-MM-DD`를 붙여 `📅`를 추가한다.
+     10_Areas의 `## 할 일`과 14_Changes의 `## 🏷 Todo` 모두 대상.
 
 ## Wiki 피드백 (적용 후)
 
