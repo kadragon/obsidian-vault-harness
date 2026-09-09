@@ -1,6 +1,6 @@
 # Mode: Review
 
-내용이 다른 conflict 파일을 **원본 기준으로 그룹화**하여 haiku 서브에이전트에
+내용이 다른 conflict 파일을 **원본 기준으로 그룹화**하여 서브에이전트에
 병렬 분석을 위임하고, 사용자 선택에 따라 처리한다.
 
 ## Step 1 — 검토 대상 수집
@@ -15,9 +15,9 @@ scan 결과에서 `status: different` 항목을 원본별로 그룹화한다.
   └─ conflict 2: 파일.sync-conflict-20260427-155346-WERFXNH.md
 ```
 
-## Step 2 — Haiku 서브에이전트 병렬 위임
+## Step 2 — 서브에이전트 병렬 위임
 
-각 그룹을 하나의 haiku 서브에이전트에 위임한다. 여러 그룹이 있으면 동시에
+각 그룹을 하나의 서브에이전트에 위임한다. 여러 그룹이 있으면 동시에
 spawn하여 병렬 처리한다. 이를 통해 orchestrator가 큰 파일 본문을 직접 읽지 않고
 요약만 받는다.
 
@@ -61,7 +61,7 @@ Conflict 파일:
 ```
 ### 그룹 A: 파일명.md
 
-**요약**: <haiku 분석 요약>
+**요약**: <분석 요약>
 **권장안**: keep_original (신뢰도: high)
 **근거**: <이유>
 
@@ -136,5 +136,5 @@ python3 .claude/skills/syncthing-conflict-cleanup/scripts/conflict_cleanup.py de
 
 ## 비-md 파일 처리
 
-그룹에 `status: non-text` 파일이 포함된 경우 haiku 위임 없이 orchestrator가
+그룹에 `status: non-text` 파일이 포함된 경우 위임 없이 orchestrator가
 직접 처리: 크기/mtime만 비교하여 표로 출력하고 사용자가 직접 삭제/유지를 선택.
