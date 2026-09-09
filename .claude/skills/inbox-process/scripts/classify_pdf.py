@@ -48,7 +48,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from extract_handysoft_pdf import out_path_for, unwrap  # noqa: E402
+from extract_handysoft_pdf import out_path_for, unwrap, write_private  # noqa: E402
 
 
 def to_ranges(pages: list) -> list:
@@ -78,7 +78,7 @@ def classify(src: str) -> dict:
     data, _ = unwrap(raw)
     if rec["handysoft"]:
         out = out_path_for(raw)
-        out.write_bytes(data)
+        write_private(out, data)
         rec["read_path"] = str(out)
     else:
         rec["read_path"] = src
