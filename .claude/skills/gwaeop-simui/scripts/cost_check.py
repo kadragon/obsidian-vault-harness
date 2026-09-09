@@ -245,6 +245,25 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(
         prog="cost_check.py",
         description="SW사업 대가 역산 검증 (SW사업 대가산정 가이드 2025년 개정판 기준)",
+        epilog="""사용 예:
+  # 개발비 → 환산 기능점수 (과소산정 탐지)
+  cost_check.py fp --amount 50000000 --vat-included
+
+  # 운영·유지관리비 → 요율제(10~15%) 대비 위치
+  cost_check.py maint --dev-amount 50000000 --maint-amount 31000000 \\
+      --months 36 --vat-included
+
+  # 항목 합계·VAT·추정가격 정합
+  cost_check.py sum --total 150000000 \\
+      --items 50000000,31000000,54000000,6000000,9000000,0 --vat-included
+
+  # 적정 개발기간 (지침 별표 1) — 제시 기간으로 소화 가능한 규모 상한
+  cost_check.py period --months 3 --headcount 3
+
+  # 규모를 아는 경우 정방향 산정
+  cost_check.py period --fp 470 --headcount 3
+""",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     sub = p.add_subparsers(dest="cmd", required=True)
 

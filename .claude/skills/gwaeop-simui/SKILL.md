@@ -130,23 +130,12 @@ python3 .claude/skills/gwaeop-simui/scripts/extract_bundle.py "<심의자료 폴
 
 SW 개발사업이면 필수. 물품구매면 건너뛴다.
 
+`cost_check.py`의 네 하위명령으로 역산한다 — `fp`(개발비→환산 기능점수) ·
+`maint`(운영·유지관리비→요율제 대비 위치) · `sum`(항목 합계·VAT·추정가격 정합) ·
+`period`(적정 개발기간). 인자와 사용 예는 `--help`에 있다.
+
 ```bash
-# 개발비 → 환산 기능점수 (과소산정 탐지)
-python3 .claude/skills/gwaeop-simui/scripts/cost_check.py fp --amount 50000000 --vat-included
-
-# 운영·유지관리비 → 요율제(10~15%) 대비 위치
-python3 .claude/skills/gwaeop-simui/scripts/cost_check.py maint \
-  --dev-amount 50000000 --maint-amount 31000000 --months 36 --vat-included
-
-# 항목 합계·VAT·추정가격 정합
-python3 .claude/skills/gwaeop-simui/scripts/cost_check.py sum \
-  --total 150000000 --items 50000000,31000000,54000000,6000000,9000000,0 --vat-included
-
-# 적정 개발기간 (지침 별표 1) — 제시 기간으로 소화 가능한 규모 상한
-python3 .claude/skills/gwaeop-simui/scripts/cost_check.py period --months 3 --headcount 3
-
-# 규모를 아는 경우 정방향 산정
-python3 .claude/skills/gwaeop-simui/scripts/cost_check.py period --fp 470 --headcount 3
+python3 .claude/skills/gwaeop-simui/scripts/cost_check.py --help
 ```
 
 판독 기준은 `references/daega-baseline.md` §3. 역산은 산정근거를 요구하는 도구이지 정답 금액을 내는 도구가 아니다 — "재산정 후 제출 바람"으로 닫는다.
