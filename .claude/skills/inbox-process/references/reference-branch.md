@@ -1,11 +1,11 @@
 # Reference Branch — 참고자료·수집물 → `_Sources` + `_Wiki`
 
 > 파일명이 `mode-*` 규약을 따르지 않는 이유: action/reference는 사용자가 고르는 실행 모드가 아니라
-> 스킬이 문서를 판별한 **분류 결과**다 (`docs/runbook.md` § Harness Asset Placement & Naming).
+> 스킬이 문서를 판별한 분류 결과다 (`docs/runbook.md` § Harness Asset Placement & Naming).
 
 `01_Inbox/reference/`와 `01_Inbox/scraps/`에 사용자가 넣은 파일(PDF, HWPX, 웹 클립, 참고 문서)을 반자동으로 위키 레이어에 반영한다. `scraps/`는 웹 클립 전용 수집함이며 처리 절차는 `reference/`와 동일하다.
 
-> **워커 실행 컨텍스트**: 이 문서는 `inbox-reference-worker`가 읽는다. 워커는 서브에이전트이므로 **사용자와 직접 대화할 수 없고, 다른 서브에이전트를 호출할 수 없다.** "사용자에게 묻는다/보고한다/지시를 기다린다"로 적힌 부분은 모두 보고의 `열린 질문` 항목으로 반환하여 오케스트레이터가 사용자에게 전달하게 한다. **원본 삭제는 워커가 하지 않는다** — 삭제 권고만 보고하고 오케스트레이터가 일괄 처리한다.
+**워커 규약**: 이 문서는 `inbox-reference-worker`가 읽는다. 워커는 사용자와 대화할 수 없고 다른 에이전트를 호출할 수 없다. "확인 필요"는 전부 보고의 `열린 질문`으로 반환하고, 원본 삭제는 오케스트레이터 몫이다.
 
 ## 먼저 확인할 파일
 
@@ -53,15 +53,7 @@
 
 **감지 조건**: 파일명에 `인사발령` 포함. 감지되지 않으면 건너뛴다.
 
-한국교원대학교 인사발령 공문은 Handysoft 포맷이므로 `scripts/extract_handysoft_pdf.py`로 내부 PDF를 먼저 추출한 뒤, PyMuPDF(`fitz`)로 텍스트를 읽는다:
-
-```python
-import fitz
-from pathlib import Path
-drive = Path(vault_root).drive  # 볼트 경로에서 드라이브 추출 (예: "C:")
-doc = fitz.open(drive + 추출경로)  # 추출 경로가 \tmp\... 형태이므로 드라이브 접두
-text = "\n".join(page.get_text() for page in doc)
-```
+한국교원대학교 인사발령 공문은 Handysoft 포맷이다. `references/pdf-reading.md` 절차로 본문을 얻는다.
 
 **공문 구조 (인물 1명당 반복되는 블록)**:
 
@@ -128,16 +120,7 @@ text = "\n".join(page.get_text() for page in doc)
 
 ## 파일 형식 주의
 
-- `.pdf`: Read 도구로 직접 읽는다. 10페이지 초과는 `pages: "1-5"`로 먼저 앞부분만 확인.
-  - **Handysoft 포맷** (한컴 공문 PDF — Read 도구가 텍스트를 뽑지 못하거나 pdftoppm 오류가 나는 경우): `scripts/extract_handysoft_pdf.py`로 내부 PDF 추출 후, **Read 도구 대신 fitz(PyMuPDF) Bash 명령**으로 읽는다. Read 도구는 추출 후에도 pdftoppm 부재로 실패한다.
-    ```python
-    import fitz
-    from pathlib import Path
-    drive = Path(vault_root).drive  # 볼트 경로에서 드라이브 추출 (예: "C:")
-    doc = fitz.open(drive + 추출경로)  # 추출 경로가 \tmp\... 형태이므로 드라이브 접두
-    text = "\n".join(page.get_text() for page in doc)
-    ```
-  - **이미지 기반 `.pdf`** (스캔본 — 텍스트 레이어 없음): `scripts/ocr_pdf.py`로 OCR 시도. 단, Tesseract 설치 여부는 실행 환경마다 다를 수 있으므로 실패 시 fitz로 재시도하고, 둘 다 실패하면 열린 질문으로 보고한다.
+- `.pdf`: `references/pdf-reading.md` 절차 (분류 → PyMuPDF → 필요 시 OCR). 원본이 아니라 `read_path`를 읽고, `error`·OCR 실패 건은 건너뛰고 보고한다.
 - `.txt`, `.md`: Read 도구로 읽는다.
 - `.hwp`, `.hwpx`, `.xlsx`, `.docx`: 내용 직접 파싱 불가. 파일명·사용자 설명·주변 맥락으로 판단. 불확실하면 보고의 열린 질문으로 "핵심 내용 확인 필요"를 반환한다 (워커가 사용자에게 직접 묻지 않음).
 
