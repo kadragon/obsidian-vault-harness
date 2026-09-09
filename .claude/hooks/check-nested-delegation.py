@@ -32,10 +32,13 @@ _FALLBACK_AGENT_NAMES = (
 def _agent_names() -> tuple:
     try:
         agents_dir = pathlib.Path(__file__).resolve().parent.parent / "agents"
-        names = tuple(sorted(p.stem for p in agents_dir.glob("*.md")))
+        names = tuple(p.stem for p in agents_dir.glob("*.md"))
     except OSError:
         return _FALLBACK_AGENT_NAMES
-    return names or _FALLBACK_AGENT_NAMES
+    # 글롭 결과와 폴백을 합집합으로 쓴다. 글롭만 쓰면 에이전트 파일을 지우는 순간
+    # 그 이름이 탐지 알파벳에서 조용히 빠져, 남아 있는 산문 위임 지시가 무검사로 통과한다
+    # (은퇴한 에이전트를 가리키는 지시야말로 잡아야 할 대상이다).
+    return tuple(sorted(set(names) | set(_FALLBACK_AGENT_NAMES)))
 
 
 AGENT_NAMES = _agent_names()

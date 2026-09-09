@@ -246,3 +246,5 @@ All three layers are now active. Promotion log:
 `.obsidian/` is **gitignored** — these fixes live only on the local machine (Syncthing-synced), not in git:
 
 - **Obsidian Linter timestamp format** (`.obsidian/plugins/obsidian-linter/data.json` → `yaml-timestamp.format`): was `YYYY-MM-DD HH:MM:SS` (moment.js `MM`=month, `SS`=fractional-second → minute slot showed month, seconds >59). Fixed to `YYYY-MM-DD HH:mm:ss` (2026-06). This was the root cause of ~485 impossible-timestamp frontmatter values vault-wide (since batch-corrected). `update-on-file-contents-updated: never` limits re-stamping. If `.obsidian` is reset/reinstalled, re-apply this format.
+20. ✅ `check-nested-delegation.py`의 탐지 알파벳이 `.claude/agents/*.md` 글롭 **단독**이라, 에이전트 파일을 지우는 순간 그 이름이 알파벳에서 빠져 남아 있는 산문 위임 지시가 무검사로 통과하던 문제 (2026-09-01, `dev:harness-curate` 삭제 후보 적대적 검토 중 발견) → `_agent_names()`를 글롭 ∪ `_FALLBACK_AGENT_NAMES` 합집합으로 변경. 폴백은 원래 `OSError` 경로에서만 쓰여, 정상 디렉터리 읽기는 줄어든 글롭을 그대로 반환했다. **교훈: 가드가 자기 검사 대상 목록을 삭제 가능한 파일에서 유도하면, 대상을 지우는 행위가 곧 가드를 끄는 행위가 된다** — 은퇴한 에이전트를 가리키는 지시야말로 잡아야 할 대상인데 정확히 그 순간 탐지가 꺼졌다. #17의 "0건은 세 가지 뜻"과 같은 계열이다.
+
