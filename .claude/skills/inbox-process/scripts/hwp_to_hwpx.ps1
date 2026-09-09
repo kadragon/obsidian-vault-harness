@@ -22,7 +22,12 @@ try {
     exit 1
 }
 
-$hwp.SetMessageBoxMode(65535) | Out-Null
+# Make the Hancom window visible BEFORE setting message-box mode.
+# With a hidden window, Open() blocks forever waiting on the automation
+# security prompt (FilePathCheckerModuleExample.dll is not installed here),
+# and the prompt never renders — the script hangs with no output.
+try { $hwp.XHwpWindows.Item(0).Visible = $true } catch {}
+$hwp.SetMessageBoxMode(0x00020001) | Out-Null
 
 foreach ($file in $hwpFiles) {
     $in  = $file.FullName
