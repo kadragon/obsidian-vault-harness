@@ -32,19 +32,23 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 ```
 - {원본 파일명}
   source: {_Sources/... 생성·갱신 경로}
+  durable copy: {_Sources/_Assets/... 경로} (인라인 텍스트면 생략)
   wiki: {_Wiki/... 생성·갱신 페이지 목록}
   active note 링크: {10_Areas/... 또는 12_Projects/...에 추가한 링크 위치} (없으면 생략)
   열린 질문: (없으면 생략)
 ```
 
-마지막에 log 엔트리와 삭제 권고 목록을 제시한다 — **실제 삭제는 하지 않는다** (오케스트레이터가 일괄 처리; SKILL.md 5단계, 승인 대기 없음):
+마지막에 log 엔트리와 삭제 권고 목록을 제시한다 — **실제 삭제는 하지 않는다** (오케스트레이터가 일괄 처리; SKILL.md 5단계-4, 승인 대기 없음). 삭제 권고에는 `verify-link` exit 0 건만 올리고, 검증하지 못한 건은 같은 형식으로 `## 미검증 (UNVERIFIED)`에 사유와 함께 남긴다:
 
 ```
 ## _Wiki/log.md 추가 엔트리
 ## [YYYY-MM-DD] ingest | 제목
 
 ## 삭제 권고 (reference)
-- /Users/.../01_Inbox/reference/파일A.pdf
+- /Users/.../01_Inbox/reference/파일A.pdf  (source: _Sources/기타/파일A.md, durable: _Sources/_Assets/기타/파일A.pdf)
+
+## 미검증 (UNVERIFIED)
+- /Users/.../01_Inbox/reference/파일B.pdf  — verify-link 실패: final wikilink missing from note
 ```
 
 `_Wiki/index.md`, `_Wiki/log.md` 갱신은 직접 수행한다 (activate note 링크 추가도 포함).
@@ -57,6 +61,7 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 - **Handysoft PDF**: `.claude/skills/inbox-process/scripts/extract_handysoft_pdf.py`로 추출 후 Read.
 - **파싱 불가 포맷** (`.hwp`, `.hwpx`, `.xlsx`, `.docx`): 파일명·사용자 설명·주변 맥락으로 처리. 불확실하면 `## 열린 질문`에 기록.
 - **원본 파일 삭제 금지**: 오케스트레이터가 일괄 처리.
+- **삭제 게이트**: 원본을 durable 위치로 복사(`copy_verified.py copy`)하고 `copy_verified.py verify-link`가 exit 0을 낼 때만 삭제 권고에 올린다. `.md`·`.txt` 텍스트 입력은 복사 대신 원문을 source note에 흡수하고 `text-absorbed`로 표시한다 (`reference-branch.md` 1a·6단계). 검증 실패·미실행은 `UNVERIFIED`로 보고하고 권고하지 않는다 — 추정으로 통과시키지 않는다.
 
 ## 협업
 

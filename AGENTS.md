@@ -14,6 +14,7 @@ XML, Java, SQL, and procedure content comes from user-provided materials or exis
 | `docs/eval-criteria.md` | Evaluating note quality after creation — all agent context manifests reference this as the evaluation rubric |
 | `docs/enforcement.md` | Enforcement layer status and how to strengthen it |
 | `docs/harness-log.md` | Harness edits with falsifiable predictions — read before re-auditing or removing a harness asset |
+| `docs/design/*.md` | 다중 세션 작업의 승인된 설계 문서를 확인하거나 후속 티켓의 근거를 찾을 때 |
 | `docs/runbook.md` | Diagnosing hook failures, checking skill trigger phrases, looking up agent capabilities, **or placing/naming a new harness asset (skill·agent·workflow·script)** |
 | `_Wiki/README.md` | Understanding the wiki layer structure (index·log·MOC·entities·topics·syntheses) |
 | `_Wiki/workflow.md` | Cross-skill process flow **and search priority** (qmd → rg → index.md) — read before vault search or multi-skill chains |

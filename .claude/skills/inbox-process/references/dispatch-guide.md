@@ -111,6 +111,9 @@ area: {판단된 area 또는 ?? (사용자 확인 필요)}
 - 01_Inbox/reference/파일B.pdf
 - 01_Inbox/scraps/2026-06-19-naver-d2.md
 
+## 미검증 (UNVERIFIED) — 원본 보존
+- 01_Inbox/reference/파일C.pdf — verify-link 실패: final wikilink missing from note
+
 ## 열린 질문
 - {에이전트가 보고한 열린 질문 병합}
 ```

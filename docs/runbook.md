@@ -284,6 +284,8 @@ python3 .claude/skills/status-sync/tests/test_contract.py
 
 "직접 호출하지 말 것"이라고 써야 하는 스킬은 스킬이 아니다 — 워크플로우로 만든다.
 
+**스크립트 규칙 — 볼트 경로·링크 문자열 비교는 `unicodedata.normalize("NFC", ...)` 후에 한다.** macOS는 한글 파일명을 NFD로 저장하고(볼트 실측 10593/10605건) 노트 본문 링크는 NFC라, 정규화 없이 비교하면 한글 이름 전부가 조용히 불일치한다. 선례: `vault_lint.py`·`check-template.py`(`docs/enforcement.md`), `copy_verified.py` 삭제 게이트(2026-09-09, 리뷰에서 P0로 검출).
+
 **이름 — `{도메인}-{동사}`, kebab-case, 영문**
 
 `inbox-process` · `status-sync` · `incident-analyze` · `tag-normalize` · `training-manage`
