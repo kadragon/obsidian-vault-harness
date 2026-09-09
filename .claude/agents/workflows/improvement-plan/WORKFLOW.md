@@ -68,7 +68,7 @@ python3 .claude/agents/workflows/improvement-plan/scripts/new_improvement_path.p
 
 1. **log.md append**: `- {오늘날짜} #improvement [[{노트 경로}]] — {도메인} 생성`
 2. **MOC 확인**: `_Wiki/topics/{도메인}-운영-MOC.md` 존재 여부 점검
-   - 존재 → **양방향**: MOC `## 미완료 업무 목록`/`## 반복 인시던트 패턴`에 wikilink append + 이 노트 `## 관련 문서`에 `- 운영 MOC: [[{도메인}-운영-MOC]]` 역링크 추가 (contracts.md MOC 갱신 조건)
+   - 존재 → **양방향**: MOC `## 반복 인시던트 패턴`의 해당 유형에 wikilink **1줄** append (`## 미완료 업무 목록`은 2026-08-03 폐지 — 진행 현황은 라이브 쿼리가 담당) + 이 노트 `## 관련 문서`에 `- 운영 MOC: [[{도메인}-운영-MOC]]` 역링크 추가 (contracts.md MOC 갱신 조건)
    - 없음 → 동일 도메인 개선 수 `qmd search "{도메인} improvement" --json -n 20`으로 카운트 → 3건+ 이면 "운영 MOC 생성을 권장합니다" 보고
 
 ### Step 5: 업무 태그 지정
