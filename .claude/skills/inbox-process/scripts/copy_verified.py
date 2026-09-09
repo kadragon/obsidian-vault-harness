@@ -20,6 +20,7 @@ import os
 import re
 import stat
 import sys
+import unicodedata
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -399,7 +400,9 @@ def verify_link(
     # Only a real Markdown wikilink counts.  Ignore fenced code, inline code,
     # and HTML comments so a copied example cannot authorize source deletion.
     note_text = re.sub(r"<!--.*?-->", "", note_text, flags=re.DOTALL)
-    note_text = re.sub(r"`[^`]*`", "", note_text)
+    # Fenced blocks are dropped BEFORE inline code: a single unpaired backtick
+    # would otherwise consume the fence markers and expose an example link
+    # inside a code block as if it were a real one.
     visible_lines = []
     fenced = False
     for line in note_text.splitlines():
@@ -409,8 +412,12 @@ def verify_link(
             continue
         if not fenced:
             visible_lines.append(line)
-    visible_text = "\n".join(visible_lines)
-    link_pattern = rf"(?<!\!){re.escape(copy.wikilink)}"
+    visible_text = re.sub(r"`[^`]*`", "", "\n".join(visible_lines))
+    # macOS stores Korean filenames decomposed (NFD) while notes are written
+    # composed (NFC), so the two spellings must be compared in one form.
+    visible_text = unicodedata.normalize("NFC", visible_text)
+    wikilink = unicodedata.normalize("NFC", copy.wikilink)
+    link_pattern = rf"(?<!\!){re.escape(wikilink)}"
     if not re.search(link_pattern, visible_text):
         raise CopyError(f"final wikilink missing from note: {copy.wikilink}")
     data = asdict(copy)

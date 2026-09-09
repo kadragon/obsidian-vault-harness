@@ -55,6 +55,7 @@ python3 .claude/skills/inbox-process/scripts/copy_verified.py copy \
 ### 2. source note 작성
 
 - 장기적으로 다시 볼 가치가 있는 자료면 `_Sources/` 아래에 source note를 만든다.
+- **1a단계에서 durable copy를 만들었으면 source note는 필수다** — 게이트가 링크를 담은 노트를 요구하므로, source note 없이 wiki만 갱신하면 그 파일은 삭제되지 못하고 `_Sources/_Assets/`에 고아 사본만 남는다. source note를 만들 가치가 없다고 판단되면 durable copy를 만들지 말고 `## 열린 질문`으로 보고한다.
 - source note에는 최소한 아래 내용을 넣는다.
   - 원문 식별 정보와 durable copy 경로 — 1a단계가 돌려준 `wikilink`를 그대로 쓴다. **`01_Inbox/...` 경로를 원문 링크로 기록하지 않는다** (삭제 후 죽는 링크가 된다). 접수 경로를 남길 필요가 있으면 링크가 아닌 본문 서술로 적는다
   - 인라인 텍스트 입력은 파일 경로 대신 `inline text provided by user on YYYY-MM-DD`를 기록
@@ -124,7 +125,7 @@ python3 .claude/skills/inbox-process/scripts/copy_verified.py copy \
 
 ### 6. 삭제 권고 (워커는 삭제하지 않음)
 
-1~5단계가 모두 성공적으로 끝난 파일은 **삭제 게이트를 통과한 건만** `## 삭제 권고 (reference)` 목록으로 보고한다. **워커는 직접 삭제하지 않는다** — 오케스트레이터가 일괄 삭제한다 (SKILL.md 5단계-4).
+1~5단계가 모두 성공적으로 끝난 파일은 **삭제 게이트를 통과한 건만** `## 삭제 권고 (reference)` 목록으로 보고한다. 항목마다 `(source: <source note 경로>, durable: <durable copy 경로>)`를 함께 적는다 — 오케스트레이터가 재확인에 그대로 쓴다. **워커는 직접 삭제하지 않는다** — 오케스트레이터가 일괄 삭제한다 (SKILL.md 5단계-4).
 
 ```bash
 python3 .claude/skills/inbox-process/scripts/copy_verified.py verify-link \

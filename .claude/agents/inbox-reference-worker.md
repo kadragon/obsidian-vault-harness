@@ -45,7 +45,7 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 ## [YYYY-MM-DD] ingest | 제목
 
 ## 삭제 권고 (reference)
-- /Users/.../01_Inbox/reference/파일A.pdf  (durable: _Sources/_Assets/기타/파일A.pdf)
+- /Users/.../01_Inbox/reference/파일A.pdf  (source: _Sources/기타/파일A.md, durable: _Sources/_Assets/기타/파일A.pdf)
 
 ## 미검증 (UNVERIFIED)
 - /Users/.../01_Inbox/reference/파일B.pdf  — verify-link 실패: final wikilink missing from note
