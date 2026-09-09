@@ -9,7 +9,7 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | Golden Principle | Enforcement method | Status |
 |-----------------|-------------------|--------|
 | #1 Existing notes immutable | AGENTS.md rule + Hard Stop + 대량편집 dry-run 규율 | Doc-enforced (의도적) |
-| #2 Follow templates | `check-template.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
+| #2 Follow templates | `check-template.py` PostToolUse hook이 `.claude/lib/note_rules.py`(규칙 SSOT)를 호출 (mechanical) | Shell-enforced (committed · SSOT 분리 2026-08-25) |
 | #3 Normalize tags (form + semantic) | `validate-tags.sh` PostToolUse hook이 태그를 추출해 `validate_tag.py --json`에 파이프 (mechanical) → 문맥 의존 건만 `tag-validator` | Shell-enforced (form: committed · semantic: 2026-07-29) |
 | 위임 비용 규칙 #1 (중첩 위임 금지) | `.claude/agents/*.md` `tools:` 화이트리스트 (런타임 차단) + `check-nested-delegation.py` PostToolUse hook (산문 린터) | Shell-enforced (committed) |
 | #4 Folder rules | `check-folder-rules.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
@@ -17,9 +17,45 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | #5 Inbox (01_Inbox) via skill | AGENTS.md delegation rule | Doc-enforced |
 | 하네스 파일의 맨 `python` 호출 (검사 무력화) | `check-bare-python.py` PostToolUse hook + `--sweep` 전수 스캔 (mechanical) | Shell-enforced (2026-08-02) |
 
-### GP#1을 훅으로 막지 않는 이유 (의도적 결정, 2026-06)
+## 규칙 라이브러리 작성 규칙 (2026-08-25)
 
+`note_rules.py` 같은 규칙 SSOT는 훅(절대 경로·단건)과 lint(볼트 상대 경로·전수) **양쪽**이 호출한다. 두 호출자를 가정하지 않으면 조용히 반쪽만 검사된다 — 이번 세션에 실제로 두 번 났다.
+
+1. **경로 세그먼트 비교는 진입 시 정규화한다.** `"/14_Changes/incident/" in fp_norm` 같은 검사는 선행 슬래시를 전제하므로, 훅(절대 경로)에서는 맞고 lint(`14_Changes/...`)에서는 전부 빗나갔다. `check()` 첫머리에서 `fp_norm = "/" + fp_norm.lstrip("/")`로 통일한다. 미적용 시 실측 피해: change_type 누락 79건이 무음 통과.
+2. **훅 어댑터는 `ModuleNotFoundError`만 삼킨다.** `except Exception`으로 import를 감싸면 규칙 파일의 SyntaxError까지 삼켜 **전 노트 검사가 통째로 사라진다**(실측: findings 133 → 0, 아무 신호 없음). 라이브러리 부재만 조용히 통과시키고 나머지는 터뜨린다.
+3. **규칙을 고치면 훅 출력을 전수 재검증한다.** 볼트 전 노트에 훅을 돌려 before/after를 비교하고, 변화가 의도한 파일 집합인지 확인한다(`scratchpad/runhook.py` 패턴). 무변화가 기대값일 때는 바이트 동일이 통과 조건이다.
+## 전수 lint — `.claude/lib/vault_lint.py` (2026-08-25 신설)
+
+훅은 **쓰기 시점 단건**만 본다. Bash `sed -i`·스크립트 대량 변경과 링크 그래프는 구조적으로 못 잡으므로 전수 스캔을 따로 둔다. 읽기 전용 — 절대 고치지 않는다(수리는 사용자가 항목을 고른 뒤 별도 작업).
+
+```bash
+python3 .claude/lib/vault_lint.py                    # 전체 요약
+python3 .claude/lib/vault_lint.py --check deadlink   # 검사 선택
+python3 .claude/lib/vault_lint.py --format markdown  # 보고용
+python3 .claude/lib/vault_lint.py --strict           # 발견 시 exit 1
+```
+
+| 검사 | 내용 | 범위 |
+|---|---|---|
+| deadlink | `[[대상]]`이 어떤 파일로도 해석 안 됨 | lint 대상 전체 |
+| ambiguous | 경로 미지정 링크가 **현행** 노트 2건 이상에 걸림 | 동일 |
+| orphan | inbound 링크 0 | `_Wiki/`(entities 제외)·`_Sources/`·`12_Projects/`·`11_Routines/`·`20_Training/` |
+| template | `note_rules.check()` 위반 | `_Wiki/`·`_Sources/`까지 확장 |
+| moc-backlink **(opt-in)** | 도메인 운영 MOC가 있는데 노트에 역링크 없음 | `10_Areas/`·`14_Changes/` |
+
+`moc-backlink`는 기본 실행에서 뺀다 — 계약(`_Wiki/contracts.md` → Operational MOC 역방향)이 요구하지만 실측 누락이 252건이라 기본에 넣으면 나머지 검사를 덮는다. `--check moc-backlink`로 따로 돌린다. 도메인은 `#업무/` 첫 세그먼트(없으면 `10_Areas/{도메인}/` 폴더명)로 잡고, **`-운영-MOC.md`만** 대상이다(정적 topic MOC는 다른 계약이라 역링크를 요구하지 않는다 — 이 한정으로 271→252).
+
+**범위 결정의 근거는 전부 실측이다**(관행을 위반으로 오판하지 않기 위함 — 위임비용 규칙 #6):
+- `90_Archive/`는 orphan 57%(554/972)라 전 검사 제외. 단 **해석 인덱스에는 포함**한다 — 빼면 아카이브로 이관된 노트를 가리키는 정상 링크가 deadlink 오탐이 된다(실측: 284건 → 17건).
+- `10_Areas/`(30%)·`14_Changes/`(38%)는 원래 잎 노트라 generic orphan 미적용. 이 둘은 stale-index 검사(미도입)가 담당한다.
+- `_Wiki/entities/`는 이름으로 조회하는 사전이라 orphan 62%(48/77) → 예외.
+- `.trash/`는 해석 인덱스에서도 제외(삭제 사본이 ambiguous 오탐을 만든다).
+
+초회 실행 결과(2026-08-25, 노트 971건): deadlink 17 · ambiguous 1 · orphan 9 · template 101. template 101 중 91건이 `status:` 부재이고 그중 79건이 `14_Changes/incident/`다 — `_인시던트.md` 템플릿은 `status: open`을 갖고 있고 `improvement`는 106건 전부 보유(0건 위반)이므로, 이는 규칙 오탐이 아니라 **레거시 백필 대상**이다.
+
+### GP#1을 훅으로 막지 않는 이유 (의도적 결정, 2026-06)
 기존 노트 편집을 PreToolUse로 차단하면 정상 워크플로(status-sync·tag-validator·note-evaluator·inbox-process 모두 기존 노트를 수정)가 깨진다. "사용자가 요청한 편집"과 "사고성 편집"을 구분할 기계 신호가 없다. PostToolUse는 쓰기 *후* 발화라 애초에 차단 불가. 실제 위험은 단일 Edit이 아니라 **Bash `sed -i`/스크립트 대량 변경**이며, 이건 Write|Edit 훅을 우회한다. 따라서 블런트 훅은 득보다 실(거짓양성·워크플로 파손)이 크다.
+
 
 대신 규율로 막는다: **노트 대량 편집(frontmatter 백필·status 정규화·링크 치환) 전 항상 (1) 정확한 타깃만 anchored 매칭, (2) CRLF/LF sandbox 테스트(`open(newline="")` raw IO — `read_text()`는 CRLF를 LF로 무음 손상), (3) dry-run 매니페스트 확인 후 적용.** 노트는 gitignore라 되돌리기 없음(과거 정상 링크 358개 소실 사고).
 
