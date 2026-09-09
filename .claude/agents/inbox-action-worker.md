@@ -37,7 +37,7 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
   열린 질문: (없으면 생략)
 ```
 
-마지막에 삭제 권고 목록을 별도로 제시한다 — **실제 삭제는 하지 않는다** (오케스트레이터가 일괄 처리; SKILL.md 5단계, 승인 대기 없음):
+마지막에 삭제 권고 목록을 별도로 제시한다 — **실제 삭제는 하지 않는다** (오케스트레이터가 일괄 처리; SKILL.md 5단계-4, 승인 대기 없음):
 
 ```
 ## 삭제 권고 (action)
