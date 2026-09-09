@@ -15,6 +15,7 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | #4 Folder rules | `check-folder-rules.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #2 Task date fields | `check-todo-due-date.py` PostToolUse hook (mechanical) | Shell-enforced |
 | #5 Inbox (01_Inbox) via skill | AGENTS.md delegation rule | Doc-enforced |
+| 스킬 문서 장황함·환경 종속 (규칙+근거 서사 혼재, 머신 사실 하드코딩) | `check-skill-doc.py` PostToolUse hook + `--sweep` 전수 스캔 (mechanical, warning-only) | Shell-enforced (2026-09-05) |
 | 하네스 파일의 맨 `python` 호출 (검사 무력화) | `check-bare-python.py` PostToolUse hook + `--sweep` 전수 스캔 (mechanical) | Shell-enforced (2026-08-02) |
 
 ## 규칙 라이브러리 작성 규칙 (2026-08-25)
@@ -54,8 +55,8 @@ python3 .claude/lib/vault_lint.py --strict           # 발견 시 exit 1
 초회 실행 결과(2026-08-25, 노트 971건): deadlink 17 · ambiguous 1 · orphan 9 · template 101. template 101 중 91건이 `status:` 부재이고 그중 79건이 `14_Changes/incident/`다 — `_인시던트.md` 템플릿은 `status: open`을 갖고 있고 `improvement`는 106건 전부 보유(0건 위반)이므로, 이는 규칙 오탐이 아니라 **레거시 백필 대상**이다.
 
 ### GP#1을 훅으로 막지 않는 이유 (의도적 결정, 2026-06)
-기존 노트 편집을 PreToolUse로 차단하면 정상 워크플로(status-sync·tag-validator·note-evaluator·inbox-process 모두 기존 노트를 수정)가 깨진다. "사용자가 요청한 편집"과 "사고성 편집"을 구분할 기계 신호가 없다. PostToolUse는 쓰기 *후* 발화라 애초에 차단 불가. 실제 위험은 단일 Edit이 아니라 **Bash `sed -i`/스크립트 대량 변경**이며, 이건 Write|Edit 훅을 우회한다. 따라서 블런트 훅은 득보다 실(거짓양성·워크플로 파손)이 크다.
 
+기존 노트 편집을 PreToolUse로 차단하면 정상 워크플로(status-sync·tag-validator·note-evaluator·inbox-process 모두 기존 노트를 수정)가 깨진다. "사용자가 요청한 편집"과 "사고성 편집"을 구분할 기계 신호가 없다. PostToolUse는 쓰기 *후* 발화라 애초에 차단 불가. 실제 위험은 단일 Edit이 아니라 **Bash `sed -i`/스크립트 대량 변경**이며, 이건 Write|Edit 훅을 우회한다. 따라서 블런트 훅은 득보다 실(거짓양성·워크플로 파손)이 크다.
 
 대신 규율로 막는다: **노트 대량 편집(frontmatter 백필·status 정규화·링크 치환) 전 항상 (1) 정확한 타깃만 anchored 매칭, (2) CRLF/LF sandbox 테스트(`open(newline="")` raw IO — `read_text()`는 CRLF를 LF로 무음 손상), (3) dry-run 매니페스트 확인 후 적용.** 노트는 gitignore라 되돌리기 없음(과거 정상 링크 358개 소실 사고).
 
@@ -141,6 +142,23 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 > **어미 그룹을 선택(`?`)으로 풀지 말 것.** 에이전트명 근처의 모든 `위임`·`호출`이 걸려, 규칙이 **권장하는** 표현("보고에 적어 메인 스레드가 호출하게 한다", "오케스트레이터가 수행한다", "incident-analyst 추가 호출 필요?로 반환")까지 오탐한다 — 실측 8건. `하게`·`하지`·` 불가`·` 필요`는 의도적으로 어미 목록에서 뺐다.
 
 검증: 위반 6종(`Agent(subagent_type:…)`, `…에 위임한다`, `…를 위임할 수 있다`, 명사형 줄끝 `…에 위임`, `…에 위임하거나`, `…에 위임 (`) 탐지 + 부정문·"메인 스레드가 호출하게 한다" 무시 확인, 현행 하네스 전체 파일 스윕 **오탐 0**.
+
+## Skill Doc Lint
+
+### Active: `check-skill-doc.py` (mechanical, 2026-09-05)
+
+대상: `.claude/skills/**/*.md`. 경고만 내고 차단하지 않는다.
+
+| 검사 | 기준 | 조치 |
+|---|---|---|
+| length | `SKILL.md` > 250줄, 기타 > 350줄 (래칫 — 낮추기만) | references/·스크립트 `--help`로 분리 |
+| token | `실측`, `이 머신`, `이 환경`, `(YYYY-MM-DD 확립\|개정\|…)` 등 근거 서사·머신 종속 토큰 | 근거는 `docs/harness-log.md` §규칙 근거, 환경 판단은 스크립트 |
+| bold | 굵게 쌍 / 비어있지 않은 줄 > 35% | 표 셀 라벨·격줄 강조 제거 |
+| snippet | 코드 펜스 안 `= "` 로 끝나는 줄, `".join` 으로 시작하는 줄 (`"\n"`이 실제 개행으로 깨진 흔적) | 이스케이프 복원 |
+
+전수 점검: `python3 .claude/hooks/check-skill-doc.py --sweep .` (발견 시 exit 1).
+
+배경: 규칙 문장에 측정치·사고 이력·머신 사실을 함께 쓰는 관행이 `inbox-process`를 819줄로 키웠고, 볼트가 macOS·Windows를 오가므로 머신 사실은 절반의 환경에서 늘 틀렸다(2026-09-05 정비, `docs/harness-log.md`).
 
 ## Bare `python` Invocation Guard
 
@@ -241,10 +259,10 @@ All three layers are now active. Promotion log:
 
 19. ✅ #18이 서식 제외를 **Check 4 한 곳에만** 걸어, 같은 서식이 남은 두 검사에서 계속 경고하던 문제 (2026-08-02 사용자 결정) → 판별을 `is_simui_form` 하나로 올려 Check 2b·4·5가 공유(Check 2b는 **부재만** 면제하고 값이 있으면 어휘 검증 유지 — 통째로 끄면 status를 가진 서식 5건이 새 무게이트가 된다). 실측 델타: `10_Areas/과업심의/` 18건 경고 10 → 0, 볼트 477건 전수에서 신규 경고 0건, 같은 폴더의 업무사안 3건은 세 검사 모두 여전히 게이트(status·태그·앵커를 지운 사본으로 음성 테스트 확인). 함께 `99_Template/_교육.md`의 `- #업무/` 제거 — #18이 Check 5에서 `20_Training/`을 뺐지만 템플릿은 그대로 요구해, 문서가 "평가자 판단"으로 넘긴 그 판단을 실제로 수행할 게이트가 없었다(`note-evaluator`는 `inbox-process` 5단계-3-b 조건에서만 호출되고 교육 노트는 그 경로를 거의 타지 않는다). **교훈 두 가지:** (1) 제외 근거가 노트의 *종류*에 대한 주장이면 그 종류를 전제하는 검사 **전부**에 걸어야 한다 — 한 검사에만 걸면 나머지가 같은 오탐을 계속 내고, 그 잔여가 백로그로 쌓여 다음 회차의 일이 된다. (2) 검사를 강등하면 그 기준을 요구하던 **템플릿·문서도 같이 내린다** — 요구만 남고 집행이 사라지면 "평가자 판단"이라는 이름의 무게이트가 된다.
 
+20. ✅ `check-nested-delegation.py`의 탐지 알파벳이 `.claude/agents/*.md` 글롭 **단독**이라, 에이전트 파일을 지우는 순간 그 이름이 알파벳에서 빠져 남아 있는 산문 위임 지시가 무검사로 통과하던 문제 (2026-09-01, `dev:harness-curate` 삭제 후보 적대적 검토 중 발견) → `_agent_names()`를 글롭 ∪ `_FALLBACK_AGENT_NAMES` 합집합으로 변경. 폴백은 원래 `OSError` 경로에서만 쓰여, 정상 디렉터리 읽기는 줄어든 글롭을 그대로 반환했다. **교훈: 가드가 자기 검사 대상 목록을 삭제 가능한 파일에서 유도하면, 대상을 지우는 행위가 곧 가드를 끄는 행위가 된다** — 은퇴한 에이전트를 가리키는 지시야말로 잡아야 할 대상인데 정확히 그 순간 탐지가 꺼졌다. #17의 "0건은 세 가지 뜻"과 같은 계열이다.
+
 ## Generator Config (not version-controlled)
 
 `.obsidian/` is **gitignored** — these fixes live only on the local machine (Syncthing-synced), not in git:
 
 - **Obsidian Linter timestamp format** (`.obsidian/plugins/obsidian-linter/data.json` → `yaml-timestamp.format`): was `YYYY-MM-DD HH:MM:SS` (moment.js `MM`=month, `SS`=fractional-second → minute slot showed month, seconds >59). Fixed to `YYYY-MM-DD HH:mm:ss` (2026-06). This was the root cause of ~485 impossible-timestamp frontmatter values vault-wide (since batch-corrected). `update-on-file-contents-updated: never` limits re-stamping. If `.obsidian` is reset/reinstalled, re-apply this format.
-20. ✅ `check-nested-delegation.py`의 탐지 알파벳이 `.claude/agents/*.md` 글롭 **단독**이라, 에이전트 파일을 지우는 순간 그 이름이 알파벳에서 빠져 남아 있는 산문 위임 지시가 무검사로 통과하던 문제 (2026-09-01, `dev:harness-curate` 삭제 후보 적대적 검토 중 발견) → `_agent_names()`를 글롭 ∪ `_FALLBACK_AGENT_NAMES` 합집합으로 변경. 폴백은 원래 `OSError` 경로에서만 쓰여, 정상 디렉터리 읽기는 줄어든 글롭을 그대로 반환했다. **교훈: 가드가 자기 검사 대상 목록을 삭제 가능한 파일에서 유도하면, 대상을 지우는 행위가 곧 가드를 끄는 행위가 된다** — 은퇴한 에이전트를 가리키는 지시야말로 잡아야 할 대상인데 정확히 그 순간 탐지가 꺼졌다. #17의 "0건은 세 가지 뜻"과 같은 계열이다.
-
