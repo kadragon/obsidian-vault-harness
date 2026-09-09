@@ -47,12 +47,14 @@ Never perform these directly without the designated agent/skill:
 | `01_Inbox/` document processing (공문·참고자료 모두) | `inbox-process` skill |
 | Training note cleanup | `training-note-manager` agent |
 | Obsidian note **create**(템플릿 적용)·open·프로퍼티·앱 내 JS | `obsidian-operator` agent |
+| 과업심의 요청 검토 (위원 관점 지적·판정) | `gwaeop-simui` skill |
 | 기존 노트 본문 **소규모 수정**(수 줄·1~2파일) | 직접 Edit — 위임 금지 (§Delegation 비용 규칙) |
 | Vault cleanup (Archive) | `vault-cleanup` skill |
 | Status open→closed sync | `status-sync` skill |
 | Syncthing conflict files | `syncthing-conflict-cleanup` skill |
 | `.hwpx` 문서 생성/읽기/편집 | `productivity:hwpx` skill |
-| 개선 완료/결과 안내 공문 초안 작성 | `gongmun-draft` skill |
+| 대외 발신 문서 초안(공문·회신·안내·업무 메일) | `gongmun-draft` skill |
+| 납품 산출물 검수 + 수행사 보완요구 메일 | `deliverable-review` skill |
 | 주간업무회의 자료 생성 | `weekly-report` skill |
 | 시스템 변경 이력 주간 보고서 생성 | `change-log` skill |
 | Domain MOC 사전 조사 | `vault-navigator` agent |
