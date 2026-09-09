@@ -13,6 +13,7 @@ XML, Java, SQL, and procedure content comes from user-provided materials or exis
 | `docs/delegation.md` | Deciding which agent/skill to use |
 | `docs/eval-criteria.md` | Evaluating note quality after creation — all agent context manifests reference this as the evaluation rubric |
 | `docs/enforcement.md` | Enforcement layer status and how to strengthen it |
+| `docs/harness-log.md` | Harness edits with falsifiable predictions — read before re-auditing or removing a harness asset |
 | `docs/runbook.md` | Diagnosing hook failures, checking skill trigger phrases, looking up agent capabilities, **or placing/naming a new harness asset (skill·agent·workflow·script)** |
 | `_Wiki/README.md` | Understanding the wiki layer structure (index·log·MOC·entities·topics·syntheses) |
 | `_Wiki/workflow.md` | Cross-skill process flow **and search priority** (qmd → rg → index.md) — read before vault search or multi-skill chains |
@@ -20,6 +21,7 @@ XML, Java, SQL, and procedure content comes from user-provided materials or exis
 | `_Wiki/index.md` | Vault topic map — starting point for exploring existing wiki pages |
 | `_Wiki/log.md` | Append-only ingest/event log — write here after note creation or closure |
 | `docs/migration-flat-areas.md` | One-time migration guide for flat `10_Areas/` notes (reference only) |
+| `docs/migration-googledrive.md` | Handling `C:\Dev\GoogleDrive` files, or checking what was already ingested into `_Sources/` |
 
 ## Golden Principles
 
@@ -45,9 +47,9 @@ Never perform these directly without the designated agent/skill:
 | Tag 검증·정규화 | **1차: `.claude/lib/validate_tag.py --json`** (결정론적) · 문맥 의존 건만 `tag-validator` agent |
 | 노트 품질 평가 (생성 직후 게이트, `docs/eval-criteria.md` 루브릭) | `note-evaluator` agent |
 | `01_Inbox/` document processing (공문·참고자료 모두) | `inbox-process` skill |
+| 과업심의 요청 검토 (위원 관점 지적·판정) | `gwaeop-simui` skill |
 | Training note cleanup | `training-note-manager` agent |
 | Obsidian note **create**(템플릿 적용)·open·프로퍼티·앱 내 JS | `obsidian-operator` agent |
-| 과업심의 요청 검토 (위원 관점 지적·판정) | `gwaeop-simui` skill |
 | 기존 노트 본문 **소규모 수정**(수 줄·1~2파일) | 직접 Edit — 위임 금지 (§Delegation 비용 규칙) |
 | Vault cleanup (Archive) | `vault-cleanup` skill |
 | Status open→closed sync | `status-sync` skill |
@@ -97,22 +99,23 @@ Direct-to-main: allowed — notes-only vault; no feature branches required.
 ## Context Management
 
 - Write `handoff-{feature}.md` at the **start** of long tasks, not when context is already full.
-- When context overflows, prefer **reset** over compaction.
+- **Deliberate override of the platform default:** when context overflows, prefer **reset** over
+  compaction/summarization. Vault work is note-at-a-time; a summarized transcript loses the exact
+  note paths and frontmatter values a resumed task needs, so a clean session + `handoff-` note
+  beats a compacted one here.
 - Use this file as the entry point; load `docs/` files only on demand.
 
 ## Hard Stops — Always ask the user
 
-- Task has 2+ valid interpretations.
+Global `~/.claude/CLAUDE.md` §Hard stops governs ambiguity/irreversibility. Vault-specific additions:
+
 - Same error repeats 2+ times.
 - Modifying an existing note appears necessary (Golden Principle #1).
 
 ## Maintenance
 
-Update this file **only** when ALL of the following are true:
-
-1. The information is not directly discoverable from code / config / manifests / docs
-2. It is operationally significant — affects build, test, deploy, or runtime safety
-3. It would likely cause mistakes if left undocumented
-4. It is stable and not task-specific
+Update this file only when the global bloat test (`~/.claude/CLAUDE.md` §Core principles) says the
+rule belongs in an always-loaded file — i.e. removing it would cause a mistake, and it is not
+discoverable from code / config / docs.
 
 **Never add:** architecture summaries, directory overviews, style conventions enforced by tooling, anything visible in the repo, temporary or task-specific instructions.
