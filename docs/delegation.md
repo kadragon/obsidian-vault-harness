@@ -28,7 +28,8 @@ If any trigger applies, delegate first — do not proceed without it.
 | Status open→closed sync needed | `status-sync` skill | — |
 | Syncthing conflict files present | `syncthing-conflict-cleanup` skill | — |
 | `.hwpx` 문서 작업 | `productivity:hwpx` skill | File path, operation type |
-| 개선 완료/결과 안내 공문 초안 작성 | `gongmun-draft` skill | 개선 노트 경로 |
+| 대외 발신 문서 초안(공문·회신·안내·업무 메일) | `gongmun-draft` skill | 근거 노트·원문 경로 |
+| 납품 산출물 검수 + 수행사 보완요구 메일 | `deliverable-review` skill | 산출물 폴더 + 과업지시서·계약서 경로 |
 | Note created by agent (모든 생성 경로) | **메인 스레드가** 게이트 실행: 1차는 기계 검사(`check-template.py`·`validate-tags.sh`·`moc_gate.py`) + 훅이 못 잡는 잔여분 직접 확인(area 적합성·MOC 순방향 등록·`20_Training/`의 `#업무/` 부재·**`10_Areas` 업무사안 외 노트 종류의 섹션 구조**), `note-evaluator`는 **조건 해당 시에만** 호출 (조건 목록 → `inbox-process/SKILL.md` 5단계-3-b). 생성자는 자기 노트를 평가하지 않는다 (AGENTS.md 위임 비용 규칙 #5) | note path, 워커가 반환한 추출본 경로 |
 
 ### Escalation

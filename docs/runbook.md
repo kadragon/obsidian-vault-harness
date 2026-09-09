@@ -45,6 +45,16 @@ Input: change description, related SQL/procedure
 Output: 14_Changes/improvement/{year}/ note
 ```
 
+### Review a 과업심의 Request
+
+```
+Run: gwaeop-simui skill
+Input: 심의자료 폴더 (01_Inbox/action/ 또는 10_Areas/과업심의/{회차}/{번호}/심의자료/)
+Output: 지적사항 + 판정(안) → 10_Areas/과업심의/{회차}/..._심의의견.md (+ 요청 시 PDF)
+Note: 회차 폴더 셋팅·서식 생성은 이 스킬이 아니라
+      10_Areas/과업심의/과업심의_프로세스.md (Step 1~11)
+```
+
 ### Weekly Report
 
 ```
@@ -87,7 +97,9 @@ Scope: 10_Areas/ → 90_Archive/
 | Skill | Trigger phrase | Entry point |
 |-------|---------------|-------------|
 | `inbox-process` | inbox 처리, 공문 처리 | `01_Inbox/` scan |
-| `gongmun-draft` | 공문 작성, 결과 안내 공문 | 개선 노트 → 공문 본문 |
+| `gwaeop-simui` | 과업심의 검토, 심의위원이라면 | 심의자료 폴더 → 지적사항·판정(안) |
+| `gongmun-draft` | 공문 작성, 회신 문구, 안내문, 메일 초안 | 근거 노트 → 발신 본문 |
+| `deliverable-review` | 산출물 검토, 결과물 받았는데 검토, 보완요구 메일 | 산출물 5종 → 검토 노트 + 메일 초안 |
 | `weekly-report` | 주간업무회의 자료 | Vault scan |
 | `change-log` | 기능 개선 내역 | Vault scan (past week) |
 | `status-sync` | status 동기화 | Vault scan |
