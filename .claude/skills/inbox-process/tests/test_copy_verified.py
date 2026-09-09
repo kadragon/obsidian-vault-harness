@@ -238,6 +238,37 @@ class DurableCopyTests(unittest.TestCase):
                 self.source, note, result.destination, self.vault
             )
 
+    def test_nested_fence_cannot_expose_an_example_link(self):
+        """A ```` wrapper holding a ``` block stays closed until its own end."""
+        result = copy_verified.copy_verified(
+            self.source,
+            "_Sources/_Assets/기타",
+            self.vault,
+        )
+        note = self.vault / "_Sources" / "기타.md"
+        note.write_text(
+            "````\n```markdown\n예시: " + result.wikilink + "\n```\n````\n",
+            encoding="utf-8",
+        )
+        with self.assertRaises(copy_verified.CopyError):
+            copy_verified.verify_link(
+                self.source, note, result.destination, self.vault
+            )
+
+    def test_attachment_embed_counts_as_the_final_link(self):
+        """Attachment embeds are allowed by Golden Principle #2."""
+        result = copy_verified.copy_verified(
+            self.source,
+            "_Sources/_Assets/기타",
+            self.vault,
+        )
+        note = self.vault / "_Sources" / "기타.md"
+        note.write_text("원본 파일: !" + result.wikilink + "\n", encoding="utf-8")
+        checked = copy_verified.verify_link(
+            self.source, note, result.destination, self.vault
+        )
+        self.assertTrue(checked["verified"])
+
     def test_cli_emits_json_and_nonzero_for_bad_source(self):
         good = copy_verified.main(
             ["copy", str(self.source), "_Sources/_Assets/기타", "--vault", str(self.vault)]

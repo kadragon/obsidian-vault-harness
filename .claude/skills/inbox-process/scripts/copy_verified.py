@@ -119,21 +119,17 @@ def _destination_dir(vault: Path, value: str | Path, *, create: bool) -> Path:
     return resolved
 
 
+def _vault_path(vault: Path, value: str | Path, label: str) -> Path:
+    """Resolve one vault path: relative values hang off the vault root."""
+    raw = Path(value).expanduser()
+    path = raw if raw.is_absolute() else vault / raw
+    resolved = _inside(path, vault, label)
+    _reject_symlink_below_vault(path, vault)
+    return resolved
+
+
 def _destination_path(vault: Path, value: str | Path) -> Path:
-    raw = Path(value).expanduser()
-    path = raw if raw.is_absolute() else vault / raw
-    resolved = _inside(path, vault, "destination")
-    _reject_symlink_below_vault(path, vault)
-    return resolved
-
-
-def _note_path(vault: Path, value: str | Path) -> Path:
-    """Resolve the note like a destination: vault-relative unless absolute."""
-    raw = Path(value).expanduser()
-    path = raw if raw.is_absolute() else vault / raw
-    resolved = _inside(path, vault, "note")
-    _reject_symlink_below_vault(path, vault)
-    return resolved
+    return _vault_path(vault, value, "destination")
 
 
 def _durable_destination(vault: Path, path: Path) -> Path:
@@ -382,6 +378,14 @@ def verify_copy(
     )
 
 
+def _fence_marker(stripped: str) -> tuple[str, int] | None:
+    """Return (char, width) when a line opens or closes a fenced block."""
+    for char in ("`", "~"):
+        if stripped.startswith(char * 3):
+            return char, len(stripped) - len(stripped.lstrip(char))
+    return None
+
+
 def verify_link(
     source: str | Path,
     note: str | Path,
@@ -390,7 +394,7 @@ def verify_link(
 ) -> dict:
     """Verify byte identity and the exact final wikilink in a note."""
     vault_path = _vault_root(vault)
-    note_path = _note_path(vault_path, note)
+    note_path = _vault_path(vault_path, note, "note")
     _regular(note_path, "note")
     copy = verify_copy(source, destination, vault_path)
     try:
@@ -404,21 +408,30 @@ def verify_link(
     # would otherwise consume the fence markers and expose an example link
     # inside a code block as if it were a real one.
     visible_lines = []
-    fenced = False
+    open_fence: tuple[str, int] | None = None
     for line in note_text.splitlines():
         marker = line.lstrip()
-        if marker.startswith("```") or marker.startswith("~~~"):
-            fenced = not fenced
+        fence = _fence_marker(marker)
+        if open_fence is None:
+            if fence is not None:
+                open_fence = fence
+                continue
+        else:
+            char, width = open_fence
+            # Only the same character, at least as long, closes the block, so a
+            # nested ```markdown inside a ```` wrapper cannot end it early.
+            if fence is not None and fence[0] == char and fence[1] >= width:
+                open_fence = None
             continue
-        if not fenced:
-            visible_lines.append(line)
+        visible_lines.append(line)
     visible_text = re.sub(r"`[^`]*`", "", "\n".join(visible_lines))
     # macOS stores Korean filenames decomposed (NFD) while notes are written
     # composed (NFC), so the two spellings must be compared in one form.
     visible_text = unicodedata.normalize("NFC", visible_text)
     wikilink = unicodedata.normalize("NFC", copy.wikilink)
-    link_pattern = rf"(?<!\!){re.escape(wikilink)}"
-    if not re.search(link_pattern, visible_text):
+    # An attachment may legitimately be embedded (AGENTS.md Golden Principle
+    # #2), so `![[...]]` counts as pointing at the durable copy too.
+    if wikilink not in visible_text:
         raise CopyError(f"final wikilink missing from note: {copy.wikilink}")
     data = asdict(copy)
     data.update({"note": str(note_path), "link_present": True, "verified": True})

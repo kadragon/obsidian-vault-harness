@@ -61,7 +61,7 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 - **Handysoft PDF**: `.claude/skills/inbox-process/scripts/extract_handysoft_pdf.py`로 추출 후 Read.
 - **파싱 불가 포맷** (`.hwp`, `.hwpx`, `.xlsx`, `.docx`): 파일명·사용자 설명·주변 맥락으로 처리. 불확실하면 `## 열린 질문`에 기록.
 - **원본 파일 삭제 금지**: 오케스트레이터가 일괄 처리.
-- **삭제 게이트**: 원본을 durable 위치로 복사(`copy_verified.py copy`)하고 `copy_verified.py verify-link`가 exit 0을 낼 때만 삭제 권고에 올린다 (`reference-branch.md` 1a·6단계). 검증 실패·미실행은 `UNVERIFIED`로 보고하고 권고하지 않는다 — 추정으로 통과시키지 않는다.
+- **삭제 게이트**: 원본을 durable 위치로 복사(`copy_verified.py copy`)하고 `copy_verified.py verify-link`가 exit 0을 낼 때만 삭제 권고에 올린다. `.md`·`.txt` 텍스트 입력은 복사 대신 원문을 source note에 흡수하고 `text-absorbed`로 표시한다 (`reference-branch.md` 1a·6단계). 검증 실패·미실행은 `UNVERIFIED`로 보고하고 권고하지 않는다 — 추정으로 통과시키지 않는다.
 
 ## 협업
 

@@ -18,3 +18,7 @@
 ## 4-hwpx-shared — HWPX 추출 경로 공용화
 
 - [ ] [REFACTOR] `gwaeop-simui/scripts/extract_bundle.py`의 `find_hwpx_text_py()` 경로 해석(marketplaces 우선·cache 폴백)을 두 진입점이 공유하는 위치로 올리고, reference 갈래의 `.hwpx`를 "파싱 불가"에서 추출 시도 대상으로 재분류한다. 도구 부재·실제 추출 실패일 때만 맥락 기반 보류(`UNVERIFIED`)로 내려가며 `.hwp`(레거시 바이너리)는 변환 필요 판정 유지. `AGENTS.md` 위임표의 없는 이름 `productivity:hwpx` → `prod:hwpx` 정정 포함. `gwaeop-simui` 동작은 회귀 테스트로 고정한 뒤 이동 (source: 같은 spec Solution §HWPX 추출 경로 공유) — `.claude/skills/gwaeop-simui/scripts/extract_bundle.py:30-44` · `.claude/skills/inbox-process/references/reference-branch.md:125` · `.claude/agents/inbox-reference-worker.md:58` · `AGENTS.md`
+
+## PR #23 — [FIX] gate Inbox reference cleanup on a proven durable copy (2026-09-09)
+
+- [ ] [risk] action 갈래는 삭제 게이트에서 전면 면제됐으나, 링크 형식이 안 맞을 뿐 `copy_verified.py verify`(존재 + SHA-256 일치)는 적용 가능하다. 첨부 복사가 조용히 실패하면 아무 검증 없이 공문 원본이 삭제된다 — 링크 실재 검사만 면제하고 사본 동일성 검사는 요구할지 결정 (source: code-review) — `.claude/skills/inbox-process/SKILL.md` 5단계-4 · `.claude/skills/inbox-process/references/action-branch.md`

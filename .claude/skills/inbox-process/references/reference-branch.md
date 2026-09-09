@@ -40,7 +40,10 @@
 
 ### 1a. durable copy 확보 (원본 삭제의 전제)
 
-파일 입력이면 source note를 쓰기 전에 원본을 durable 위치로 복사한다. 인라인 텍스트 입력은 원본 파일이 없으므로 건너뛴다.
+바이너리·문서 파일(`.pdf`·`.hwpx`·이미지 등) 입력이면 source note를 쓰기 전에 원본을 durable 위치로 복사한다.
+
+- **인라인 텍스트**: 원본 파일이 없으므로 건너뛴다.
+- **텍스트 파일(`.md`·`.txt`, `scraps/` 웹 클립 포함)**: durable copy를 만들지 않는다 — `_Sources/_Assets/`에 `.md` 사본을 두면 `vault_lint.py`가 노트로 린트하고 qmd가 이중 색인해 `vault-cleanup` dedupe가 source note와 중복으로 잡는다. 대신 **원문 전체를 source note 본문에 흡수**하고(출처 URL·제목 포함), 6단계에서 `verify-link` 대신 `text-absorbed`로 보고한다.
 
 ```bash
 python3 .claude/skills/inbox-process/scripts/copy_verified.py copy \
@@ -132,12 +135,14 @@ python3 .claude/skills/inbox-process/scripts/copy_verified.py verify-link \
   "<원본 절대경로>" "<source note 경로>" "<durable copy 경로>" --vault .
 ```
 
-exit 0 = durable copy 존재 + 원본과 SHA-256 동일 + 노트 본문에 그 wikilink가 실재. 세 조건이 모두 참일 때만 권고한다. 노트 경로는 볼트 기준 상대경로도 절대경로도 받는다. 코드블록·인라인 코드·HTML 주석 안의 링크는 통과로 치지 않으므로, 예시로 적은 경로가 삭제를 승인하는 일은 없다.
+exit 0 = durable copy 존재 + 원본과 SHA-256 동일 + 노트 본문에 그 wikilink가 실재(첨부 임베드 `![[...]]`도 인정). 세 조건이 모두 참일 때만 권고한다. 노트 경로는 볼트 기준 상대경로도 절대경로도 받는다. 코드블록·인라인 코드·HTML 주석 안의 링크는 통과로 치지 않으므로, 예시로 적은 경로가 삭제를 승인하는 일은 없다.
 
 **삭제 권고에서 제외**할 건 (목록에 넣지 않음):
 - 인라인 텍스트 입력이라 원본 파일이 없는 건
 - ingest가 부분 실패이거나 열린 질문이 남아 있는 건
 - `verify-link`가 exit 1이거나 아예 돌리지 않은 건 → `UNVERIFIED: <원인>`으로 보고한다. 추정으로 통과시키지 않는다
+
+텍스트 파일은 durable copy가 없으므로 게이트 대신 **원문이 source note 본문에 전부 들어갔는지** 확인하고 `text-absorbed`로 표시해 권고한다. 일부만 요약했으면 권고하지 않는다.
 
 보존 사유가 있으면 보고의 열린 질문 항목으로 반환한다 (워커가 사용자 지시를 기다리지 않음).
 
