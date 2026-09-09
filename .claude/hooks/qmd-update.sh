@@ -40,7 +40,16 @@ if ! command -v qmd &>/dev/null; then
     exit 0
 fi
 
-# Run QMD update in background (incremental, fast)
-(qmd update --quiet && qmd embed --quiet) &>/dev/null &
+# Run QMD update in background (incremental, fast).
+# Serialize update/embed jobs so repeated Write/Edit events cannot multiply
+# memory-heavy embedding processes.
+LOCK_ID=$(printf '%s' "$VAULT_ROOT" | sha256sum 2>/dev/null | awk '{print $1}')
+[[ -z "$LOCK_ID" ]] && LOCK_ID="vault"
+LOCK_FILE="${TMPDIR:-/tmp}/qmd-${LOCK_ID}.lock"
+(
+    exec 9>"$LOCK_FILE"
+    flock -n 9 || exit 0
+    qmd update --quiet && qmd embed --quiet
+) &>/dev/null &
 
 exit 0
