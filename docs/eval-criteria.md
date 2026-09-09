@@ -110,7 +110,7 @@ Below threshold → findings become fixes in same session before note is committ
 |------|-----------|-----------|
 | 1 Frontmatter | `check-template.py` Check 2·2b·2c·3 (Check 3은 incident·improvement 양쪽) | 심의 서식의 `status:` **부재**는 위반 아님(Check 2b 면제). 값이 있으면 어휘는 계속 검증한다 |
 | 2 Tag | `validate-tags.sh` → `validate_tag.py` (형식) + `check-template.py` Check 5 (`#업무/` **구체** 태그 존재 — `10_Areas`+`type: work`·`14_Changes`, 심의 서식 제외) | area 배정의 문맥 적합성. `20_Training/`의 `#업무/` 부재와 심의 서식의 `#업무/` 부재는 검사 제외이자 **위반 아님**(템플릿·서식 모두 요구하지 않음). `#부서/` 부재는 **감점 대상 아님**(선택 필드) |
-| 3 Template Adherence | `check-template.py` Check 1b·4 — **Check 4는 `10_Areas/`+`type: work` 전용, `10_Areas/과업심의/`의 심의 서식(파일명 기준) 제외** | **`14_Changes/`·`20_Training/`·`12_Projects/`·`11_Routines/` 노트의 섹션 구조는 기계 검사가 없다** — 해당 종류는 평가자가 직접 본다. 과업심의 **서식**만 앵커 검사 대상 아님(같은 폴더의 업무사안 노트는 검사됨) |
+| 3 Template Adherence | `check-template.py` Check 1b·4 — **Check 4는 `10_Areas/`+`type: work`의 업무사안 **본체**(영역 루트 노트 또는 래퍼 폴더의 `_{제목}.md`) 전용 — 래퍼 폴더 안의 자식 문서(메모·수신 원문·계획서)와 `10_Areas/과업심의/`의 심의 서식(파일명 기준)은 제외** | **`14_Changes/`·`20_Training/`·`12_Projects/`·`11_Routines/` 노트의 섹션 구조는 기계 검사가 없다** — 해당 종류는 평가자가 직접 본다. 과업심의 **서식**만 앵커 검사 대상 아님(같은 폴더의 업무사안 노트는 검사됨) |
 | 4 Wikilink Style | `check-template.py` Check 1 | — |
 | 5 Wiki Feedback Loop | `moc_gate.py` (임계 도달 도메인 검출) | MOC **순방향 등록** 여부 — 노트가 MOC를 링크했는지는 grep |
 
