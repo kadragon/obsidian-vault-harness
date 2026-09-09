@@ -24,29 +24,44 @@ from pathlib import Path
 
 
 def _discover_allowed_areas() -> set[str] | None:
-    """Derive the allowed `#업무/{area}` set at runtime from 10_Areas/ folder names.
+    """Derive the allowed `#업무/{area}` set at runtime.
 
-    Source of truth: "#업무/ 태그 = 10_Areas 폴더명 그대로" (문서 유형 불문).
+    Two registries, unioned (2026-08-25):
+      1. `10_Areas/` folder names — 진행 중 업무가 있는 영역.
+      2. `_Wiki/topics/{area}-운영-MOC.md` — 운영 MOC가 선 도메인.
+
+    폴더만 기준으로 삼으면 **업무가 끝나 아카이브로 넘어간 영역이 태그 어휘에서 사라진다**
+    (실측 2026-08-25: 교육연구학생지도·장학은 운영 MOC와 기존 노트 태그가 살아 있는데
+    `10_Areas/` 폴더가 없어 `unknown area`로 거부됐다). 도메인의 실제 등록부는 운영 MOC이고,
+    폴더는 "지금 진행 중인가"를 나타낼 뿐이다. 빈 폴더를 만들어 맞추는 것은 폴더 규칙과
+    어긋나므로 검증기 쪽을 넓힌다.
+
     Resolve the vault robustly via $CLAUDE_PROJECT_DIR, else walk up from this
-    script's location. Return None if 10_Areas/ cannot be located/read so the
-    caller can degrade gracefully (skip the unknown-area check rather than fail).
+    script's location. Return None if neither registry can be read so the caller
+    can degrade gracefully (skip the unknown-area check rather than fail).
     """
-    candidates: list[Path] = []
+    roots: list[Path] = []
     env = os.environ.get("CLAUDE_PROJECT_DIR")
     if env:
-        candidates.append(Path(env) / "10_Areas")
-    here = Path(__file__).resolve()
-    candidates.extend(parent / "10_Areas" for parent in here.parents)
-    for areas in candidates:
+        roots.append(Path(env))
+    roots.extend(Path(__file__).resolve().parents)
+
+    names: set[str] = set()
+    for root in roots:
         try:
+            areas = root / "10_Areas"
             if areas.is_dir():
                 # NFC-normalize: macOS lists filenames in NFD; tags are NFC.
-                names = {unicodedata.normalize("NFC", p.name)
-                         for p in areas.iterdir() if p.is_dir()}
-                if names:
-                    return names
+                names |= {unicodedata.normalize("NFC", p.name)
+                          for p in areas.iterdir() if p.is_dir()}
+            topics = root / "_Wiki" / "topics"
+            if topics.is_dir():
+                names |= {unicodedata.normalize("NFC", p.stem)[:-len("-운영-MOC")]
+                          for p in topics.glob("*-운영-MOC.md")}
         except OSError:
             continue
+        if names:
+            return names
     return None
 
 
@@ -136,7 +151,7 @@ def normalize_upmu(tag: str) -> Result:
 
     area = unicodedata.normalize("NFC", parts[1])
     if ALLOWED_AREAS is not None and area not in ALLOWED_AREAS:
-        issues.append(f"unknown area '{area}' (not a 10_Areas/ folder)")
+        issues.append(f"unknown area '{area}' (neither a 10_Areas/ folder nor a _Wiki/topics/{area}-운영-MOC.md)")
         return Result(tag, normalized, False, issues)
 
     valid = not issues
