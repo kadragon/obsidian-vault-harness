@@ -126,6 +126,15 @@ def _destination_path(vault: Path, value: str | Path) -> Path:
     return resolved
 
 
+def _note_path(vault: Path, value: str | Path) -> Path:
+    """Resolve the note like a destination: vault-relative unless absolute."""
+    raw = Path(value).expanduser()
+    path = raw if raw.is_absolute() else vault / raw
+    resolved = _inside(path, vault, "note")
+    _reject_symlink_below_vault(path, vault)
+    return resolved
+
+
 def _durable_destination(vault: Path, path: Path) -> Path:
     """Allow only the two vault locations that own durable attachments."""
     resolved = _inside(path, vault, "destination")
@@ -380,9 +389,8 @@ def verify_link(
 ) -> dict:
     """Verify byte identity and the exact final wikilink in a note."""
     vault_path = _vault_root(vault)
-    note_path = Path(note).expanduser()
+    note_path = _note_path(vault_path, note)
     _regular(note_path, "note")
-    _inside(note_path, vault_path, "note")
     copy = verify_copy(source, destination, vault_path)
     try:
         note_text = note_path.read_text(encoding="utf-8")

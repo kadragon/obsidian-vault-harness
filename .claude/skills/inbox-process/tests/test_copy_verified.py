@@ -136,6 +136,32 @@ class DurableCopyTests(unittest.TestCase):
         with self.assertRaises(copy_verified.CopyError):
             copy_verified.verify_link(self.source, note, result.destination, self.vault)
 
+    def test_vault_relative_note_path_resolves_like_destination(self):
+        """A note path is read against the vault, not the process CWD."""
+        result = copy_verified.copy_verified(
+            self.source,
+            "_Sources/_Assets/기타",
+            self.vault,
+        )
+        note = self.vault / "_Sources" / "기타.md"
+        note.write_text(f"원본 파일: {result.wikilink}\n", encoding="utf-8")
+
+        checked = copy_verified.verify_link(
+            self.source,
+            "_Sources/기타.md",
+            result.destination,
+            self.vault,
+        )
+        self.assertTrue(checked["verified"])
+        self.assertEqual(str(note.resolve()), checked["note"])
+
+        outside = Path(self.tmp.name) / "밖.md"
+        outside.write_text(f"원본 파일: {result.wikilink}\n", encoding="utf-8")
+        with self.assertRaises(copy_verified.CopyError):
+            copy_verified.verify_link(
+                self.source, outside, result.destination, self.vault
+            )
+
     def test_missing_final_link_blocks_cleanup(self):
         result = copy_verified.copy_verified(
             self.source,

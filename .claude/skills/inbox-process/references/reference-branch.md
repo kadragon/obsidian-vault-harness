@@ -38,11 +38,25 @@
 - 파일 형식과 제목, 관련 업무 맥락을 파악한다.
 - 필요하면 `qmd`, `rg`, 기존 wiki 페이지로 관련 노트를 찾는다.
 
+### 1a. durable copy 확보 (원본 삭제의 전제)
+
+파일 입력이면 source note를 쓰기 전에 원본을 durable 위치로 복사한다. 인라인 텍스트 입력은 원본 파일이 없으므로 건너뛴다.
+
+```bash
+python3 .claude/skills/inbox-process/scripts/copy_verified.py copy \
+  "<원본 절대경로>" "_Sources/_Assets/{도메인}" --vault .
+```
+
+- 출력 JSON의 `wikilink`(예: `[[_Sources/_Assets/기타/자료.pdf]]`)와 `relative_destination`을 기록해 둔다. 2단계 source note와 6단계 게이트가 그대로 쓴다.
+- 목적지 기본값은 `_Sources/_Assets/{도메인}/`. 다른 위치가 맞다고 판단되면 복사를 강행하지 말고 `## 열린 질문`으로 보고한다.
+- 스크립트는 원본을 지우지 않고 기존 파일을 덮어쓰지 않는다. 동일 내용이 이미 있으면 그 복사본을 재사용한다.
+- exit 1이면 그 파일은 durable copy 없음으로 취급한다 — 6단계에서 삭제 권고 대상이 되지 않는다.
+
 ### 2. source note 작성
 
 - 장기적으로 다시 볼 가치가 있는 자료면 `_Sources/` 아래에 source note를 만든다.
 - source note에는 최소한 아래 내용을 넣는다.
-  - 원문 식별 정보 또는 파일 경로 (신규는 `01_Inbox/reference/...` 또는 `01_Inbox/scraps/...` 경로를 기록)
+  - 원문 식별 정보와 durable copy 경로 — 1a단계가 돌려준 `wikilink`를 그대로 쓴다. **`01_Inbox/...` 경로를 원문 링크로 기록하지 않는다** (삭제 후 죽는 링크가 된다). 접수 경로를 남길 필요가 있으면 링크가 아닌 본문 서술로 적는다
   - 인라인 텍스트 입력은 파일 경로 대신 `inline text provided by user on YYYY-MM-DD`를 기록
   - 짧은 요약
   - 핵심 포인트
@@ -110,11 +124,19 @@
 
 ### 6. 삭제 권고 (워커는 삭제하지 않음)
 
-1~5단계가 모두 성공적으로 끝난 파일은 `## 삭제 권고 (reference)` 목록으로 보고한다. **워커는 직접 삭제하지 않는다** — 오케스트레이터가 일괄 삭제한다 (SKILL.md 5단계).
+1~5단계가 모두 성공적으로 끝난 파일은 **삭제 게이트를 통과한 건만** `## 삭제 권고 (reference)` 목록으로 보고한다. **워커는 직접 삭제하지 않는다** — 오케스트레이터가 일괄 삭제한다 (SKILL.md 5단계-4).
+
+```bash
+python3 .claude/skills/inbox-process/scripts/copy_verified.py verify-link \
+  "<원본 절대경로>" "<source note 경로>" "<durable copy 경로>" --vault .
+```
+
+exit 0 = durable copy 존재 + 원본과 SHA-256 동일 + 노트 본문에 그 wikilink가 실재. 세 조건이 모두 참일 때만 권고한다. 노트 경로는 볼트 기준 상대경로도 절대경로도 받는다. 코드블록·인라인 코드·HTML 주석 안의 링크는 통과로 치지 않으므로, 예시로 적은 경로가 삭제를 승인하는 일은 없다.
 
 **삭제 권고에서 제외**할 건 (목록에 넣지 않음):
 - 인라인 텍스트 입력이라 원본 파일이 없는 건
 - ingest가 부분 실패이거나 열린 질문이 남아 있는 건
+- `verify-link`가 exit 1이거나 아예 돌리지 않은 건 → `UNVERIFIED: <원인>`으로 보고한다. 추정으로 통과시키지 않는다
 
 보존 사유가 있으면 보고의 열린 질문 항목으로 반환한다 (워커가 사용자 지시를 기다리지 않음).
 
@@ -132,7 +154,7 @@
 2. wiki page 1건 이상 생성 또는 갱신
 3. 관련 active note 링크 추가
 4. `index.md`, `log.md` 갱신
-5. `01_Inbox/reference/`·`01_Inbox/scraps/` 원본 파일은 **삭제 권고 목록으로 보고** (삭제는 오케스트레이터)
+5. durable copy 1건 (1a단계) + `verify-link` 통과 건의 **삭제 권고 목록 보고** (삭제는 오케스트레이터)
 
 ## 출력 방식
 
