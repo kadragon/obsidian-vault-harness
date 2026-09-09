@@ -8,14 +8,22 @@ description: |
 
 # Inbox 처리 오케스트레이터
 
-`01_Inbox/` 처리를 오케스트레이션한다. 실제 파일 처리는 두 워커에 위임한다:
+`01_Inbox/` 처리를 오케스트레이션한다. 기본 파일 처리는 두 워커에 위임한다:
 
 - **action 갈래** (공문·업무요청) → `inbox-action-worker`
 - **reference 갈래** (참고자료·수집물·웹 클립) → `inbox-reference-worker`
 
-오케스트레이터가 하는 일: 스캔, 루트 triage, 선례 수집, Grill, 디스패치, 태그 확정, 품질 게이트, 일괄 삭제, 최종 보고. 파일 내용 Read·노트 작성은 하지 않는다. 단, grill 결과 반영 같은 수 줄 수정은 직접 Edit으로 한다.
+오케스트레이터가 하는 일: 스캔, 루트 triage, 선례 수집, Grill, 디스패치, 태그 확정, 품질 게이트, 일괄 삭제, 최종 보고. 명확한 단일 인라인·`.txt`·`.md` 건은 같은 갈래 절차를 메인에서 직접 실행할 수 있다. OCR·배치·모호한 건은 워커로 보낸다.
 
 워커는 서브에이전트라 사용자 대화·다른 에이전트 호출을 못 한다. vault-navigator·tag-validator·incident-analyst·improvement-planner 호출과 모든 사용자 확인은 오케스트레이터 몫이고, 워커는 후보 태그·열린 질문·삭제 권고를 보고로만 돌려준다.
+
+## 범위 선택과 실행 경로
+
+- 사용자가 `전체`·`모두`·`비워줘`처럼 전체 범위를 명시하면 한 번만 스캔하고 그 범위를 끝까지 처리한다. 중간에 같은 범위 재승인·재스캔을 요구하지 않는다.
+- 파일·폴더·`action/`·`reference/`·`scraps/`를 지정하면 지정 대상만 처리한다. 전체 Inbox를 다시 훑거나 이미 확정한 triage를 반복하지 않는다.
+- 범위가 없으면 한 번 스캔해 건수와 루트 분류 후보를 제시하고 범위를 한 번 묻는다. 답을 받은 뒤 목록을 고정한다.
+- 인라인 텍스트 또는 내용이 분명한 단일 `.txt`·`.md`는 메인이 해당 action/reference 절차를 그대로 수행할 수 있다. 파일 탐색·첨부 복사·원본 삭제 단계만 해당 입력에 맞게 건너뛴다.
+- 여러 건·하위 폴더·OCR/스캔·`.hwpx`/`.hwp` 해석·분류가 모호한 건은 워커에 보낸다. 워커는 사용자에게 묻거나 다른 에이전트를 호출하지 않는다.
 
 ## 디렉터리 구조
 
@@ -48,18 +56,12 @@ description: |
 - 한 번에 한 질문, 추천 답 + 근거 병기, `AskUserQuestion` 사용. 결정 항목이 없으면 건너뛴다.
 - 확정된 답은 노트 `## 현황`에 `[사용자 확인(YYYY-MM-DD)]`로 기재하고 대응하는 `## 할 일`·`## 열린 질문`을 해결 표시한다. 이 반영은 오케스트레이터가 직접 Edit한다.
 
-## 0단계: HWP 사전 변환 (Windows 전용)
+## 0단계: HWP/HWPX 문서 라우팅
 
-`01_Inbox/` 전체에 `.hwp`가 있고 `powershell`이 있을 때만:
-
-1. 사용자에게 알림: "한컴 보안 팝업이 뜨면 **모두 허용(N)** 을 클릭하세요"
-2. 실행:
-   ```powershell
-   powershell -NoProfile -ExecutionPolicy Bypass -File ".claude/skills/inbox-process/scripts/hwp_to_hwpx.ps1" -InboxPath ".\01_Inbox"
-   ```
-3. `FAIL:` 줄 → 해당 파일 경고 후 제외. `ERROR: Hancom not installed` → "한컴 미설치 — HWP 건너뜀" 경고 후 제외. 성공·원본 삭제는 스크립트가 처리한다.
-
-`powershell`이 없는 환경(macOS)에서는 건너뛴다 — `.hwp`는 내용 분석 없이 첨부로만 처리된다.
+- `.hwpx`는 설치된 `prod:hwpx` skill을 `read/extract` 의도로 호출한다. HWPX를 일괄적으로 미지원 첨부로 분류하지 않는다.
+- `.hwp`는 legacy binary라 HWPX와 같은 형식으로 취급하지 않는다. `prod:hwpx`의 변환 절차로 `.hwpx`를 만든 뒤 읽는다. 변환·추출 capability가 없거나 실패하면 `UNVERIFIED: HWP conversion/extraction unavailable`로 보고하고 원본을 보존한다.
+- 변환 성공은 Inbox 원본 삭제 승인이 아니다. durable copy·최종 노트 링크·품질 게이트가 모두 확인된 뒤에만 삭제 권고한다.
+- `prod:hwpx` skill 경로·스크립트가 현재 환경에서 해석되지 않으면 실패 원인과 대상 경로를 보고한다. HWP를 HWPX라고 가장하거나 내용을 추정하지 않는다.
 
 ## 1단계: Inbox 스캔
 
