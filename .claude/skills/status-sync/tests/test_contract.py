@@ -236,10 +236,30 @@ with tempfile.TemporaryDirectory() as d:
     check(ok, f"add_todo failed: {msg}")
     check("> - [ ] 신규 작업" in out,
           f"add_todo did not insert callout-prefixed line:\n{out}")
+    new_line = next((line for line in out.splitlines() if "신규 작업" in line), "")
+    check(bool(re.search(r"➕ \d{4}-\d{2}-\d{2}$", new_line)),
+          f"add_todo did not retain the creation date without a deadline: {new_line!r}")
+    check("📅" not in new_line,
+          f"add_todo invented a deadline when none was supplied: {new_line!r}")
     # new line must stay inside the callout, before the next section
     todo_sec = AREAS.todo.search(out[out.index("# T"):])
     check(todo_sec is not None and "신규 작업" in todo_sec.group(1),
           "new todo escaped the 할 일 section")
+
+# ── apply.add_todo keeps an explicitly supplied weekend deadline ─────────────
+with tempfile.TemporaryDirectory() as d:
+    f = Path(d) / "weekend.md"
+    f.write_text(
+        "---\ntype: work\nstatus: open\n---\n"
+        "# T\n\n## 할 일\n\n- [ ] 기존\n\n## 처리 결과\n\n- \n",
+        encoding="utf-8",
+    )
+    ok, msg = apply.add_todo(f, "주말 마감", "2026-09-12")
+    out = f.read_text(encoding="utf-8")
+    check(ok, f"add_todo with explicit due failed: {msg}")
+    due_line = next((line for line in out.splitlines() if "주말 마감" in line), "")
+    check("➕ " in due_line and "📅 2026-09-12" in due_line,
+          f"explicit due was not preserved: {due_line!r}")
 
 # ── every shipped template keeps its required headings ─────────────────────
 REQUIRED = {
