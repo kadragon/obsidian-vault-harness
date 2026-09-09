@@ -1,6 +1,6 @@
 # Mode 1: review — 문서 가치 점검
 
-아카이브 문서를 haiku 에이전트로 읽고, 보관 가치가 낮은 문서를 식별한다.
+아카이브 문서를 에이전트로 읽고, 보관 가치가 낮은 문서를 식별한다.
 
 ## 삭제 후보 기준 (LOW value)
 
@@ -33,13 +33,13 @@ for dir in */; do
 done | sort -rn
 ```
 
-### Step 2: haiku 에이전트 병렬 배포
+### Step 2: 에이전트 병렬 배포
 
-폴더별로 haiku 모델 에이전트를 배포한다. 문서가 적은 폴더(10개 이하)는 묶어서 하나의 에이전트에 맡긴다.
+폴더별로 에이전트를 배포한다. 문서가 적은 폴더(10개 이하)는 묶어서 하나의 에이전트에 맡긴다.
 
 ```
 Agent(
-  model: "haiku",
+
   run_in_background: true,
   prompt: """
   You are reviewing archived documents in an Obsidian vault for a Korean university IT operations team.

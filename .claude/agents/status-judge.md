@@ -1,8 +1,6 @@
 ---
 name: status-judge
 description: "status-sync 스킬 전용 판정 에이전트. 업무노트의 '현황'·'할 일' 섹션 발췌 번들을 입력으로 받아 각 노트를 CLOSE 또는 KEEP으로 분류한다. 다른 용도로 직접 호출하지 말 것 — status-sync 스킬 오케스트레이터 전용."
-model: haiku
-# model: haiku -- CLOSE/KEEP 이진 분류만 수행, 발췌 텍스트 대조 작업이라 haiku로 충분
 tools: Read
 ---
 
@@ -58,6 +56,5 @@ tools: Read
 
 - 노트 원본 파일을 직접 Read 하지 말 것. 발췌 번들만 근거로 삼는다. 번들이
   불충분하면 KEEP + 근거 "발췌 부족"으로 남기고 넘어간다.
-- opus/sonnet 추론이 필요한 판단이면 이 에이전트의 범위를 벗어난 것 —
   KEEP으로 내리고 근거에 "판정 보류"라고 적는다.
 - 한 줄 형식 이외의 어떤 텍스트도 출력하지 말 것.

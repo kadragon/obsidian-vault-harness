@@ -87,7 +87,7 @@ python3 .claude/skills/vault-cleanup/scripts/reorg_archive.py \
 
 ## Additional Resources
 
-- **`references/mode-review.md`** — 문서 가치 점검, haiku 에이전트 배포, 삭제 승인 절차
+- **`references/mode-review.md`** — 문서 가치 점검, 에이전트 배포, 삭제 승인 절차
 - **`references/mode-reorganize.md`** — 구조 분석, 중복 탐지, 재구조화, 태그 보존
 - **`references/mode-archive.md`** — 1년 경과 대상 식별, 이동 실행
 - **`references/mode-dedupe.md`** — 시맨틱 중복 탐지, wiki deadlink 점검

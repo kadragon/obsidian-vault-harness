@@ -17,7 +17,7 @@ Syncthing이 충돌을 감지하면 원본 파일 옆에
 |------|------|-------------|----------|
 | **scan** | 볼트 전체에서 conflict 파일 목록 + 상태 분류 | 스캔, 목록, 몇 개, 있어? | `references/mode-scan.md` |
 | **purge** | 원본과 SHA-256 일치하는 conflict만 일괄 삭제 | 동일 삭제, 중복 정리, purge | `references/mode-purge.md` |
-| **review** | 내용이 다른 conflict를 haiku 분석 후 사용자 선택 처리 | 검토, 비교, review, 다르면 | `references/mode-review.md` |
+| **review** | 내용이 다른 conflict를 분석 후 사용자 선택 처리 | 검토, 비교, review, 다르면 | `references/mode-review.md` |
 | **(전체)** | scan → purge → review 순차 실행 | 전체 정리, 다 치워줘, 깔끔하게 | 세 references 순차 |
 
 모드를 명시하지 않으면 **전체 시퀀스**(scan → purge → review)를 제안한다.
@@ -77,5 +77,5 @@ python3 .claude/skills/syncthing-conflict-cleanup/scripts/conflict_cleanup.py re
 
 - **`references/mode-scan.md`** — 스캔 절차 및 결과 표 형식
 - **`references/mode-purge.md`** — identical conflict 일괄 삭제 절차
-- **`references/mode-review.md`** — haiku 위임 분석 + 사용자 선택 처리 절차
+- **`references/mode-review.md`** — 위임 분석 + 사용자 선택 처리 절차
 - **`scripts/conflict_cleanup.py`** — 결정론적 scan/purge/replace/delete helper
