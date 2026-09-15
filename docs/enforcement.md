@@ -17,6 +17,27 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | #5 Inbox (01_Inbox) via skill | AGENTS.md delegation rule | Doc-enforced |
 | 스킬 문서 장황함·환경 종속 (규칙+근거 서사 혼재, 머신 사실 하드코딩) | `check-skill-doc.py` PostToolUse hook + `--sweep` 전수 스캔 (mechanical, warning-only) | Shell-enforced (2026-09-05) |
 | 하네스 파일의 맨 `python` 호출 (검사 무력화) | `check-bare-python.py` PostToolUse hook + `--sweep` 전수 스캔 (mechanical) | Shell-enforced (2026-08-02) |
+| 머신 간 커밋 이력 갈라짐 (Syncthing이 `.git/` 제외) | `git-sync-check.py` SessionStart hook (mechanical) | Shell-enforced (2026-09-15) |
+
+## 원격 동기화 훅 — `git-sync-check.py` (2026-09-15)
+
+`.stignore`가 `.git/`를 제외하므로 Syncthing은 작업 파일만 옮기고 커밋 이력은 옮기지 않는다. 다른 머신에서 커밋·push한 내용이 이 머신에는 "수정된 파일"로만 도착하고 로컬 HEAD는 뒤처진 채 남는다. 이 상태에서 커밋하면 이력이 갈라진다 — 2026-09-15 실측: 로컬 전용 19 · 원격 전용 21커밋, 커밋 안 된 변경 42건 중 39건이 `origin/main`과 바이트 동일.
+
+`settings.json` `SessionStart`(`startup|resume`)에 등록. `main` 브랜치에서만 동작하고 항상 exit 0.
+
+| 상태 | 동작 |
+|---|---|
+| 동기화됨 · `main` 아님 · git 저장소 아님 | 무출력 |
+| 뒤처짐만 | `git reset --mixed origin/main` — 작업 파일 무변경. 원격과 다른 파일 목록 출력 |
+| 뒤처짐 + 스테이징 변경 | reset 안 함, 경고 |
+| 갈라짐 (로컬 전용 커밋 존재) | reset 안 함, 경고 — 로컬 커밋 내용이 원격에 포함됐는지 사람이 대조해야 함 |
+| fetch 실패·시간 초과 | 경고 |
+
+`.git/`를 동기화 대상에 넣지 않는 이유: Syncthing은 파일 단위로 옮기므로 `index`·`refs`·pack의 원자적 갱신이 깨지고, `.git` 안에 `.sync-conflict`·`index.lock`이 전파되며, `core.symlinks` 같은 머신별 `.git/config`가 덮어써진다.
+
+`--hard`가 아니라 `--mixed`인 이유: 뒤처진 파일이 Syncthing으로 아직 도착하지 않았으면 `--hard`가 원격 버전으로 덮어써 도착 중인 로컬 편집과 충돌한다. `--mixed`는 인덱스만 옮기고, 남은 차이는 목록으로 보고한다.
+
+테스트: `python3 .claude/hooks/tests/test_git_sync_check.py` (bare origin + 두 클론 + 파일 복사로 Syncthing 모사).
 
 ## 규칙 라이브러리 작성 규칙 (2026-08-25)
 

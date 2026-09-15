@@ -231,6 +231,12 @@ Scope: 10_Areas/ → 90_Archive/
 **Cause:** This repo merges PRs via squash/rebase (see `dev-tools:dev-review-cycle` runbook entry above — actually direct-to-main here) or a parallel session re-did equivalent work under different commit hashes. Commit-level diffing (`git log branch..origin/main`) looks scary but is misleading — it compares history shape, not content.
 **Fix:** Diagnose with **working-tree-vs-origin content diff**, not commit history: `git diff origin/main --stat` (run from the branch with all commits + uncommitted changes applied). If it shows near-zero diff, local work is already reflected upstream under different commits — safe to `git reset --hard origin/main` on `main` and drop the stale branch. Before deleting any branch (local or remote), confirm with `gh pr list --state all --json headRefName,state,mergedAt` that its PR is `MERGED`, not just that the diff looks small. Preserve any local-only files (e.g. gitignored-but-force-added files like `.gitattributes`) by `git show <old-branch>:<path>` before resetting.
 
+### session start reports `[git-sync]` diverged / behind `origin/main`
+
+**Symptom:** SessionStart hook message `[git-sync] 로컬 main이 origin/main와 갈라짐`, or `git status -sb` shows `[ahead N, behind M]` while most uncommitted files already equal `origin/main`.
+**Cause:** Syncthing syncs the working tree but `.stignore` excludes `.git/`, so commits pushed from another machine arrive as plain file edits. Committing on this machine before realigning forks history. Behind-only cases are auto-fixed by `git-sync-check.py` (`reset --mixed`); diverged cases are left for a human.
+**Fix:** Do not use `reset --hard` (overwrites files Syncthing may still be delivering). (1) `git branch backup/local-main-<date> main`. (2) For each file in `git diff --name-only origin/main main`, check whether lines added by local-only commits exist in `origin/main` — normalize `**`, backticks, and `\uXXXX` escapes first, since remote rewrites often differ only in formatting. (3) Remaining lines: `git log -S '<text>' origin/main` to confirm the remote removed them deliberately. (4) If remote is a superset: `git reset --mixed origin/main`. Files still differing afterwards are genuine local edits. Details: `docs/enforcement.md` → 원격 동기화 훅.
+
 ### Agent tool spawn fails with `name` regex error on Korean folder/area names
 
 **Symptom:** `Agent(name: "review-홈페이지")` (or similar Korean-labeled agent name) → `InputValidationError: name must start with a letter or digit and contain only letters, digits, underscores, or hyphens`.

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- [done] SessionStart 훅으로 Syncthing 머신 간 커밋 이력 갈라짐 방지 — 뒤처짐만이면 `reset --mixed` 자동 정렬 (2026-09-15) → docs/enforcement.md
+
 - [done] Inbox reference 원본 삭제를 durable copy·wikilink 검증 통과분으로 제한 (2026-09-09) → docs/design/inbox-eval-rule-conflicts.md
 - [done] 심의 서식 제외를 Check 2b·4·5가 공유하고 `_교육.md`의 `- #업무/` 제거 (2026-08-02) → docs/enforcement.md
 - [done] 태그·앵커 규칙을 실측 관행에 정렬 — 과업심의 Check 4 제외, `20_Training` Check 5 제외, `#부서/` 선택 필드 강등 (2026-08-02) → docs/enforcement.md
