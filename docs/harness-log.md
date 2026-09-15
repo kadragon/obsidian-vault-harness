@@ -6,6 +6,7 @@
 
 | Date | Change | Predicted impact | Verified |
 |------|--------|------------------|----------|
+| 2026-09-15 | `git-sync-check.py` SessionStart 훅 신설 — 뒤처짐만이면 `reset --mixed origin/main`, 갈라짐·스테이징·fetch 실패는 경고만. `.stignore`의 `.git/` 제외는 유지 | 다음 30일간 `git status -sb`에 `ahead`와 `behind`가 동시에 나타나는 세션 0건. 다른 머신 push 후 이 머신 세션 시작 시 `[git-sync] … reset --mixed` 메시지가 트랜스크립트에 나타난다 | pending |
 | 2026-09-05 | 스킬 문서 장황함 정비 — `check-skill-doc.py` PostToolUse 훅 신설(길이·근거 서사 토큰·굵게 밀도·깨진 스니펫), `inbox-process` 819→614줄(PDF 절차를 `references/pdf-reading.md` 단일 출처로, 워커 규약·선례 규칙 중복 제거, 근거 서사는 아래 §규칙 근거로 이관), gwaeop 참고 4종 표·본문 굵게 245쌍 제거, Chrome 경로 하드코딩 → `render_pdf.py`(OS 자동 탐색), 머신 종속 서술(poppler·Tesseract·Windows) 제거, 깨진 `"\n"` 스니펫 2건·태그 힌트 예시(`#업무/학사/…`)·요일 오기 수정 | `--sweep` 0건이 유지된다. 다음 회차 스킬 편집에서 훅 경고를 받고도 근거 서사를 SKILL.md에 남긴 커밋이 0건. inbox-process 워커가 `pdf-reading.md`를 Read하는 호출이 트랜스크립트에 나타난다 | pending |
 | 2026-09-01 | `gwaeop-simui` — 전달본에서 §4 권고 사항 절 제거(L4는 노트 전용), B 항목 채택 기준·묶기 규칙 추가, 추정가격 2천만원 미만 시 경쟁입찰 전제 지적 금지 게이트 추가. `report.html`·`lint_findings.py` 동반 수정 | 다음 회차 보완요청 PDF에서 사용자의 "항목 삭제해서 다시 만들어줘" 요청이 0건이 된다. 특히 권고사항 절 삭제 요청과 B-N 다건 삭제가 사라진다 | pending |
 | 2026-09-01 | `gongmun-draft` — 스코프를 개선 결과 안내 공문에서 대외 발신 문서 전반으로 확장, B 유형(회신·안내) 절차 추가, 트리거에 "회신 문구 초안"·"메일 초안 작성" 등 추가 | 회신·메일 초안 요청 시 스킬이 발화한다. 다음 회차 `SKILLS-ACTIVE`에서 `gongmun-draft` ≥1 | pending |
