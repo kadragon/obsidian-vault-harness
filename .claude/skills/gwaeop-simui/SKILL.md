@@ -130,8 +130,9 @@ python3 .claude/skills/gwaeop-simui/scripts/extract_bundle.py "<심의자료 폴
 
 SW 개발사업이면 필수. 물품구매면 건너뛴다.
 
-`cost_check.py`의 네 하위명령으로 역산한다 — `fp`(개발비→환산 기능점수) ·
-`maint`(운영·유지관리비→요율제 대비 위치) · `sum`(항목 합계·VAT·추정가격 정합) ·
+`cost_check.py`의 다섯 하위명령으로 역산한다 — `fp`(개발비→환산 기능점수) ·
+`maint`(운영·유지관리비→요율제 대비 위치, `--tmp-levels`면 난이도 점추정) ·
+`commercial`(상용SW 유지관리비→등급별 요율 12~20%) · `sum`(항목 합계·VAT·추정가격 정합) ·
 `period`(적정 개발기간). 인자와 사용 예는 `--help`에 있다.
 
 ```bash

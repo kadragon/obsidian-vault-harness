@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """SW사업 대가·기간 검증 — 결정론적 계산기.
 
-fp/maint/sum : 「SW사업 대가산정 가이드」(2025년 개정판) 기준 대가 역산
+fp/maint/commercial/sum : 「SW사업 대가산정 가이드」(2025년 개정판) 기준 대가 역산
 period       : 「소프트웨어사업 계약 및 관리감독에 관한 지침」 별표 1
                (소프트웨어 개발사업의 적정 사업기간 산정 기준) 기준 개발기간 산정
 
@@ -20,6 +20,17 @@ SIZE_COEF_UNDER_500FP = 1.28  # 규모 보정계수 (500FP 미만 고정)
 DEFAULT_PROFIT_RATE = 0.25    # 이윤 (개발원가의 25% 이내)
 MAINT_RATE_MIN = 0.10         # 요율제 유지관리 요율 하한
 MAINT_RATE_MAX = 0.15         # 요율제 유지관리 요율 상한
+# 표4-4 용역 SW 유지관리 난이도(TMP) 산정 평가표 — (단순, 보통, 복잡) 점수, 총점 0~100
+TMP_FACTORS = [
+    ("유지관리 횟수", (0, 14, 27)),      # 연 4회 이하 / 12회 이하 / 12회 초과
+    ("시스템 사용자수", (0, 8, 18)),     # 내부 25%·대국민 1만 이하 / 50%·10만 이하 / 초과
+    ("시스템 중요도", (0, 17, 31)),      # 표4-3 4·5급 / 3급 / 1·2급
+    ("타시스템 연계", (0, 6, 11)),       # 없음 / 1~2개 / 3개 이상
+    ("오류복구 신속성", (0, 6, 13)),     # 12시간 초과 / 12시간 이내 / 6시간 이내
+]
+TMP_LEVELS = {"단순": 0, "보통": 1, "복잡": 2}
+# 표4-10 상용SW 유지관리 측정 등급별 적용요율 (최초 Licence 구매 계약금액 기준)
+COMMERCIAL_MAINT_RATES = {1: 0.20, 2: 0.18, 3: 0.16, 4: 0.14, 5: 0.12}
 VAT_RATE = 0.1
 GUIDE_SAMPLE_FP = 73          # 가이드 부록 예시(사용자앱 42 + 관리자앱 31)
 GUIDE_VERSION = "2025년 개정판"
@@ -92,11 +103,44 @@ def cmd_fp(args: argparse.Namespace) -> int:
     return 0
 
 
+def tmp_from_levels(levels: str) -> int:
+    """표4-4 순서(횟수,사용자수,중요도,연계,신속성)의 단순/보통/복잡 5개 → TMP 총점."""
+    parts = [x.strip() for x in levels.split(",")]
+    if len(parts) != len(TMP_FACTORS) or any(x not in TMP_LEVELS for x in parts):
+        raise ValueError(
+            f"단순/보통/복잡 {len(TMP_FACTORS)}개를 "
+            f"{','.join(n for n, _ in TMP_FACTORS)} 순서로 줄 것: {levels}")
+    return sum(scores[TMP_LEVELS[x]] for x, (_, scores) in zip(parts, TMP_FACTORS))
+
+
+def maint_rate_for(tmp: float) -> float:
+    """유지관리 요율 = 10 + 5 × (TMP ÷ 100) [%]."""
+    return (10 + 5 * tmp / 100) / 100
+
+
+def tmp_arg(value: str) -> int:
+    v = int(value)
+    if not 0 <= v <= 100:
+        raise argparse.ArgumentTypeError(f"TMP는 0~100: {value}")
+    return v
+
+
+def levels_arg(value: str) -> str:
+    try:
+        tmp_from_levels(value)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(str(e))
+    return value
+
+
 def cmd_maint(args: argparse.Namespace) -> int:
     dev_supply = supply_price(args.dev_amount, args.vat_included)
     maint_supply = supply_price(args.maint_amount, args.vat_included)
+    direct = supply_price(args.direct_expense, args.vat_included)
     years = args.months / 12
 
+    # 요율제 유지관리비 = 개발비 × 요율 + 직접경비 — 비교는 직접경비를 뺀 금액으로 한다.
+    rate_part = maint_supply - direct
     lo = dev_supply * MAINT_RATE_MIN * years
     hi = dev_supply * MAINT_RATE_MAX * years
     monthly = maint_supply / args.months if args.months else 0.0
@@ -104,14 +148,28 @@ def cmd_maint(args: argparse.Namespace) -> int:
     print(f"[유지관리·운영비 검증]  요율제 {MAINT_RATE_MIN:.0%}~{MAINT_RATE_MAX:.0%} · 투입공수 양방향")
     print(f"  개발비 공급가       {won(dev_supply)}")
     print(f"  유지관리비 공급가   {won(maint_supply)}  ({args.months}개월 = {years:.2f}년)")
+    if direct:
+        print(f"  직접경비            {won(direct)}  → 요율 적용분 {won(rate_part)}")
     print()
+    tmp = tmp_from_levels(args.tmp_levels) if args.tmp_levels else args.tmp
+    if hi > 0 and tmp is not None:
+        rate = maint_rate_for(tmp)
+        expected = dev_supply * rate * years + direct
+        print(f"  TMP {tmp}점 → 요율 {rate * 100:.2f}%  (표4-4·10 + 5 × TMP/100)")
+        print(f"  TMP 기준 산정액     {won(expected)}")
+        if abs(maint_supply - expected) < 1:
+            print("  → TMP 산정액과 일치")
+        else:
+            print(f"  → TMP 산정액 대비 {maint_supply / expected:.0%}"
+                  f" — {'과다' if maint_supply > expected else '과소'} (난이도 판정 근거 요구)")
+        print()
     if hi > 0:
         print(f"  요율제 환산 범위    {won(lo)} ~ {won(hi)}")
-        if maint_supply > hi:
-            over = maint_supply / hi
+        if rate_part > hi:
+            over = rate_part / hi
             print(f"  → 상한 대비 {over:.0%} — **요율제 기준 과다**")
-        elif maint_supply < lo:
-            under = maint_supply / lo
+        elif rate_part < lo:
+            under = rate_part / lo
             print(f"  → 하한 대비 {under:.0%} — **요율제 기준 과소**")
         else:
             print("  → 요율제 범위 내")
@@ -131,6 +189,32 @@ def cmd_maint(args: argparse.Namespace) -> int:
     print()
     print("  판독: 요율제로 과다 + 투입공수로 과소가 동시에 성립하면")
     print("        '어느 방식으로도 설명되지 않음 = 산정방식 미적용'으로 지적할 것.")
+    return 0
+
+
+def cmd_commercial(args: argparse.Namespace) -> int:
+    license_supply = supply_price(args.license_amount, args.vat_included)
+    rate = COMMERCIAL_MAINT_RATES[args.grade]
+    years = args.months / 12
+    expected = license_supply * rate * years
+
+    print(f"[상용SW 유지관리비 검증]  가이드 {GUIDE_VERSION} 표4-10 · 등급별 요율")
+    print(f"  최초 Licence 구매 계약금액(공급가)  {won(license_supply)}")
+    print(f"  유지관리 등급       {args.grade}등급 → 요율 {rate:.0%}  ({args.months}개월 = {years:.2f}년)")
+    print(f"  등급 기준 산정액    {won(expected)}  (부가세 별도)")
+    if args.maint_amount is not None:
+        maint_supply = supply_price(args.maint_amount, args.vat_included)
+        print(f"  계상 유지관리비     {won(maint_supply)}")
+        if abs(maint_supply - expected) < 1:
+            print("  → 등급 산정액과 일치")
+        else:
+            actual_rate = maint_supply / license_supply / years if license_supply else 0.0
+            verdict = "과다" if maint_supply > expected else "과소"
+            print(f"  → 실효 요율 {actual_rate:.1%} — 등급 기준 **{verdict}** (등급 판정 근거·협의 조정 사유 요구)")
+    print()
+    print("  확인: 표4-9 등급별 서비스 수준(긴급/장애 처리시간·방문 여부·교육)이 과업지시서에 명시됐는지,")
+    print("        조달청 쇼핑몰 등록상품이면 조달청 단가 우선, 메이저 업그레이드·커스터마이징은 미포함,")
+    print("        정보보호제품이면 보안성 지속 서비스비와 중복 산정 금지 (가이드 2.2.5).")
     return 0
 
 
@@ -253,6 +337,13 @@ def main(argv: list[str] | None = None) -> int:
   cost_check.py maint --dev-amount 50000000 --maint-amount 31000000 \\
       --months 36 --vat-included
 
+  # 난이도(TMP)를 알면 정확한 요율까지 (표4-4, 가이드 적용사례)
+  cost_check.py maint --dev-amount 249222058 --maint-amount 31865302 --months 12 \\
+      --tmp-levels 보통,보통,보통,단순,보통 --direct-expense 1335600
+
+  # 상용SW 유지관리비 → 등급별 요율(1등급 20% ~ 5등급 12%)
+  cost_check.py commercial --license-amount 50000000 --grade 3 --maint-amount 8000000
+
   # 항목 합계·VAT·추정가격 정합
   cost_check.py sum --total 150000000 \\
       --items 50000000,31000000,54000000,6000000,9000000,0 --vat-included
@@ -284,7 +375,24 @@ def main(argv: list[str] | None = None) -> int:
     m.add_argument("--vat-included", action="store_true", help="두 금액이 부가세 포함이면 지정")
     m.add_argument("--monthly-rate", type=float, default=None,
                    help="SW기술자 월 노임단가 (주면 MM 환산까지 계산)")
+    m.add_argument("--direct-expense", type=float, default=0.0,
+                   help="유지관리비에 포함된 직접경비 (요율 비교에서 제외)")
+    t = m.add_mutually_exclusive_group()
+    t.add_argument("--tmp", type=tmp_arg, default=None, help="유지관리 난이도 총점 TMP (0~100)")
+    t.add_argument("--tmp-levels", type=levels_arg, default=None,
+                   help="표4-4 난이도 5개 — 횟수,사용자수,중요도,연계,신속성 순 단순/보통/복잡"
+                        " (예: 보통,보통,보통,단순,보통)")
     m.set_defaults(func=cmd_maint)
+
+    c = sub.add_parser("commercial", help="상용SW 유지관리비 → 등급별 요율(표4-10) 검증")
+    c.add_argument("--license-amount", type=positive_float, required=True,
+                   help="최초 Licence 구매 계약금액")
+    c.add_argument("--grade", type=int, choices=sorted(COMMERCIAL_MAINT_RATES), required=True,
+                   help="유지관리 등급 1~5 (표4-9 서비스 수준으로 판정)")
+    c.add_argument("--maint-amount", type=float, default=None, help="계상된 상용SW 유지관리비")
+    c.add_argument("--months", type=positive_int, default=12, help="유지관리 기간(개월, 기본 12)")
+    c.add_argument("--vat-included", action="store_true", help="금액이 부가세 포함이면 지정")
+    c.set_defaults(func=cmd_commercial)
 
     s = sub.add_parser("sum", help="항목 합계·부가세·추정가격 정합 검증")
     s.add_argument("--items", required=True, help="쉼표로 구분한 항목 금액 (예: 50000000,31000000,...)")
