@@ -54,6 +54,12 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 - **PDF 헤더**: Handysoft 포맷은 `.claude/skills/inbox-process/scripts/extract_handysoft_pdf.py`로 추출 후 Read.
 - **원본 파일 삭제 금지**: 오케스트레이터가 일괄 처리.
 
+## 탐색 상한
+
+- 노트와 첨부 폴더를 모두 만들었으면 새 검색을 시작하지 말고 출력 프로토콜대로 바로 반환한다. 2026-08-14 Codex 실행에서 대상 폴더 4개를 만든 뒤에도 탐색을 이어 가 오케스트레이터가 중단시켰다.
+- 선례·관련 노트는 오케스트레이터 힌트로 충분하다. 추가 탐색은 건당 `qmd search`·`rg --no-ignore`를 합쳐 3회까지 돌린다.
+- 같은 명령이 2회 실패하면 그 경로를 멈추고 `열린 질문`에 사유를 남긴다.
+
 ## 협업 (모두 오케스트레이터가 수행 — 워커는 서브에이전트를 호출하지 않는다)
 
 워커는 노트 생성과 보고만 담당한다. 아래 후속 작업은 워커 출력을 받아 **오케스트레이터**가 처리한다:
