@@ -98,7 +98,7 @@ Scope: 10_Areas/ → 90_Archive/
 |-------|---------------|-------------|
 | `inbox-process` | inbox 처리, 공문 처리 | `01_Inbox/` scan |
 | `gwaeop-simui` | 과업심의 검토, 심의위원이라면 | 심의자료 폴더 → 지적사항·판정(안) |
-| `gongmun-draft` | 공문 작성, 회신 문구, 안내문, 메일 초안 | 근거 노트 → 발신 본문 |
+| `gongmun-draft` | 공문 작성, 회신 문구, 안내문, 메일 초안, 보냈다고 기록 | 근거 노트 → 발신 본문 → 발송 후 노트 기록 |
 | `deliverable-review` | 산출물 검토, 결과물 받았는데 검토, 보완요구 메일 | 산출물 5종 → 검토 노트 + 메일 초안 |
 | `report-draft` | 보고서 작성, 보고서 수정, 계획(안) 작성 | 근거 자료 → 개조식 보고서 hwpx (수정은 `_수정.hwpx`) |
 | `weekly-report` | 주간업무회의 자료 | Vault scan |
