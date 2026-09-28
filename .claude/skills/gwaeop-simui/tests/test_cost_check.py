@@ -28,6 +28,26 @@ def run(*argv: str) -> str:
     return buf.getvalue()
 
 
+class ReviewTypeTests(unittest.TestCase):
+    def test_basis_is_amount_excluding_vat(self):
+        out = run("sum", "--items", "105000000", "--vat-included")
+        self.assertIn("부가세 제외", out)
+        self.assertIn("간소화 심의 대상", out)
+
+    def test_boundary_band_warns_when_vat_inclusive_exceeds_limit(self):
+        # 부가세 포함 1.05억 = 부가세 제외 약 0.95억 — 포함 기준으로 읽으면 정식 심의로 갈린다.
+        out = run("sum", "--items", "105000000", "--vat-included")
+        self.assertIn("경계", out)
+
+    def test_no_boundary_warning_outside_band(self):
+        out = run("sum", "--items", "50000000", "--vat-included")
+        self.assertNotIn("경계", out)
+
+    def test_over_limit_is_formal_review(self):
+        out = run("sum", "--items", "121000000", "--vat-included")
+        self.assertIn("정식 심의", out)
+
+
 class MaintTmpTests(unittest.TestCase):
     """가이드 PartⅣ 2.1.6 적용사례(p.191): TMP 45 → 요율 12.25% → 31,865,302원."""
 

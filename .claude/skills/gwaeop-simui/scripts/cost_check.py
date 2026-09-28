@@ -245,13 +245,19 @@ def cmd_sum(args: argparse.Namespace) -> int:
         print(f"  추정가격            {won(est_price)}  (이미 VAT 제외)")
         print(f"  VAT 포함 환산       {won(base * (1 + VAT_RATE))}")
 
+    # 총 사업금액은 부가세 제외(= 추정가격)로 판정한다 — 조문에 포함 여부 명시가 없어
+    # 담당자 확인으로 정한 운영 기준(legal-basis.md §5 "금액 기준 — 부가세").
+    vat_inclusive = est_price * (1 + VAT_RATE)
     print()
     if est_price > SIMPLIFIED_REVIEW_LIMIT:
-        print(f"  심의 구분: 추정가격이 {won(SIMPLIFIED_REVIEW_LIMIT)} 초과 → **정식 심의**")
+        print(f"  심의 구분: 총 사업금액(부가세 제외) {won(est_price)} > {won(SIMPLIFIED_REVIEW_LIMIT)} → **정식 심의**")
         print("            (적정 사업기간 산정 주체도 과업심의위원회 — 지침 §10②③)")
     else:
-        print(f"  심의 구분: 추정가격 {won(SIMPLIFIED_REVIEW_LIMIT)} 이하 → 간소화 심의 대상")
+        print(f"  심의 구분: 총 사업금액(부가세 제외) {won(est_price)} ≤ {won(SIMPLIFIED_REVIEW_LIMIT)} → 간소화 심의 대상")
         print("            (대학 운영지침 §5③1호 — 서면심의 가능 여부 확인)")
+        if vat_inclusive > SIMPLIFIED_REVIEW_LIMIT:
+            print(f"  ** 경계 구간: 부가세 포함 {won(vat_inclusive)}은 1억원 초과 — 포함 기준으로 읽으면 정식 심의로 갈림."
+                  " 발주 문서가 어느 금액을 기준으로 삼는지 확인할 것")
 
     print()
     print("  확인: 항목별로 VAT 포함 여부가 명시되어 있는지, 단가 × 수량 형식인지,")
@@ -316,12 +322,8 @@ def cmd_period(args: argparse.Namespace) -> int:
         return 2
 
     print()
-    print("  확인 (legal-basis.md §3·§4):")
-    print("   - 별표 1 대상사업인가 — 컨설팅·운영유지관리·상용SW 도입(커스터마이징 포함)은 제외")
-    print("   - 사업금액 1억원 초과면 산정 주체는 과업심의위원회 (지침 §10②③)")
-    print("   - 제안요청서에 '적정 사업기간 산정 기준에 따른 사업' 명시 + 별지 제4호서식")
-    print("     첨부 여부, 그 서식에서 위원명·서명이 제외되었는지 (지침 §10④)")
-    print("   - 유사사업 자료는 g2b.go.kr·spir.kr 조사자료여야 함 (업체 제출 자사실적 아님)")
+    # 요건 문구는 checklist.md 축 2가 정본 — 여기서는 행 번호만 가리킨다(중복 서술 금지).
+    print("  확인: checklist.md 축 2 — 대상사업 2-0 · 산정 주체 2-5 · 유사사업 2-4 · 첨부 요건 2-6·2-7·2-11")
     return 0
 
 
