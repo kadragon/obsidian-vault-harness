@@ -57,6 +57,7 @@ Never perform these directly without the designated agent/skill:
 | Syncthing conflict files | `syncthing-conflict-cleanup` skill |
 | `.hwpx` 문서 생성/읽기/편집 | `productivity:hwpx` skill |
 | 대외 발신 문서 초안(공문·회신·안내·업무 메일) | `gongmun-draft` skill |
+| 개조식 보고서(계획(안)·추진·검토·결과 보고) 작성·수정 | `report-draft` skill |
 | 납품 산출물 검수 + 수행사 보완요구 메일 | `deliverable-review` skill |
 | 주간업무회의 자료 생성 | `weekly-report` skill |
 | 시스템 변경 이력 주간 보고서 생성 | `change-log` skill |
