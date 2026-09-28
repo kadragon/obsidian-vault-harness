@@ -188,7 +188,8 @@ def check(body: str) -> dict:
 
 
 def lint(path: Path) -> list[dict]:
-    text = path.read_text(encoding="utf-8", errors="replace")
+    # utf-8-sig: Windows 편집기·PowerShell 이 붙인 BOM 이 첫 줄 표제 인식을 막지 않게 한다.
+    text = path.read_text(encoding="utf-8-sig", errors="replace")
     is_html = path.suffix.lower() in {".html", ".htm"}
     blocks = blocks_from_html(text) if is_html else blocks_from_markdown(text)
     results = []

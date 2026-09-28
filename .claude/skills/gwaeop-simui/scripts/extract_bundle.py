@@ -24,7 +24,35 @@ import zipfile
 
 TEXTLIKE = {".md", ".txt", ".csv", ".json", ".xml"}
 SKIP = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff",
-        ".xlsx", ".xls", ".pptx", ".ppt", ".docx", ".doc", ".zip"}
+        ".xls", ".pptx", ".ppt", ".docx", ".doc", ".zip"}
+XLSX = {".xlsx", ".xlsm"}
+
+
+def extract_xlsx(src: str, dst: str) -> str:
+    """산출내역서 등 엑셀 파일을 시트별 `셀 | 셀` 행 텍스트로. 수식 셀은 저장된 계산값, 없으면 수식 그대로."""
+    try:
+        import openpyxl
+    except ImportError:
+        return "SKIP (openpyxl 미설치)"
+    try:
+        values = openpyxl.load_workbook(src, data_only=True, read_only=True)
+        formulas = openpyxl.load_workbook(src, data_only=False, read_only=True)
+    except Exception as exc:                          # noqa: BLE001 - 손상 파일 방어
+        return f"ERROR: {exc}"[:120]
+    parts = []
+    for ws_v, ws_f in zip(values.worksheets, formulas.worksheets):
+        parts.append(f"\n===SHEET {ws_v.title}===")
+        for row_v, row_f in zip(ws_v.iter_rows(values_only=True), ws_f.iter_rows(values_only=True)):
+            cells = ["" if v is None and f is None else str(f if v is None else v)
+                     for v, f in zip(row_v, row_f)]
+            if any(c.strip() for c in cells):
+                parts.append(" | ".join(cells).rstrip(" |"))
+    values.close()
+    formulas.close()
+    body = "\n".join(parts)
+    with open(dst, "w", encoding="utf-8") as fh:
+        fh.write(body)
+    return "OK (값만 — 서식·병합 없음)" if body.strip() else "EMPTY"
 
 HWPX_GLOBS = [
     os.path.expanduser("~/.claude/plugins/marketplaces/*/prod/skills/hwpx/scripts/text.py"),
@@ -60,6 +88,84 @@ def extract_hwpx(src: str, dst: str, text_py: str | None) -> str:
     with open(dst, "w", encoding="utf-8") as fh:
         fh.write(body)
     return "OK" if body.strip() else "EMPTY"
+
+
+HWPTAG_PARA_TEXT = 67
+# HWP 5.0 제어문자: 확장·인라인 컨트롤은 8 wchar(16 byte)를 차지한다. 나머지(10·13 등)는 1 wchar.
+HWP_WIDE_CTRL = {1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23}
+
+
+def hwp_section_text(data: bytes) -> str:
+    """압축 해제된 BodyText/Section 레코드 스트림에서 PARA_TEXT 만 문단 단위로 뽑는다.
+
+    표·도형 안의 문단도 PARA_TEXT 레코드라 텍스트는 나오지만 표 구조(행·열)는 사라진다.
+    """
+    import struct
+
+    paras, pos = [], 0
+    while pos + 4 <= len(data):
+        (hdr,) = struct.unpack_from("<I", data, pos)
+        pos += 4
+        tag, size = hdr & 0x3FF, (hdr >> 20) & 0xFFF
+        if size == 0xFFF:
+            (size,) = struct.unpack_from("<I", data, pos)
+            pos += 4
+        body = data[pos:pos + size]
+        pos += size
+        if tag != HWPTAG_PARA_TEXT:
+            continue
+        chars, i = [], 0
+        while i + 2 <= len(body):
+            (c,) = struct.unpack_from("<H", body, i)
+            if c >= 32:
+                chars.append(chr(c))
+                i += 2
+            elif c in HWP_WIDE_CTRL:
+                if c == 9:
+                    chars.append("\t")
+                i += 16
+            else:
+                if c in (10, 13):
+                    chars.append("\n")
+                i += 2
+        paras.append("".join(chars).rstrip("\n"))
+    return "\n".join(paras)
+
+
+def extract_hwp(src: str, dst: str) -> str:
+    """레거시 바이너리 .hwp(HWP 5.0, OLE) 본문 텍스트. NIPA 권고서 등이 이 형식으로 온다."""
+    try:
+        import olefile
+    except ImportError:
+        return "NEEDS_HWPX (olefile 미설치 — 한글에서 .hwpx 로 변환 후 재실행)"
+    import struct
+    import zlib
+
+    try:
+        if not olefile.isOleFile(src):
+            return "ERROR: OLE 형식 아님 (HWP 3.x 이하 또는 손상)"
+        with olefile.OleFileIO(src) as ole:
+            (props,) = struct.unpack_from("<I", ole.openstream("FileHeader").read(), 36)
+            if props & 0x2:
+                return "NEEDS_HWPX (암호 설정 문서)"
+            sections = sorted(
+                (e for e in ole.listdir() if e[0] == "BodyText" and e[1].startswith("Section")),
+                key=lambda e: int(e[1][len("Section"):]),
+            )
+            if not sections:
+                return "NEEDS_HWPX (BodyText 없음 — 배포용 문서)"
+            parts = []
+            for entry in sections:
+                raw = ole.openstream(entry).read()
+                if props & 0x1:
+                    raw = zlib.decompress(raw, -15)
+                parts.append(f"\n===SECTION {entry[1]}===\n" + hwp_section_text(raw))
+    except Exception as exc:                          # noqa: BLE001 - 손상 파일 방어
+        return f"ERROR: {exc}"[:120]
+    body = "".join(parts)
+    with open(dst, "w", encoding="utf-8") as fh:
+        fh.write(body)
+    return "OK (텍스트만 — 표 구조 없음)" if body.strip() else "EMPTY"
 
 
 def to_ranges(pages: list[int]) -> list[str]:
@@ -148,12 +254,13 @@ def walk(root: str, out: str, text_py: str | None, rel_prefix: str = "") -> list
             if ext == ".hwpx":
                 status = extract_hwpx(src, dst, text_py)
             elif ext == ".hwp":
-                # prod:hwpx 의 text.py 는 ZIP 기반 HWPX 만 읽는다. 레거시 바이너리
-                # .hwp 를 넘기면 "not a valid HWPX (ZIP) file" 로 끝나므로,
-                # 변환이 선행돼야 함을 상태로 드러낸다 (프로세스.md HWP→HWPX 단계).
-                status = "NEEDS_HWPX (레거시 .hwp — 한글에서 .hwpx 로 변환 후 재실행)"
+                # prod:hwpx 의 text.py 는 ZIP 기반 HWPX 만 읽으므로 OLE 본문을 직접 읽는다.
+                # 암호·배포용 문서처럼 못 읽는 경우만 NEEDS_HWPX 로 변환을 요구한다.
+                status = extract_hwp(src, dst)
             elif ext == ".pdf":
                 status = extract_pdf(src, dst)
+            elif ext in XLSX:
+                status = extract_xlsx(src, dst)
             elif ext in TEXTLIKE:
                 shutil.copyfile(src, dst)
                 status = "OK (복사)"
