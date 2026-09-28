@@ -110,6 +110,30 @@ class MoveTests(unittest.TestCase):
             undo = Path(out["undo_manifest"]).read_text(encoding="utf-8")
             self.assertIn("5. 계약/note.md\tnote.md", undo)
 
+    def test_preflight_rejects_target_created_by_earlier_row(self):
+        # The first row creates `3. 과업심의/`; the rename would then nest into it.
+        with tempfile.TemporaryDirectory() as tmp:
+            proj = make_vault(Path(tmp))
+            m = write_manifest(Path(tmp) / "m.tsv", [
+                ("copy of a.hwpx", "3. 과업심의/copy of a.hwpx"),
+                ("과업심의", "3. 과업심의"),
+            ])
+            out = rs.move(proj, m, apply=True)
+            self.assertIn("target created by earlier row: 3. 과업심의", out["errors"])
+            self.assertFalse(out["applied"])
+            self.assertTrue((proj / "과업심의" / "a.hwpx").exists())
+
+    def test_preflight_rejects_source_moved_by_earlier_row(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proj = make_vault(Path(tmp))
+            m = write_manifest(Path(tmp) / "m.tsv", [
+                ("과업심의", "3. 과업심의"),
+                ("과업심의/a.hwpx", "99. 참고/a.hwpx"),
+            ])
+            out = rs.move(proj, m, apply=True)
+            self.assertIn("source moved by earlier row: 과업심의/a.hwpx", out["errors"])
+            self.assertFalse(out["applied"])
+
 
 class RefsTests(unittest.TestCase):
     def test_refs_finds_relative_and_full_path_references(self):
@@ -170,6 +194,15 @@ class VerifyTests(unittest.TestCase):
             after = rs.verify(proj, baseline=before)
             self.assertTrue(after["ok"])
             self.assertEqual(len(after["missing_links"]), 1)
+
+    def test_baseline_catches_new_break_to_already_broken_target(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proj = make_vault(Path(tmp))
+            (proj / "_P.md").write_text(HUB + "- [[없는 파일.hwpx]]\n", encoding="utf-8")
+            before = rs.verify(proj)
+            (proj / "note.md").write_text("- [[없는 파일.hwpx]]\n", encoding="utf-8")
+            after = rs.verify(proj, baseline=before)
+            self.assertFalse(after["ok"])
 
     def test_hub_checkbox_loss_fails(self):
         with tempfile.TemporaryDirectory() as tmp:

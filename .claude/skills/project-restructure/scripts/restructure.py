@@ -119,6 +119,13 @@ def move(project: Path, manifest: Path, apply: bool) -> dict:
     rows = read_manifest(manifest)
     errors = []
     targets = Counter(b for _, b in rows)
+    under = lambda p, q: p == q or p.startswith(q + "/")  # noqa: E731
+    # rows run in order: an earlier row can remove a later source or create a later target
+    for i, (a, b) in enumerate(rows):
+        if any(under(a, x) for x, _ in rows[:i]):
+            errors.append(f"source moved by earlier row: {a}")
+        if any(under(y, b) and y != b for _, y in rows[:i]):
+            errors.append(f"target created by earlier row: {b}")
     for a, b in rows:
         if not a or not b:
             errors.append(f"empty path in row: {a!r} -> {b!r}")
@@ -257,8 +264,11 @@ def verify(project: Path, baseline: dict | None = None) -> dict:
     if baseline is None:
         new_missing = missing
     else:
-        seen = {m["target"] for m in baseline.get("missing_links", [])}
-        new_missing = [m for m in missing if m["target"] not in seen]
+        # count per target, not per (note, target): a moved note changes its path,
+        # but one more break to an already-broken target must still count
+        before = Counter(m["target"] for m in baseline.get("missing_links", []))
+        now = Counter(m["target"] for m in missing)
+        new_missing = [m for m in missing if now[m["target"]] > before[m["target"]]]
         if out["hub_checkboxes"] < baseline["hub_checkboxes"]:
             out["failures"].append(
                 f"hub_checkboxes decreased {baseline['hub_checkboxes']} -> {out['hub_checkboxes']}")
