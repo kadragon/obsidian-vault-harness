@@ -26,3 +26,6 @@
 !_Sources/
 !_Sources/한국교원대학교-규정집
 !_Sources/한국교원대학교-규정집/**
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
