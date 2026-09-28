@@ -106,6 +106,7 @@ Scope: 10_Areas/ → 90_Archive/
 | `status-sync` | status 동기화 | Vault scan |
 | `syncthing-conflict-cleanup` | conflict 파일 정리 | Vault scan |
 | `vault-cleanup` | 아카이브 정리 | Vault scan |
+| `project-restructure` | 허브 노트 너무 길어, 단계별로 나눠줘, 프로젝트 폴더 정리 | 프로젝트 폴더 → 단계 폴더·단계 노트 + 허브 축약 |
 
 > 복합 볼트 작업(여러 스킬/에이전트 연계)은 `docs/delegation.md` § Multi-step Chains 참조.
 
