@@ -53,6 +53,7 @@ Never perform these directly without the designated agent/skill:
 | Obsidian note **create**(템플릿 적용)·open·프로퍼티·앱 내 JS | `obsidian-operator` agent |
 | 기존 노트 본문 **소규모 수정**(수 줄·1~2파일) | 직접 Edit — 위임 금지 (§Delegation 비용 규칙) |
 | Vault cleanup (Archive) | `vault-cleanup` skill |
+| 길어진 `12_Projects/` 허브 노트 단계별 분리·프로젝트 폴더 정리 | `project-restructure` skill |
 | Status open→closed sync | `status-sync` skill |
 | Syncthing conflict files | `syncthing-conflict-cleanup` skill |
 | `.hwpx` 문서 생성/읽기/편집 | `productivity:hwpx` skill |

@@ -24,6 +24,7 @@ If any trigger applies, delegate first — do not proceed without it.
 |---------|------------|----------------|
 | Past cases / similar notes needed | `vault-navigator` | Keywords, work domain |
 | Periodic vault cleanup | `vault-cleanup` skill | — |
+| 프로젝트 허브 120줄 초과 또는 프로젝트 폴더 정리 요청 | `project-restructure` skill | 프로젝트 폴더 경로 |
 | Weekly system change report needed | `change-log` skill | Date range (default: past week) |
 | Status open→closed sync needed | `status-sync` skill | — |
 | Syncthing conflict files present | `syncthing-conflict-cleanup` skill | — |

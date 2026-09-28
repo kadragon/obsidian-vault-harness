@@ -163,7 +163,8 @@ def extract_hwp(src: str, dst: str) -> str:
     except Exception as exc:                          # noqa: BLE001 - 손상 파일 방어
         return f"ERROR: {exc}"[:120]
     body = "".join(parts)
-    with open(dst, "w", encoding="utf-8") as fh:
+    # HWP 문자 코드에 짝 없는 UTF-16 서로게이트가 섞여 오면 utf-8 인코딩이 실패한다
+    with open(dst, "w", encoding="utf-8", errors="replace") as fh:
         fh.write(body)
     return "OK (텍스트만 — 표 구조 없음)" if body.strip() else "EMPTY"
 
