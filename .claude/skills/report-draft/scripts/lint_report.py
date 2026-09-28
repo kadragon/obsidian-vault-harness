@@ -6,7 +6,7 @@ Exit 0 = no FAIL. WARN lines never change the exit code.
 
 Rules
   R1  numbered heading (`1.`, `2.`) in body — use `□` (skip with --allow-numbered for 기관 서식)
-  R2  bullet level skip — `-` needs a `○` parent in the same block (WARN: 1쪽 보고서가 □ 바로 아래 `-`를 쓰는 관행 있음)
+  R2  bullet level skip — `-` needs a `○` (or 서식 `◦`) parent in the same block (WARN: 1쪽 보고서가 □ 바로 아래 `-`를 쓰는 관행 있음)
   R3  remedy phrase inside 현황/문제점 — state facts only, remedies go to 추진 계획
   R4  polite ending (`~습니다`) — reports use 개조식 endings (`~함`, `~음`, `~임`)
   R5  date format — write `2026. 9. 21.` (not `2026-09-21`, `2026.9.21`, `2026년 9월`)
@@ -54,7 +54,7 @@ RHETORIC = re.compile(r"[?!？！]|것이다\.?\s*$")
 VAGUE = re.compile(r"적극(?!행정)|최대한|만전|가능한 한|등등")
 PLACEHOLDER = re.compile(r"○○|△△|\[확인 필요\]")
 ITEM_MAX = 80
-BULLET = re.compile(r"^\s*(□|○|-|※|\*+)\s*")
+BULLET = re.compile(r"^\s*(□|○|◦|-|※|\*+)\s*")
 BOLD_PAIR = re.compile(r"\*\*(?=\S)(.+?)(?<=\S)\*\*")
 UNCLOSED_BOLD = re.compile(r"(?<!^)\*\*(?=[^\s,.)·])")
 
@@ -99,7 +99,7 @@ def lint(lines, allow_numbered=False):
             continue
         if s.startswith("□"):
             box, label, has_circle = s, "", False
-        elif s.startswith("○"):
+        elif s.startswith(("○", "◦")):  # ◦ = ○ in 본부 배포 서식
             has_circle = True
             label = s if len(BULLET.sub("", s)) <= LABEL_MAX else ""
         elif s.startswith("- ") and not has_circle:
@@ -190,6 +190,8 @@ def selftest():
         " ○ 예산: **총 60,935,000원**(금육천구십삼만오천원)",
     ]
     assert lint(footnotes) == [], lint(footnotes)
+    form = ["□ 성과지표 및 목푯값", " ◦ 지표 설정 근거", "   - 전년도 만족도 결과로 설정함"]
+    assert lint(form) == [], lint(form)
     assert lint(good) == [], lint(good)
     bad = {
         "R1": ["1. 수요조사 기반 구독권 제공"],
