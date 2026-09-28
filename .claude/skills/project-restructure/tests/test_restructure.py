@@ -173,6 +173,14 @@ class RefsTests(unittest.TestCase):
             olds = [h["old"] for h in rs.refs(proj, m)]
             self.assertEqual(olds, ["99. 작년 예시/"])
 
+    def test_refs_ignores_needle_inside_longer_name(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proj = make_vault(Path(tmp))
+            m = write_manifest(Path(tmp) / "m.tsv", [("과업심의", "3. 과업심의"), ("note.md", "5. 계약/note.md")])
+            (proj / "_P.md").write_text("- `특별과업심의/x.hwpx`\n", encoding="utf-8")
+            (Path(tmp) / "_Wiki" / "log.md").write_text("- [[12_Projects/2026/P/note-final]]\n", encoding="utf-8")
+            self.assertEqual(rs.refs(proj, m), [])
+
     def test_refs_skips_path_valid_relative_to_note_folder(self):
         with tempfile.TemporaryDirectory() as tmp:
             proj = make_vault(Path(tmp))
@@ -193,6 +201,14 @@ class VerifyTests(unittest.TestCase):
             after = rs.verify(proj, baseline=before)
             self.assertEqual([m["target"] for m in after["missing_links"]], ["참고문서/r.pdf"])
             self.assertFalse(after["ok"])
+
+    def test_code_is_not_a_wikilink(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proj = make_vault(Path(tmp))
+            (proj / "note.md").write_text(
+                "```bash\nif [[ $a == b ]]; then :; fi\n```\n- `[[1, 2]]`\n- [[없는 파일]]\n", encoding="utf-8")
+            out = rs.verify(proj)
+            self.assertEqual([(m["line"], m["target"]) for m in out["missing_links"]], [(5, "없는 파일")])
 
     def test_path_link_does_not_resolve_to_other_project(self):
         with tempfile.TemporaryDirectory() as tmp:

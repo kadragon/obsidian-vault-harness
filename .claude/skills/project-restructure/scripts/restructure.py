@@ -27,6 +27,7 @@ SKIP_DIRS = {".git", ".obsidian", ".trash", "node_modules", "__pycache__"}
 TEXT_SUFFIXES = {".md", ".gs", ".js", ".py", ".txt", ".canvas"}
 CHECKBOX = re.compile(r"^\s*- \[([ xX])\] ")
 WIKILINK = re.compile(r"!?\[\[(.+?)\]\](?!\])")
+CODE = re.compile(r"```.*?```|`[^`\n]*`", re.DOTALL)  # `[[ ... ]]` in code is not a link
 
 
 def nfc(s: str) -> str:
@@ -208,7 +209,9 @@ def refs(project: Path, manifest: Path) -> list[dict]:
             continue
         for i, line in enumerate(text.splitlines(), 1):
             for n, news in needles.items():
-                for m in re.finditer(re.escape(n), line):
+                # whole path segment only: `과업심의/` must not hit `특별과업심의/`
+                tail = "" if n.endswith("/") else r"(?![\w-])"
+                for m in re.finditer(r"(?<![\w-])" + re.escape(n) + tail, line):
                     e = m.end()
                     if any(line[max(0, e - len(x)):e] == x for x in news):
                         continue
@@ -255,7 +258,8 @@ def verify(project: Path, baseline: dict | None = None) -> dict:
     for p in walk_files(project):
         if p.suffix.lower() != ".md":
             continue
-        for i, line in enumerate(nfc(p.read_text(encoding="utf-8")).splitlines(), 1):
+        text = CODE.sub(lambda c: "\n" * c.group().count("\n"), nfc(p.read_text(encoding="utf-8")))
+        for i, line in enumerate(text.splitlines(), 1):
             for m in WIKILINK.finditer(line):
                 target = re.split(r"[|#]", m.group(1), maxsplit=1)[0]
                 if target and not resolves(target, keys, names, rel(project, vault) + "/"):

@@ -18,12 +18,14 @@ HERE = Path(__file__).resolve()
 HOOK = HERE.parents[1] / "check-project-hub-length.py"
 
 
-def run_hook(rel_path: str, lines: int) -> str:
+def run_hook(rel_path: str, lines: int, relative: bool = False, raw: bytes | None = None) -> str:
     with tempfile.TemporaryDirectory() as directory:
         note = Path(directory) / rel_path
         note.parent.mkdir(parents=True)
         note.write_text("\n".join(f"line {i}" for i in range(lines)) + "\n", encoding="utf-8")
-        payload = json.dumps({"tool_input": {"file_path": str(note)}})
+        if raw is not None:
+            note.write_bytes(raw)
+        payload = json.dumps({"tool_input": {"file_path": rel_path if relative else str(note)}})
         result = subprocess.run(
             [sys.executable, str(HOOK)],
             input=payload,
@@ -31,6 +33,7 @@ def run_hook(rel_path: str, lines: int) -> str:
             encoding="utf-8",
             capture_output=True,
             check=True,
+            cwd=directory,
         )
     if not result.stdout.strip():
         return ""
@@ -62,6 +65,12 @@ class ProjectHubLengthTests(unittest.TestCase):
         name = unicodedata.normalize("NFD", "사업C")
         rel = f"12_Projects/2026/{name}/_{unicodedata.normalize('NFC', '사업C')}.md"
         self.assertNotEqual(run_hook(rel, 200), "")
+
+    def test_vault_relative_path_warns(self) -> None:
+        self.assertNotEqual(run_hook(HUB, 200, relative=True), "")
+
+    def test_non_utf8_hub_is_silent(self) -> None:
+        self.assertEqual(run_hook(HUB, 0, raw=b"\xff\xfe\x00bad\n" * 200), "")
 
     def test_outside_projects_is_silent(self) -> None:
         self.assertEqual(run_hook("10_Areas/학사/_학사.md", 300), "")

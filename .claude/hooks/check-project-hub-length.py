@@ -16,7 +16,8 @@ fp = (d.get("tool_input") or {}).get("file_path", "")
 if not fp or not fp.endswith(".md"):
     sys.exit(0)
 
-fp_norm = unicodedata.normalize("NFC", fp.replace("\\", "/"))
+# leading "/" so a vault-relative `12_Projects/...` path also matches
+fp_norm = "/" + unicodedata.normalize("NFC", fp.replace("\\", "/")).lstrip("/")
 if "/12_Projects/" not in fp_norm:
     sys.exit(0)
 
@@ -34,7 +35,7 @@ if not (container.name == "12_Projects"
 try:
     with open(fp, encoding="utf-8") as f:
         lines = sum(1 for _ in f)
-except OSError:
+except (OSError, UnicodeDecodeError):
     sys.exit(0)
 
 if lines <= MAX_LINES:
