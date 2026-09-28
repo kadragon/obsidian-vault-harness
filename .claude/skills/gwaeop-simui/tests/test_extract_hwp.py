@@ -64,6 +64,49 @@ class HwpSectionTextTests(unittest.TestCase):
             status = extract_bundle.extract_hwp(str(src), str(Path(tmp) / "out.txt"))
         self.assertTrue(status.startswith(("ERROR", "NEEDS_HWPX")), status)
 
+    def test_unpaired_surrogate_is_written_not_raised(self):
+        # A lone UTF-16 surrogate wchar (0xD800) becomes an unpaired surrogate in str;
+        # writing it as utf-8 used to raise UnicodeEncodeError.
+        section = record(PARA_TEXT, wchars("앞") + struct.pack("<H", 0xD800) + wchars("뒤"))
+
+        class FakeOle:
+            def __init__(self, _src):
+                pass
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            def openstream(self, name):
+                import io
+                if name == "FileHeader":
+                    return io.BytesIO(b"\x00" * 40)  # props at offset 36 = 0: uncompressed, no password
+                return io.BytesIO(section)
+
+            def listdir(self):
+                return [["BodyText", "Section0"]]
+
+        fake = type(sys)("olefile")
+        fake.isOleFile = lambda _src: True
+        fake.OleFileIO = FakeOle
+        saved = sys.modules.get("olefile")
+        sys.modules["olefile"] = fake
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                dst = Path(tmp) / "out.txt"
+                status = extract_bundle.extract_hwp(str(Path(tmp) / "x.hwp"), str(dst))
+                text = dst.read_text(encoding="utf-8")
+        finally:
+            if saved is None:
+                sys.modules.pop("olefile", None)
+            else:
+                sys.modules["olefile"] = saved
+        self.assertTrue(status.startswith("OK"), status)
+        self.assertIn("앞", text)
+        self.assertIn("뒤", text)
+
 
 class XlsxTextTests(unittest.TestCase):
     def test_extracts_cell_values_per_sheet(self):

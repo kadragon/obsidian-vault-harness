@@ -168,7 +168,13 @@ python3 .claude/skills/gwaeop-simui/scripts/cost_check.py --help
 | **A** | 과업범위·사업금액·사업기간 판단에 직접 영향. 근거 자료 추가 제출 필요 | **위원 발송일 − 2영업일** |
 | **B** | 표기·정합성. 위원 검토 진행에는 지장 없음 | 심의 개최일 전까지 |
 
-### 5-2. 산출물 2종
+### 5-2. 지적별 독립 검증 — 전달본 작성 전 필수
+
+A 항목 전부를 **지적 1건당 서브에이전트 1개**(general-purpose, 한 메시지에서 병렬·백그라운드)로 반박 검증한다.
+프롬프트·판정별 처리·노트 기록 형식은 `references/verify-prompt.md`. REJECTED는 전달본 A에서 빼고,
+검증자가 출처 없이 단정한 수치는 옮기지 않는다.
+
+### 5-3. 산출물 2종
 
 | # | 산출물 | 용도 | 문체 |
 |---|--------|------|------|
@@ -179,7 +185,7 @@ python3 .claude/skills/gwaeop-simui/scripts/cost_check.py --help
 반대로 전달본에만 있는 것은 발신 메타 4종과 "확인 완료" 절이다 → `output-format.md` §2.
 미보완·미회신 시의 불이익 고지 문장은 전달본에 싣지 않는다 → `output-format.md` §2-3.
 
-### 5-3. 제작과 검증
+### 5-4. 제작과 기계 검사
 
 ```bash
 # 1) 템플릿 복사 후 채움
@@ -233,18 +239,12 @@ python3 .claude/skills/gwaeop-simui/scripts/render_pdf.py "<scratch>/report.html
 
 ## 참고자료
 
-- `references/checklist.md` — 축 0 + 5축 검토 체크리스트
-- `references/legal-basis.md` — 법·시행령·지침·별표 1·대학 운영지침 조문 인용
-- `references/daega-baseline.md` — 대가산정 기준값·역산 절차
-- `references/recurring-defects.md` — 반복 결함 목록: 탐지 키워드 + 근거 조문
-- `references/nipa-compliance.md` — SW사업 법령준수 18개 항목: 적용 대상·명시 요소·필수 명시 문구 (조문 기준)
+- `references/` — `checklist.md`(축 0 + 5축) · `legal-basis.md`(법·시행령·지침·별표 1·대학 운영지침 조문) · `daega-baseline.md`(대가산정 기준값·역산) · `recurring-defects.md`(반복 결함: 탐지 키워드 + 근거 조문) · `nipa-compliance.md`(법령준수 18개 항목 명시 요소) · `verify-prompt.md`(Step 5-2 반박 검증 프롬프트)
 - `references/output-format.md` — **§0 지적 문장 4요소 규격** · 산출물 골격(노트·검토의견본·보완요청본) · 회신 기한(불이익 고지 금지) · **한글 문체 규칙** · 상대 문서 표기 검수
 - `assets/report.html` — 전달본 A4 템플릿 (자리표시자 채워 쓰고 Chrome headless로 렌더)
 - `scripts/lint_findings.py` — 지적 4요소(근거·당위·실제·요청)·근거 등급 기계 검사
 - `scripts/render_pdf.py` — HTML → PDF (headless Chrome, OS별 경로 자동 탐색)
 - `scripts/merge_sign_bundle.py` — 이 스킬 절차 밖. `과업심의_프로세스.md` Step 7-2(위원별 전자서명 통합본)가 호출한다
-- [[_Sources/규정/SW사업-대가산정-가이드-2025]] — 대가산정 가이드 원문 요약
-- [[_Sources/규정/소프트웨어사업-계약-및-관리감독에-관한-지침]] — 지침 조문 구조·별표·별지 서식
-- [[_Sources/규정/한국교원대학교-과업심의위원회-운영지침-2026]] — 대학 자체 지침(간소화·제척·구성)
+- 원문 요약: [[_Sources/규정/SW사업-대가산정-가이드-2025]] · [[_Sources/규정/소프트웨어사업-계약-및-관리감독에-관한-지침]] (조문·별표·별지) · [[_Sources/규정/한국교원대학교-과업심의위원회-운영지침-2026]] (간소화·제척·구성)
 - [[_Wiki/topics/공공SW발주계약-MOC]] — 법제도 근거 인덱스
 - `10_Areas/과업심의/과업심의_프로세스.md` — 회차 운영 절차 (이 스킬의 앞뒤 단계)

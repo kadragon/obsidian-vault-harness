@@ -17,6 +17,7 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | #5 Inbox (01_Inbox) via skill | AGENTS.md delegation rule | Doc-enforced |
 | 스킬 문서 장황함·환경 종속 (규칙+근거 서사 혼재, 머신 사실 하드코딩) | `check-skill-doc.py` PostToolUse hook + `--sweep` 전수 스캔 (mechanical, warning-only) | Shell-enforced (2026-09-05) |
 | 하네스 파일의 맨 `python` 호출 (검사 무력화) | `check-bare-python.py` PostToolUse hook + `--sweep` 전수 스캔 (mechanical) | Shell-enforced (2026-08-02) |
+| 프로젝트 허브 노트 비대 (`12_Projects/…/{폴더}/_{폴더}.md` > 120줄) | `check-project-hub-length.py` PostToolUse `Write\|Edit` hook → `project-restructure` 스킬 제안 (mechanical, warning-only) | Shell-enforced (2026-09-28) |
 | 머신 간 커밋 이력 갈라짐 (Syncthing이 `.git/` 제외) | `git-sync-check.py` SessionStart hook (mechanical) | Shell-enforced (2026-09-15) |
 
 ## 원격 동기화 훅 — `git-sync-check.py` (2026-09-15)
@@ -283,6 +284,8 @@ All three layers are now active. Promotion log:
 19. ✅ #18이 서식 제외를 **Check 4 한 곳에만** 걸어, 같은 서식이 남은 두 검사에서 계속 경고하던 문제 (2026-08-02 사용자 결정) → 판별을 `is_simui_form` 하나로 올려 Check 2b·4·5가 공유(Check 2b는 **부재만** 면제하고 값이 있으면 어휘 검증 유지 — 통째로 끄면 status를 가진 서식 5건이 새 무게이트가 된다). 실측 델타: `10_Areas/과업심의/` 18건 경고 10 → 0, 볼트 477건 전수에서 신규 경고 0건, 같은 폴더의 업무사안 3건은 세 검사 모두 여전히 게이트(status·태그·앵커를 지운 사본으로 음성 테스트 확인). 함께 `99_Template/_교육.md`의 `- #업무/` 제거 — #18이 Check 5에서 `20_Training/`을 뺐지만 템플릿은 그대로 요구해, 문서가 "평가자 판단"으로 넘긴 그 판단을 실제로 수행할 게이트가 없었다(`note-evaluator`는 `inbox-process` 5단계-3-b 조건에서만 호출되고 교육 노트는 그 경로를 거의 타지 않는다). **교훈 두 가지:** (1) 제외 근거가 노트의 *종류*에 대한 주장이면 그 종류를 전제하는 검사 **전부**에 걸어야 한다 — 한 검사에만 걸면 나머지가 같은 오탐을 계속 내고, 그 잔여가 백로그로 쌓여 다음 회차의 일이 된다. (2) 검사를 강등하면 그 기준을 요구하던 **템플릿·문서도 같이 내린다** — 요구만 남고 집행이 사라지면 "평가자 판단"이라는 이름의 무게이트가 된다.
 
 20. ✅ `check-nested-delegation.py`의 탐지 알파벳이 `.claude/agents/*.md` 글롭 **단독**이라, 에이전트 파일을 지우는 순간 그 이름이 알파벳에서 빠져 남아 있는 산문 위임 지시가 무검사로 통과하던 문제 (2026-09-01, `dev:harness-curate` 삭제 후보 적대적 검토 중 발견) → `_agent_names()`를 글롭 ∪ `_FALLBACK_AGENT_NAMES` 합집합으로 변경. 폴백은 원래 `OSError` 경로에서만 쓰여, 정상 디렉터리 읽기는 줄어든 글롭을 그대로 반환했다. **교훈: 가드가 자기 검사 대상 목록을 삭제 가능한 파일에서 유도하면, 대상을 지우는 행위가 곧 가드를 끄는 행위가 된다** — 은퇴한 에이전트를 가리키는 지시야말로 잡아야 할 대상인데 정확히 그 순간 탐지가 꺼졌다. #17의 "0건은 세 가지 뜻"과 같은 계열이다.
+
+21. ✅ 단계가 쌓인 프로젝트 허브 노트가 날짜별 진행 로그로 149줄까지 늘어도 신호가 없던 문제 → `check-project-hub-length.py`(120줄 초과 경고) + `project-restructure` 스킬 (2026-09-28). 허브 판정은 `{폴더}/_{폴더}.md`이면서 프로젝트 폴더가 `12_Projects/` 또는 `12_Projects/{YYYY}/` 바로 아래일 때만 — 단계 폴더 안 `_3. 과업심의.md` 같은 이름도 파일명 조건은 통과하므로 위치 조건이 필요했다(테스트가 발견). `Write` 전용인 `check-folder-rules.py`에 넣지 않은 이유: 허브는 주로 Edit로 길어진다.
 
 ## Generator Config (not version-controlled)
 
