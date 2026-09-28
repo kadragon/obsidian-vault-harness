@@ -130,6 +130,11 @@ def move(project: Path, manifest: Path, apply: bool) -> dict:
         if not a or not b:
             errors.append(f"empty path in row: {a!r} -> {b!r}")
             continue
+        outside = [x for x in (a, b) if not (project / x).resolve().is_relative_to(project)
+                   or (project / x).resolve() == project]
+        if outside:
+            errors.extend(f"outside project: {x}" for x in outside)
+            continue
         if not (project / a).exists():
             errors.append(f"missing source: {a}")
         if (project / b).exists():
@@ -231,13 +236,15 @@ def build_index(vault: Path) -> tuple[set[str], dict[str, int]]:
     return keys, names
 
 
-def resolves(target: str, keys: set[str], names: dict[str, int]) -> bool:
+def resolves(target: str, keys: set[str], names: dict[str, int], scope: str = "") -> bool:
+    """`scope` limits partial-path matches to one folder, so a link left behind
+    after a move does not pass by matching another project's same-named path."""
     t = target.strip().lstrip("/")
     if t.lower().endswith(".md"):
         t = t[:-3]
     if "/" not in t:
         return names.get(t, 0) > 0
-    return t in keys or any(k.endswith("/" + t) for k in keys)
+    return t in keys or any(k.endswith("/" + t) and k.startswith(scope) for k in keys)
 
 
 def verify(project: Path, baseline: dict | None = None) -> dict:
@@ -251,7 +258,7 @@ def verify(project: Path, baseline: dict | None = None) -> dict:
         for i, line in enumerate(nfc(p.read_text(encoding="utf-8")).splitlines(), 1):
             for m in WIKILINK.finditer(line):
                 target = re.split(r"[|#]", m.group(1), maxsplit=1)[0]
-                if target and not resolves(target, keys, names):
+                if target and not resolves(target, keys, names, rel(project, vault) + "/"):
                     missing.append({"note": rel(p, project), "line": i, "target": nfc(target.strip())})
     hub = hub_path(project)
     hub_open, hub_done = checkbox_counts(hub.read_text(encoding="utf-8")) if hub.exists() else (0, 0)

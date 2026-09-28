@@ -123,6 +123,14 @@ class MoveTests(unittest.TestCase):
             self.assertFalse(out["applied"])
             self.assertTrue((proj / "과업심의" / "a.hwpx").exists())
 
+    def test_preflight_rejects_path_outside_project(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proj = make_vault(Path(tmp))
+            m = write_manifest(Path(tmp) / "m.tsv", [("../../../_Wiki/log.md", "99. 참고/log.md")])
+            out = rs.move(proj, m, apply=True)
+            self.assertIn("outside project: ../../../_Wiki/log.md", out["errors"])
+            self.assertTrue((Path(tmp) / "_Wiki" / "log.md").exists())
+
     def test_preflight_rejects_source_moved_by_earlier_row(self):
         with tempfile.TemporaryDirectory() as tmp:
             proj = make_vault(Path(tmp))
@@ -184,6 +192,17 @@ class VerifyTests(unittest.TestCase):
             rs.move(proj, write_manifest(Path(tmp) / "m.tsv", [("참고문서/r.pdf", "99. 참고/r.pdf")]), apply=True)
             after = rs.verify(proj, baseline=before)
             self.assertEqual([m["target"] for m in after["missing_links"]], ["참고문서/r.pdf"])
+            self.assertFalse(after["ok"])
+
+    def test_path_link_does_not_resolve_to_other_project(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proj = make_vault(Path(tmp))
+            other = Path(tmp) / "12_Projects" / "2026" / "Q" / "참고문서"
+            other.mkdir(parents=True)
+            (other / "r.pdf").write_bytes(b"Q")
+            before = rs.verify(proj)
+            rs.move(proj, write_manifest(Path(tmp) / "m.tsv", [("참고문서/r.pdf", "99. 참고/r.pdf")]), apply=True)
+            after = rs.verify(proj, baseline=before)
             self.assertFalse(after["ok"])
 
     def test_baseline_ignores_preexisting_missing_link(self):
