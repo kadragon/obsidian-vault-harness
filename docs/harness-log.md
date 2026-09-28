@@ -7,6 +7,8 @@
 | Date | Change | Predicted impact | Verified |
 |------|--------|------------------|----------|
 | 2026-09-23 | `gwaeop-simui/scripts/merge_sign_bundle.py` 신설 + `tests/test_merge_sign_bundle.py`(7건) — 위원별 전자서명 통합본 병합(한글 COM InsertFile)·`hp:p` id 중복 해소·값 교체·validate. `과업심의_프로세스.md` Step 7-2에서 호출. 9차 윤인자 통합본 재현 시 텍스트 노드 차이는 사용자 수기 입력 직위 2곳뿐 | 다음 회차 Step 7-2가 위원당 스크립트 1회 호출로 끝나고, 수동 COM 스크립트 작성·`Duplicate hp:p IDs` INVALID·빈 쪽 재작업이 트랜스크립트에 0건 | pending |
+| 2026-09-21 | `report-draft` 고도화 — 공공 작성법(행정업무규정 제7조·시행규칙 제2조, 대통령비서실 「보고서 작성 매뉴얼」, 국립국어원)·공개 스킬 3종 조사 반영: 유형별 골격 7종, 결론 먼저·요청 사항 명시(§0), 제출 전 점검표 C1~C10(§8), lint R7~R13(요일·24시각·수사·80자·모호어·미기입·`**` 짝), 붙임 이후 검사 제외, R6 라벨 스코프 오탐 수정. 3케이스 비교 통과율 기존 50% → 신규 92% | 다음 검토·결과 보고 요청에서 첫 `□`에 결론·요청 사항이 들어가고, 실보고서 lint에서 `[붙임]` 서식·`○ 성과` 라벨 오탐 FAIL 0건 | pending |
+| 2026-09-21 | `report-draft` 신규 스킬 — 개조식 보고서 작성(A)·수정(B), `lint_report.py`(R1~R6), kr-style 윤문 필수 게이트(G2). `AGENTS.md`·`docs/delegation.md`·`docs/runbook.md`에 등록 | 다음 보고서 요청에서 발화하고, 같은 턴에 `lint_report.py`와 `prod:kr-style` 호출이 따라 나온다. 사용자가 번호 목록→□, 현황의 대안 문구 삭제, 향후 계획 연도 명시를 다시 지적하는 경우 0건 | pending |
 | 2026-09-15 | `git-sync-check.py` SessionStart 훅 신설 — 뒤처짐만이면 `reset --mixed origin/main`, 갈라짐·스테이징·fetch 실패는 경고만. `.stignore`의 `.git/` 제외는 유지 | 다음 30일간 `git status -sb`에 `ahead`와 `behind`가 동시에 나타나는 세션 0건. 다른 머신 push 후 이 머신 세션 시작 시 `[git-sync] … reset --mixed` 메시지가 트랜스크립트에 나타난다 | pending |
 | 2026-09-05 | 스킬 문서 장황함 정비 — `check-skill-doc.py` PostToolUse 훅 신설(길이·근거 서사 토큰·굵게 밀도·깨진 스니펫), `inbox-process` 819→614줄(PDF 절차를 `references/pdf-reading.md` 단일 출처로, 워커 규약·선례 규칙 중복 제거, 근거 서사는 아래 §규칙 근거로 이관), gwaeop 참고 4종 표·본문 굵게 245쌍 제거, Chrome 경로 하드코딩 → `render_pdf.py`(OS 자동 탐색), 머신 종속 서술(poppler·Tesseract·Windows) 제거, 깨진 `"\n"` 스니펫 2건·태그 힌트 예시(`#업무/학사/…`)·요일 오기 수정 | `--sweep` 0건이 유지된다. 다음 회차 스킬 편집에서 훅 경고를 받고도 근거 서사를 SKILL.md에 남긴 커밋이 0건. inbox-process 워커가 `pdf-reading.md`를 Read하는 호출이 트랜스크립트에 나타난다 | pending |
 | 2026-09-01 | `gwaeop-simui` — 전달본에서 §4 권고 사항 절 제거(L4는 노트 전용), B 항목 채택 기준·묶기 규칙 추가, 추정가격 2천만원 미만 시 경쟁입찰 전제 지적 금지 게이트 추가. `report.html`·`lint_findings.py` 동반 수정 | 다음 회차 보완요청 PDF에서 사용자의 "항목 삭제해서 다시 만들어줘" 요청이 0건이 된다. 특히 권고사항 절 삭제 요청과 B-N 다건 삭제가 사라진다 | pending |
@@ -40,6 +42,11 @@
 | PDF 본문은 PyMuPDF로 읽는다 — Read 도구를 쓰지 않음 | Read 도구의 PDF 지원은 poppler 유무에 좌우된다(Windows 머신 미설치, macOS 설치). 머신마다 갈리는 사실을 문서에 박지 않고 항상 동작하는 경로 하나만 남김 |
 | OCR 실패 시 건너뛰고 열린 질문 (`pdf-reading.md` §3) | Tesseract는 파이썬 패키지가 아니라 `uv`가 못 준다. 2026-08-04 Windows 머신에서 실패 확인. 실패는 `ERROR: OCR failed`로 크게 드러남 |
 | Handysoft 추출본 경로는 해시 기반 (`extract_handysoft_pdf.py`) | 원본 전체 바이트 md5 앞 8자 — 서로 다른 문서가 같은 경로를 쓰는 일이 없고, triage와 워커가 같은 파일을 두 번 분류해도 재사용됨 |
+| 보고서 기호 체계 □ > ○ > - > ※, 번호 금지 (`report-draft/references/style-rules.md` §2, lint R1) | 2026-09-21 사용자 지시: "이런 보고서에서는 숫자가 아니라 네모 > 동그라미 > - > 당구장표시를 사용함". R2(□ 바로 아래 `-`)는 사용자가 이미 올린 1쪽 보고서 3건에서 7회 쓰인 관행이라 WARN |
+| 현황·문제점에 대안 금지 (§3, lint R3) | 2026-09-21 사용자 지시: "현황 및 문제점에서 대안을 제시하지말고, 순수하게 현황 및 문제점만 언급". 원본 계획(안)에서 2건 검출 |
+| 기대효과는 상위 목표 관점 (§3) | 2026-09-21 사용자 지시: 사업 단위 지표 위주 기대효과를 "너무 이 사업에 작게 표현"으로 지적, 관련 정책 기반 거시 서술 요청 |
+| 정책 발표일 원문 재확인 (§4) | 2026-09-21 「디지털 기반 교육혁신 방안」이 문서에 (2023. 3.)로 적혀 있었으나 발표는 2023. 2. 23. |
+| 보고서 윤문은 kr-style 필수 게이트 (SKILL.md G2) | 2026-09-21 사용자 지시: "prod:kr-style 을 사용해서 윤문 잡아야 한다고 설정해줘" |
 | 공문번호 `--doc-number`에 날짜를 붙이지 않음 (`action-branch.md`) | `find_duplicates()`가 substring 매칭이라 날짜가 붙으면 과거 날짜 없는 노트와 매칭되지 않아 중복을 놓침 |
 | 전달본에 권고 사항 절 없음, L4는 노트 전용 (`gwaeop-simui/output-format.md` §2-2) | 4회차 연속 사용자가 발행 직전 권고 절을 통째로 삭제. 근거 없는 항목이 강한 지적의 강제력까지 희석 |
 | 지침 고시번호·시행일은 원문에서 확인 (`legal-basis.md` 상단) | 2026-08-18 검색엔진 요약이 2023-05-15 개정을 2025-03-25로 잘못 표기한 사례 |
