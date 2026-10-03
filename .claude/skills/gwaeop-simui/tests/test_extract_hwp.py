@@ -130,5 +130,58 @@ class XlsxTextTests(unittest.TestCase):
         self.assertIn("분석설계 | 1000000 | 2", text)
 
 
+class _FakeXlsSheet:
+    def __init__(self, name, rows):
+        self.name, self._rows, self.nrows = name, rows, len(rows)
+
+    def row_values(self, i):
+        return self._rows[i]
+
+
+class _FakeXlsBook:
+    def __init__(self, sheets):
+        self._sheets = sheets
+
+    def sheets(self):
+        return self._sheets
+
+
+class XlsTextTests(unittest.TestCase):
+    """xlwt 가 없어 실제 .xls 를 만들 수 없으므로 xlrd 를 가짜 모듈로 대체한다."""
+
+    def _run_with_fake_xlrd(self, book):
+        fake = type(sys)("xlrd")
+        fake.open_workbook = lambda path, on_demand=False: book
+        saved = sys.modules.get("xlrd")
+        sys.modules["xlrd"] = fake
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                src = Path(tmp) / "bundle" / "산출내역서.xls"
+                src.parent.mkdir()
+                src.write_bytes(b"\xd0\xcf\x11\xe0")
+                out = Path(tmp) / "out"
+                rows = extract_bundle.walk(str(src.parent), str(out), None)
+                txt = out / "산출내역서.xls.txt"
+                text = txt.read_text(encoding="utf-8") if txt.exists() else ""
+        finally:
+            if saved is None:
+                sys.modules.pop("xlrd", None)
+            else:
+                sys.modules["xlrd"] = saved
+        return rows, text
+
+    def test_xls_is_extracted_not_skipped(self):
+        book = _FakeXlsBook([_FakeXlsSheet("개발비", [
+            ["항목", "단가", "수량", "금액"],
+            ["분석설계", 1000000.0, 2.0, 2000000.0],
+            ["", "", "", ""],
+        ])])
+        rows, text = self._run_with_fake_xlrd(book)
+        status = rows[0][2]
+        self.assertTrue(status.startswith("OK"), status)
+        self.assertIn("===SHEET 개발비===", text)
+        self.assertIn("분석설계 | 1000000 | 2 | 2000000", text)
+
+
 if __name__ == "__main__":
     unittest.main()

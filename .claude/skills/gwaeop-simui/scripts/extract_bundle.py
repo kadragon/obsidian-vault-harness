@@ -24,7 +24,7 @@ import zipfile
 
 TEXTLIKE = {".md", ".txt", ".csv", ".json", ".xml"}
 SKIP = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff",
-        ".xls", ".pptx", ".ppt", ".docx", ".doc", ".zip"}
+        ".pptx", ".ppt", ".docx", ".doc", ".zip"}
 XLSX = {".xlsx", ".xlsm"}
 
 
@@ -49,6 +49,31 @@ def extract_xlsx(src: str, dst: str) -> str:
                 parts.append(" | ".join(cells).rstrip(" |"))
     values.close()
     formulas.close()
+    body = "\n".join(parts)
+    with open(dst, "w", encoding="utf-8") as fh:
+        fh.write(body)
+    return "OK (값만 — 서식·병합 없음)" if body.strip() else "EMPTY"
+
+
+def extract_xls(src: str, dst: str) -> str:
+    """레거시 .xls(BIFF) 산출내역서를 extract_xlsx 와 같은 형식으로. xlrd 는 저장된 계산값만 준다."""
+    try:
+        import xlrd
+    except ImportError:
+        return "SKIP (xlrd 미설치)"
+    try:
+        book = xlrd.open_workbook(src, on_demand=True)
+    except Exception as exc:                          # noqa: BLE001 - 손상 파일 방어
+        return f"ERROR: {exc}"[:120]
+    parts = []
+    for sheet in book.sheets():
+        parts.append(f"\n===SHEET {sheet.name}===")
+        for i in range(sheet.nrows):
+            # xlrd 는 숫자를 모두 float 로 준다 — 정수값은 1000000.0 이 아니라 1000000 으로.
+            cells = [str(int(v)) if isinstance(v, float) and v.is_integer() else str(v)
+                     for v in sheet.row_values(i)]
+            if any(c.strip() for c in cells):
+                parts.append(" | ".join(cells).rstrip(" |"))
     body = "\n".join(parts)
     with open(dst, "w", encoding="utf-8") as fh:
         fh.write(body)
@@ -262,6 +287,8 @@ def walk(root: str, out: str, text_py: str | None, rel_prefix: str = "") -> list
                 status = extract_pdf(src, dst)
             elif ext in XLSX:
                 status = extract_xlsx(src, dst)
+            elif ext == ".xls":
+                status = extract_xls(src, dst)
             elif ext in TEXTLIKE:
                 shutil.copyfile(src, dst)
                 status = "OK (복사)"
