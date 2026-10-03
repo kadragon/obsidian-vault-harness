@@ -43,6 +43,7 @@ PRODUCTIVITY_BANDS = [
     (3000, float("inf"), 22),
 ]
 SIMPLIFIED_REVIEW_LIMIT = 100_000_000  # 지침 §10②·대학 운영지침 §5③1호: 1억원
+SMALL_CONTRACT_LIMIT = 20_000_000  # 국가계약법 시행령 §30①2호(1인 견적)·§7의2②2호(예정가격 생략): 추정가격 2천만원 이하
 
 
 def positive_float(value: str) -> float:
@@ -258,6 +259,16 @@ def cmd_sum(args: argparse.Namespace) -> int:
         if vat_inclusive > SIMPLIFIED_REVIEW_LIMIT:
             print(f"  ** 경계 구간: 부가세 포함 {won(vat_inclusive)}은 1억원 초과 — 포함 기준으로 읽으면 정식 심의로 갈림."
                   " 발주 문서가 어느 금액을 기준으로 삼는지 확인할 것")
+
+    # 검토 강도 구간 — output-format.md §2-0 표가 정본.
+    if est_price <= SMALL_CONTRACT_LIMIT:
+        print(f"  검토 강도: 경량 — 추정가격 {won(SMALL_CONTRACT_LIMIT)} 이하 수의계약"
+              " (1인 견적 §30①2호·예정가격 생략 §7의2②2호 가능)")
+        print("            A = 문서 간 금액·수량 오류 + 금액 하한 없는 법정 의무만. FP·투입공수 산출 요구 금지, B ≤ 3행")
+    elif est_price <= SIMPLIFIED_REVIEW_LIMIT:
+        print("  검토 강도: 표준 — 간소화 심의 구간. 대가산정 근거(FP 또는 투입공수) 요구 가능")
+    else:
+        print("  검토 강도: 전체 — 정식 심의 구간. 체크리스트 축 0~5 전부")
 
     print()
     print("  확인: 항목별로 VAT 포함 여부가 명시되어 있는지, 단가 × 수량 형식인지,")

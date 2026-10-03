@@ -43,6 +43,16 @@ class ReviewTypeTests(unittest.TestCase):
         out = run("sum", "--items", "50000000", "--vat-included")
         self.assertNotIn("경계", out)
 
+    def test_small_contract_band_prints_light_review_tier(self):
+        # 추정가격 2천만원 이하 = 1인 견적·예정가격 생략 가능 수의계약 — 경량 검토.
+        out = run("sum", "--items", "20000000", "--vat-included")
+        self.assertIn("검토 강도: 경량", out)
+
+    def test_above_small_contract_band_is_standard_tier(self):
+        out = run("sum", "--items", "66000000", "--vat-included")
+        self.assertNotIn("검토 강도: 경량", out)
+        self.assertIn("검토 강도: 표준", out)
+
     def test_over_limit_is_formal_review(self):
         out = run("sum", "--items", "121000000", "--vat-included")
         self.assertIn("정식 심의", out)
