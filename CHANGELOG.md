@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- [done] note-evaluator defaults to source fact-check table; 5-axis scoring only on full-quality (2026-10-03)
 - [done] SessionStart 훅으로 Syncthing 머신 간 커밋 이력 갈라짐 방지 — 뒤처짐만이면 `reset --mixed` 자동 정렬 (2026-09-15) → docs/enforcement.md
 
 - [done] Inbox reference 원본 삭제를 durable copy·wikilink 검증 통과분으로 제한 (2026-09-09) → docs/design/inbox-eval-rule-conflicts.md
