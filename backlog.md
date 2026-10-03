@@ -7,9 +7,11 @@
 - [ ] [debt] `extract_bundle.py` 의 `SKIP` 집합이 `.xlsx`·`.xls` 를 버려 산출내역서가 스프레드시트로 제출되면 금액·수량·VAT 근거가 번들 추출물에 남지 않는다 — 스프레드시트 추출 경로를 추가하거나 대체 리더를 명시 (source: codex) — `.claude/skills/gwaeop-simui/scripts/extract_bundle.py:23`
 - [ ] [harness] Read 도구가 PDF를 못 읽는 근본 원인은 poppler(`pdftoppm`) 미설치다. 문서로 우회(PyMuPDF 경유)했을 뿐이므로 poppler 설치로 근본 해소할지 결정 (source: code-review) — 볼트 전역
 
-## 2-evaluator-contract — 평가자 기본 모드 계약 재작성
+### PR #25 — [REFACTOR] make note-evaluator default to source fact-check table (2026-10-03)
 
-- [ ] [REFACTOR] `note-evaluator.md`를 기본 모드(원본 대조 사실검증) 우선으로 재작성한다. 출력은 `필드 | 원본 값 | 노트 값 | 결과(PASS·FAIL·UNVERIFIED)` 표, 값 불일치는 FAIL, 원본 부재는 UNVERIFIED이며 UNVERIFIED 잔존 시 원본 삭제 보류. 훅 실행 절차를 평가자에서 제거하고 메인이 1회 실행한 결과를 넘긴다(3-a). 5축 채점은 `full-quality` 명시 요청으로 한정. 소비 형식을 명시하는 호출자 `SKILL.md` 3-b를 같은 커밋에서 수정하고, `note-evaluator.md:35`의 교육 노트 `#업무/` finding 지시(=`eval-criteria.md:43`과 정면 충돌)를 제거한다 (source: 같은 spec Solution §평가자 계약 재작성) — `.claude/agents/note-evaluator.md` · `.claude/skills/inbox-process/SKILL.md` 3-b
+- [ ] [debt] `eval-criteria.md` Evaluator Protocol(기준 5 MOC 확인·잔여분 직접 확인·재평가 루프)과 :113/:117(평가자가 `14_Changes`·`20_Training` 섹션 구조를 직접 대조)이 옛 평가자 계약을 서술한다. 기본 모드 평가자는 구조를 보지 않으므로 incident·improvement·training 노트의 섹션 구조 확인 주체를 메인 스레드로 명시해야 한다 — 3-policy-ssot와 함께 처리 (source: code-review) — `docs/eval-criteria.md:113-127`
+- [ ] [debt] `docs/delegation.md:35`가 `20_Training/`의 `#업무/` 부재를 메인 확인 항목으로 나열해 `eval-criteria.md` "위반 아님"과 충돌한다. `runbook.md:139`는 `note-evaluator`를 `moc_gate.py` 호출자로, `:154`는 평가자를 "품질 게이트 (eval-criteria.md)"로 적어 새 계약과 어긋난다. full-quality 호출자가 훅별 결과를 넘겨야 한다는 사실도 위임 문서에 없다 (source: code-review) — `docs/delegation.md:35` · `docs/runbook.md:139,154`
+- [ ] [verify] 새 평가자 계약의 실제 호출 1회 관찰 검증(spec Testing Decisions) — 에이전트 정의가 세션 시작 시 로드돼 같은 세션에서는 관찰 불가. 다음 inbox 처리에서 3-b 호출 시 표·`VERDICT`·`HOLD_DELETE` 반환 여부 확인 (source: task-next) — `.claude/agents/note-evaluator.md`
 
 ## 3-policy-ssot — 임베드·기존 본문 갱신 정책 SSOT 정리
 
