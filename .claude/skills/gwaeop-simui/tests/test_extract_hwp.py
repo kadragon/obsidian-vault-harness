@@ -130,5 +130,53 @@ class XlsxTextTests(unittest.TestCase):
         self.assertIn("분석설계 | 1000000 | 2", text)
 
 
+FIXTURES = HERE.parent / "fixtures"
+
+
+class XlsTextTests(unittest.TestCase):
+    """fixtures/cost_sheet.xls 는 xlwt 로 만든 BIFF8 — 날짜·불리언·오류 셀과 0.1+0.2 부동소수 노이즈를 담는다."""
+
+    def _walk(self, name: str, data: bytes):
+        with tempfile.TemporaryDirectory() as tmp:
+            src = Path(tmp) / "bundle" / name
+            src.parent.mkdir()
+            src.write_bytes(data)
+            out = Path(tmp) / "out"
+            rows = extract_bundle.walk(str(src.parent), str(out), None)
+            txt = out / (name + ".txt")
+            return rows[0][2], txt.read_text(encoding="utf-8") if txt.exists() else ""
+
+    def test_xls_cells_are_rendered_by_type(self):
+        try:
+            import xlrd  # noqa: F401
+        except ImportError:
+            self.skipTest("xlrd 미설치")
+        status, text = self._walk("산출내역서.xls", (FIXTURES / "cost_sheet.xls").read_bytes())
+        self.assertTrue(status.startswith("OK"), status)
+        self.assertIn("===SHEET 개발비===", text)
+        self.assertIn("분석설계 | 1000000 | 2 | 1100000 | 2026-11-02 | TRUE", text)
+        self.assertIn("VAT | 0.3 |  | #DIV/0!", text)
+
+    def test_xls_named_ooxml_is_read_as_xlsx(self):
+        try:
+            import openpyxl
+        except ImportError:
+            self.skipTest("openpyxl 미설치")
+        with tempfile.TemporaryDirectory() as tmp:
+            real = Path(tmp) / "real.xlsx"
+            wb = openpyxl.Workbook()
+            wb.active.append(["항목", "금액"])
+            wb.save(real)
+            data = real.read_bytes()
+        status, text = self._walk("산출내역서.xls", data)
+        self.assertTrue(status.startswith("OK"), status)
+        self.assertIn("항목 | 금액", text)
+
+    def test_xls_named_html_is_copied_as_text(self):
+        status, text = self._walk("산출내역서.xls", "<html><table><tr><td>금액</td></tr></table></html>".encode())
+        self.assertTrue(status.startswith("OK"), status)
+        self.assertIn("<td>금액</td>", text)
+
+
 if __name__ == "__main__":
     unittest.main()
