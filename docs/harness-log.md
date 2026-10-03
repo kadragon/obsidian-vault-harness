@@ -6,6 +6,7 @@
 
 | Date | Change | Predicted impact | Verified |
 |------|--------|------------------|----------|
+
 | 2026-09-23 | `gwaeop-simui/scripts/merge_sign_bundle.py` 신설 + `tests/test_merge_sign_bundle.py`(7건) — 위원별 전자서명 통합본 병합(한글 COM InsertFile)·`hp:p` id 중복 해소·값 교체·validate. `과업심의_프로세스.md` Step 7-2에서 호출. 9차 윤인자 통합본 재현 시 텍스트 노드 차이는 사용자 수기 입력 직위 2곳뿐 | 다음 회차 Step 7-2가 위원당 스크립트 1회 호출로 끝나고, 수동 COM 스크립트 작성·`Duplicate hp:p IDs` INVALID·빈 쪽 재작업이 트랜스크립트에 0건 | pending |
 | 2026-09-21 | `report-draft` 고도화 — 공공 작성법(행정업무규정 제7조·시행규칙 제2조, 대통령비서실 「보고서 작성 매뉴얼」, 국립국어원)·공개 스킬 3종 조사 반영: 유형별 골격 7종, 결론 먼저·요청 사항 명시(§0), 제출 전 점검표 C1~C10(§8), lint R7~R13(요일·24시각·수사·80자·모호어·미기입·`**` 짝), 붙임 이후 검사 제외, R6 라벨 스코프 오탐 수정. 3케이스 비교 통과율 기존 50% → 신규 92% | 다음 검토·결과 보고 요청에서 첫 `□`에 결론·요청 사항이 들어가고, 실보고서 lint에서 `[붙임]` 서식·`○ 성과` 라벨 오탐 FAIL 0건 | pending |
 | 2026-09-21 | `report-draft` 신규 스킬 — 개조식 보고서 작성(A)·수정(B), `lint_report.py`(R1~R6), kr-style 윤문 필수 게이트(G2). `AGENTS.md`·`docs/delegation.md`·`docs/runbook.md`에 등록 | 다음 보고서 요청에서 발화하고, 같은 턴에 `lint_report.py`와 `prod:kr-style` 호출이 따라 나온다. 사용자가 번호 목록→□, 현황의 대안 문구 삭제, 향후 계획 연도 명시를 다시 지적하는 경우 0건 | pending |
