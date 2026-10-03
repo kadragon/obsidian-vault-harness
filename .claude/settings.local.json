@@ -1,7 +1,6 @@
 {
   "permissions": {
     "allow": [
-      "mcp__plugin_supabase_supabase__execute_sql",
       "Skill(codex:rescue)",
       "Bash(ls:*)",
       "Bash(chmod +x:*)",
@@ -29,8 +28,5 @@
         ]
       }
     ]
-  },
-  "enabledPlugins": {
-    "insane-search@gptaku-plugins": true
   }
 }
