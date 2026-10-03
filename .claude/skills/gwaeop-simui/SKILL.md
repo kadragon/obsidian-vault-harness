@@ -85,7 +85,7 @@ python3 .claude/skills/gwaeop-simui/scripts/extract_bundle.py "<심의자료 폴
 
 - `.hwpx` → prod:hwpx `text.py extract -f markdown` (표 포함) · `.hwp` → olefile 본문 텍스트 (표 구조 없음)
 - `.pdf` → 텍스트 레이어 추출, 페이지 단위 판정 — 전면 스캔 `SCANNED`, 일부 페이지만 이미지면 `OK+OCR`
-- `.xlsx`/`.xlsm` → 시트별 셀 값 (수식은 저장된 계산값)
+- `.xlsx`/`.xlsm`/`.xls` → 시트별 셀 값 (수식은 저장된 계산값, `.xls`는 xlrd 필요 — 이름만 `.xls`인 xlsx·HTML 표도 내용으로 판별)
 - `.zip` → 풀어서 재귀 처리
 - 결과: 파일별 `.txt` + `INDEX.md`(파일 목록·크기·추출 상태)
 
