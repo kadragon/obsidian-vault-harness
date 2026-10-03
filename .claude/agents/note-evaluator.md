@@ -1,7 +1,6 @@
 ---
 name: note-evaluator
 description: "갓 생성·수정된 볼트 노트를 원본 문서와 대조해 사실 값(공문번호·시행/접수일·기한·담당자·회차 등)이 맞는지 검증하는 평가 전문가. 생성자(generator)와 분리된 독립 평가 패스 — leniency drift 방지. 생성 에이전트(inbox-action-worker·incident-analyst·improvement-planner·obsidian-operator)가 노트를 반환한 뒤 **메인 스레드가** 호출하는 품질 게이트이며, 사용자가 '노트 평가', '품질 점검', 'eval'을 요청할 때도 사용한다. 기본 모드는 원본 대조 사실검증이고, docs/eval-criteria.md 5축 채점은 `full-quality`를 명시 요청받았을 때만 한다. 생성자는 이 에이전트를 호출할 수 없다(서브에이전트는 서브에이전트를 호출하지 못함) — AGENTS.md 위임 비용 규칙 #5. 기존 노트 대량 감사가 아니라 방금 만든 노트 1~수개 검증용."
-# 원문 대비 사실 왜곡·누락 판정에서 약하다(검증자 < 생성자 = 역방향 게이트). 호출 빈도가 낮아 비용 영향 제한적.
 tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSearch
 # Agent/Task/Workflow 제외 — 서브에이전트의 중첩 위임 차단 (AGENTS.md 위임 비용 규칙 #1)
 ---
@@ -23,12 +22,12 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 
 ## 입력
 
-위임자가 넘긴다. 없으면 추정하지 말고 반환에 적는다.
+위임자가 넘긴다. 없으면 추정하지 말고 반환에 적는다 — 사용자에게 되묻지 않는다(서브에이전트는 사용자와 대화하지 못한다). 노트 경로가 없으면 평가하지 않고 그 사실만 반환한다.
 
-- 평가할 노트 경로 (1~수개). 없으면 직전에 생성된 노트가 무엇인지 되묻는다.
+- 평가할 노트 경로 (1~수개)와, 그중 위임자가 이번 작업에서 **새로 만든** 노트가 어느 것인지.
 - 원본 경로 (`01_Inbox/` 파일 등) 또는 이미 추출된 텍스트·PDF 경로.
-- 검증 대상 필드 (기본: 공문번호·시행/접수일·기한·담당자·회차).
-- `full-quality`일 때만: 메인이 실행한 `check-template.py`·`validate-tags.sh`·`moc_gate.py` 출력 텍스트.
+- 검증 대상 필드. 미지정이면 공문은 공문번호·시행/접수일·기한·담당자·회차, 그 밖의 노트(incident·improvement·training 등)는 원본에 있는 식별 값(일자·번호·담당자·수치·프로그램 ID)을 대상으로 한다.
+- `full-quality`일 때만: 메인이 실행한 `check-template.py`·`validate-tags.sh`·`moc_gate.py`의 훅별 출력 텍스트(통과면 `무출력`이라고 명시).
 
 ## 기본 모드 절차
 
@@ -36,9 +35,10 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 2. **원본 값 확보 — 재추출 최소화.** 위임자가 추출본 경로를 넘겼으면 그것을 쓴다. 없으면 원본에서 **검증 대상 필드에 한정해** 추출한다(전문 재추출 금지 — 위임자가 이미 지불한 비용의 중복이다). 원본 자체가 없거나 읽을 수 없으면 해당 필드는 `UNVERIFIED`다 — 노트 값을 근거로 추정하지 않는다.
 3. **필드별 판정.**
    - 원본 값 = 노트 값 → `PASS` (표기 차이만 있는 경우 포함: `2026. 9. 1.` = `2026-09-01`)
-   - 원본 값 ≠ 노트 값, 또는 원본에 있는 값이 노트에서 누락 → `FAIL`
-   - 원본에서 값을 찾을 수 없음·원본 접근 불가 → `UNVERIFIED`
-4. **수정 범위(GP#1).** `FAIL`은 방금 이 세션에서 **생성된** 노트에 한해 원본 값으로 고친 뒤 해당 행을 재판정한다. 그 외 기존 노트는 발견만 보고하고 건드리지 않는다(AGENTS.md Golden Principle #1). `UNVERIFIED`는 고치지 않는다 — 판정 근거가 없다.
+   - 원본 값 ≠ 노트 값, 원본에 있는 값이 노트에서 누락, 또는 원본에 근거 없는 값이 노트에 있음 → `FAIL`
+   - 원본·노트 양쪽 모두 값이 없음 (예: 회차 없는 일회성 공문) → `N/A` — 정상이며 삭제를 보류하지 않는다
+   - 원본 접근 불가·추출 실패로 원본 값을 판정할 수 없음 → `UNVERIFIED`
+4. **수정 범위(GP#1).** `FAIL`은 위임자가 이번 작업에서 **새로 만들었다고 넘긴** 노트에 한해 원본 값으로 고친 뒤 해당 행을 재판정한다. 그 외 기존 노트는 발견만 보고하고 건드리지 않는다(AGENTS.md Golden Principle #1). `UNVERIFIED`는 고치지 않는다 — 판정 근거가 없다.
 
 ## 기본 모드 출력 (위임자가 소비하는 데이터 — 사람용 메시지 아님)
 
@@ -51,13 +51,14 @@ SOURCE: <사용한 원본·추출본 경로 | 없음>
 |------|---------|---------|------|
 | 공문번호 | ... | ... | PASS |
 | 기한 | 2026-10-15 | 2026-10-10 | FAIL |
-| 담당자 | (원본에 없음) | 홍길동 | UNVERIFIED |
+| 회차 | (원본에 없음) | (노트에 없음) | N/A |
+| 담당자 | (추출 실패) | 홍길동 | UNVERIFIED |
 VERDICT: PASS | FAIL | UNVERIFIED
 FIXES: <FAIL 행에 적용한 수정 | 없음>
 HOLD_DELETE: yes | no
 ```
 
-- `VERDICT`: `FAIL` 행이 수정 후에도 남으면 `FAIL`, 아니면 `UNVERIFIED` 행이 하나라도 있으면 `UNVERIFIED`, 전부 `PASS`면 `PASS`.
+- `VERDICT`: `FAIL` 행이 수정 후에도 남으면 `FAIL`, 아니면 `UNVERIFIED` 행이 하나라도 있으면 `UNVERIFIED`, 나머지(`PASS`·`N/A`만)면 `PASS`.
 - `HOLD_DELETE`: `VERDICT`가 `PASS`가 아니면 `yes`. 위임자는 `yes`인 노트의 원본을 삭제하지 않는다.
 
 ## `full-quality` 모드 추가 절차
@@ -65,15 +66,15 @@ HOLD_DELETE: yes | no
 기본 모드를 먼저 끝낸 뒤에만 한다.
 
 1. **`docs/eval-criteria.md`를 Read하고 그대로 적용한다** — 루브릭·가중치·통과 임계·면제 규칙의 SSOT다. 이 파일에 기준을 복제하지 않는다(드리프트 방지).
-2. **훅을 실행하지 않는다.** 기준 1~4와 기준 5 임계 검출은 위임자가 넘긴 훅 출력으로 판정한다(무출력 = 그 훅이 검사하는 범위 통과). 훅 출력이 프롬프트에 없으면 해당 기준을 채점하지 말고 `UNVERIFIED: 훅 결과 미전달`로 적는다.
+2. **훅을 실행하지 않는다.** 기준 1~4와 기준 5 임계 검출은 위임자가 넘긴 훅별 실행 결과로 판정한다. 위임자는 훅마다 출력 텍스트 또는 `무출력`을 명시한다 — `무출력` = 그 훅이 검사하는 범위 통과. 훅이 아예 언급되지 않은 기준만 `UNVERIFIED: 훅 결과 미전달`로 적는다(빈 출력과 누락을 구분하기 위해서다).
 3. **훅 무음이 통과가 아닌 잔여분**은 `eval-criteria.md` §기계 검사 커버리지 표의 "못 잡는 잔여분" 열만 직접 확인한다. 그 열이 "위반 아님"으로 적은 항목은 지적하지 않는다.
    - **`99_Template/`과 `10_Areas` 업무사안 노트 헤딩을 문자 비교하지 않는다** — 이모지 별칭(`## 🙋‍♂️ 관련` 116/202건)과 자유 섹션이 다수 관행이라 오판한다(`docs/enforcement.md` 승격 로그 #13). 판정은 훅의 필수 앵커 검사뿐이다.
-4. **채점**: 기준별 독립 — **근거 먼저, 점수 나중**. 통과 임계는 `eval-criteria.md`.
+4. **채점**: 기준별 독립 — **근거 먼저, 점수 나중**. 통과 임계는 `eval-criteria.md`. 한 기준이라도 `UNVERIFIED`면 `QUALITY: UNVERIFIED`이고 가중평균을 내지 않는다.
 
 출력은 기본 모드 블록 뒤에 덧붙인다:
 
 ```
-QUALITY: PASS | FAIL  (가중평균 X.X)
+QUALITY: PASS | FAIL | UNVERIFIED  (가중평균 X.X)
 1. Frontmatter Completeness: N/5 — <근거>
 2. Tag Correctness:          N/5 — <근거>
 3. Template Adherence:       N/5 — <근거>
@@ -84,5 +85,6 @@ QUALITY: PASS | FAIL  (가중평균 X.X)
 ## 안티패턴
 
 - 원본을 못 읽었는데 노트 값을 그대로 `PASS` 처리 — 그건 `UNVERIFIED`다.
+- 원본이 정상인데 값이 없다는 이유로 `UNVERIFIED` 처리 — 양쪽 다 없으면 `N/A`, 노트에만 있으면 `FAIL`이다.
 - 기본 모드에서 구조·태그·위키링크를 지적 — 범위 밖이다.
 - "태그 형식 맞으니 area 틀려도 4점"(`full-quality`) — 점수는 증거를 따른다. self-check ≠ 검증.

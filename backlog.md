@@ -7,6 +7,12 @@
 - [ ] [debt] `extract_bundle.py` 의 `SKIP` 집합이 `.xlsx`·`.xls` 를 버려 산출내역서가 스프레드시트로 제출되면 금액·수량·VAT 근거가 번들 추출물에 남지 않는다 — 스프레드시트 추출 경로를 추가하거나 대체 리더를 명시 (source: codex) — `.claude/skills/gwaeop-simui/scripts/extract_bundle.py:23`
 - [ ] [harness] Read 도구가 PDF를 못 읽는 근본 원인은 poppler(`pdftoppm`) 미설치다. 문서로 우회(PyMuPDF 경유)했을 뿐이므로 poppler 설치로 근본 해소할지 결정 (source: code-review) — 볼트 전역
 
+### PR #25 — [REFACTOR] make note-evaluator default to source fact-check table (2026-10-03)
+
+- [ ] [debt] `eval-criteria.md` Evaluator Protocol(기준 5 MOC 확인·잔여분 직접 확인·재평가 루프)과 :113/:117(평가자가 `14_Changes`·`20_Training` 섹션 구조를 직접 대조)이 옛 평가자 계약을 서술한다. 기본 모드 평가자는 구조를 보지 않으므로 incident·improvement·training 노트의 섹션 구조 확인 주체를 메인 스레드로 명시해야 한다 — 3-policy-ssot와 함께 처리 (source: code-review) — `docs/eval-criteria.md:113-127`
+- [ ] [debt] `docs/delegation.md:35`가 `20_Training/`의 `#업무/` 부재를 메인 확인 항목으로 나열해 `eval-criteria.md` "위반 아님"과 충돌한다. `runbook.md:139`는 `note-evaluator`를 `moc_gate.py` 호출자로, `:154`는 평가자를 "품질 게이트 (eval-criteria.md)"로 적어 새 계약과 어긋난다. full-quality 호출자가 훅별 결과를 넘겨야 한다는 사실도 위임 문서에 없다 (source: code-review) — `docs/delegation.md:35` · `docs/runbook.md:139,154`
+- [ ] [verify] 새 평가자 계약의 실제 호출 1회 관찰 검증(spec Testing Decisions) — 에이전트 정의가 세션 시작 시 로드돼 같은 세션에서는 관찰 불가. 다음 inbox 처리에서 3-b 호출 시 표·`VERDICT`·`HOLD_DELETE` 반환 여부 확인 (source: task-next) — `.claude/agents/note-evaluator.md`
+
 ## 3-policy-ssot — 임베드·기존 본문 갱신 정책 SSOT 정리
 
 - [ ] [FIX] 충돌 정책 2건에 소유 문서를 하나씩 정하고 나머지는 참조만 남긴다. (a) `eval-criteria.md:74-81` Wikilink Style binary 채점 대상을 **노트 임베드로 한정**해 `AGENTS.md` GP#2가 허용하는 첨부 `![[...]]`를 감점에서 제외(가중치·임계 불변). (b) `reference-branch.md:97`(기존 페이지 갱신 요구) ↔ `inbox-reference-worker.md:54`(얇은 링크 추가만) 모순을 GP#1 문장 참조로 일원화 (source: 같은 spec Solution §정책 SSOT 정리) — `docs/eval-criteria.md:74-81` · `.claude/skills/inbox-process/references/reference-branch.md:97` · `.claude/agents/inbox-reference-worker.md:54`
