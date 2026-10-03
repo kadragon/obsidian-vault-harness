@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import io
 import os
 import shutil
 import subprocess
@@ -28,6 +29,32 @@ SKIP = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff",
 XLSX = {".xlsx", ".xlsm"}
 
 
+def _cell_text(v) -> str:
+    """셀 값 하나를 문자열로. 정수값 float 은 1000000.0 → 1000000, 나머지는 0.1+0.2 같은 이진 노이즈를 15자리에서 자른다."""
+    if v is None:
+        return ""
+    if isinstance(v, bool):
+        return "TRUE" if v else "FALSE"
+    if isinstance(v, float):
+        return str(int(v)) if v.is_integer() else f"{v:.15g}"
+    return str(v)
+
+
+def _write_sheets(sheets, dst: str) -> str:
+    """(시트명, 행 리스트) 반복자를 `===SHEET 이름===` + `셀 | 셀` 행 텍스트로 쓴다. 빈 행은 버린다."""
+    parts = []
+    for title, rows in sheets:
+        parts.append(f"\n===SHEET {title}===")
+        for row in rows:
+            cells = [_cell_text(c) for c in row]
+            if any(c.strip() for c in cells):
+                parts.append(" | ".join(cells).rstrip(" |"))
+    body = "\n".join(parts)
+    with open(dst, "w", encoding="utf-8") as fh:
+        fh.write(body)
+    return "OK (값만 — 서식·병합 없음)" if body.strip() else "EMPTY"
+
+
 def extract_xlsx(src: str, dst: str) -> str:
     """산출내역서 등 엑셀 파일을 시트별 `셀 | 셀` 행 텍스트로. 수식 셀은 저장된 계산값, 없으면 수식 그대로."""
     try:
@@ -35,49 +62,62 @@ def extract_xlsx(src: str, dst: str) -> str:
     except ImportError:
         return "SKIP (openpyxl 미설치)"
     try:
-        values = openpyxl.load_workbook(src, data_only=True, read_only=True)
-        formulas = openpyxl.load_workbook(src, data_only=False, read_only=True)
+        # 경로 대신 바이트를 넘긴다 — openpyxl 은 경로의 확장자가 .xls 면 내용과 무관하게 거부한다.
+        with open(src, "rb") as fh:
+            data = fh.read()
+        values = openpyxl.load_workbook(io.BytesIO(data), data_only=True, read_only=True)
+        formulas = openpyxl.load_workbook(io.BytesIO(data), data_only=False, read_only=True)
     except Exception as exc:                          # noqa: BLE001 - 손상 파일 방어
         return f"ERROR: {exc}"[:120]
-    parts = []
-    for ws_v, ws_f in zip(values.worksheets, formulas.worksheets):
-        parts.append(f"\n===SHEET {ws_v.title}===")
-        for row_v, row_f in zip(ws_v.iter_rows(values_only=True), ws_f.iter_rows(values_only=True)):
-            cells = ["" if v is None and f is None else str(f if v is None else v)
-                     for v, f in zip(row_v, row_f)]
-            if any(c.strip() for c in cells):
-                parts.append(" | ".join(cells).rstrip(" |"))
-    values.close()
-    formulas.close()
-    body = "\n".join(parts)
-    with open(dst, "w", encoding="utf-8") as fh:
-        fh.write(body)
-    return "OK (값만 — 서식·병합 없음)" if body.strip() else "EMPTY"
+    try:
+        return _write_sheets(
+            ((ws_v.title, ([f if v is None else v for v, f in zip(row_v, row_f)]
+                           for row_v, row_f in zip(ws_v.iter_rows(values_only=True),
+                                                   ws_f.iter_rows(values_only=True))))
+             for ws_v, ws_f in zip(values.worksheets, formulas.worksheets)),
+            dst,
+        )
+    finally:
+        values.close()
+        formulas.close()
 
 
 def extract_xls(src: str, dst: str) -> str:
-    """레거시 .xls(BIFF) 산출내역서를 extract_xlsx 와 같은 형식으로. xlrd 는 저장된 계산값만 준다."""
+    """레거시 .xls 를 extract_xlsx 와 같은 형식으로. 확장자만 .xls 인 파일도 흔하다 —
+    이름만 바꾼 .xlsx(PK 시그니처)는 openpyxl 로, 시스템이 내보낸 HTML 표는 텍스트로 복사한다."""
+    with open(src, "rb") as fh:
+        head = fh.read(512)
+    if head.startswith(b"PK\x03\x04"):
+        return extract_xlsx(src, dst)
+    if b"<html" in head.lower() or b"<table" in head.lower():
+        shutil.copyfile(src, dst)
+        return "OK (HTML 표 — 복사)"
     try:
         import xlrd
     except ImportError:
         return "SKIP (xlrd 미설치)"
     try:
-        book = xlrd.open_workbook(src, on_demand=True)
+        # on_demand 없이 연다 — 시트 파싱 오류가 이 try 안에서 터지고, 파일 핸들도 즉시 닫힌다.
+        book = xlrd.open_workbook(src)
     except Exception as exc:                          # noqa: BLE001 - 손상 파일 방어
         return f"ERROR: {exc}"[:120]
-    parts = []
-    for sheet in book.sheets():
-        parts.append(f"\n===SHEET {sheet.name}===")
-        for i in range(sheet.nrows):
-            # xlrd 는 숫자를 모두 float 로 준다 — 정수값은 1000000.0 이 아니라 1000000 으로.
-            cells = [str(int(v)) if isinstance(v, float) and v.is_integer() else str(v)
-                     for v in sheet.row_values(i)]
-            if any(c.strip() for c in cells):
-                parts.append(" | ".join(cells).rstrip(" |"))
-    body = "\n".join(parts)
-    with open(dst, "w", encoding="utf-8") as fh:
-        fh.write(body)
-    return "OK (값만 — 서식·병합 없음)" if body.strip() else "EMPTY"
+
+    def typed(sheet, i):
+        out = []
+        for j, v in enumerate(sheet.row_values(i)):
+            t = sheet.cell_type(i, j)
+            if t == xlrd.XL_CELL_DATE:
+                d = xlrd.xldate_as_datetime(v, book.datemode)
+                v = d.date().isoformat() if d.time() == d.min.time() else d.isoformat(sep=" ")
+            elif t == xlrd.XL_CELL_BOOLEAN:
+                v = bool(v)
+            elif t == xlrd.XL_CELL_ERROR:
+                v = xlrd.error_text_from_code.get(v, f"#ERR{v}")
+            out.append(v)
+        return out
+
+    return _write_sheets(
+        ((sh.name, (typed(sh, i) for i in range(sh.nrows))) for sh in book.sheets()), dst)
 
 HWPX_GLOBS = [
     os.path.expanduser("~/.claude/plugins/marketplaces/*/prod/skills/hwpx/scripts/text.py"),
@@ -345,6 +385,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\n인덱스: {index}")
     if scanned:
         print(f"** OCR 대상 {len(scanned)}건 (스캔본·혼재본) — OCR 또는 이미지 판독 필요")
+    if any(str(r[2]).startswith("SKIP (xlrd") for r in rows):
+        print("** .xls 추출 생략 — xlrd 미설치. `pip install xlrd` 후 재실행 (산출내역서 금액 근거 누락)")
     if needs_hwpx:
         print(f"** 레거시 .hwp {len(needs_hwpx)}건 — .hwpx 로 변환 후 재실행")
     return 0
