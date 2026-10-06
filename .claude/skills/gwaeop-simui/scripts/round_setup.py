@@ -90,11 +90,14 @@ def load_round(round_dir: Path) -> Round:
     if not cfg_path.is_file():
         sys.exit(f"_round.json 없음: {cfg_path}")
     c = json.loads(cfg_path.read_text(encoding="utf-8"))
-    members = tuple(Member(m["name"], m["org"], m.get("position", ""), bool(m.get("consent", False))) for m in c["members"])
-    projects = tuple(Project(p["id"], p["title"], p["dept"], bool(p["period"])) for p in c["projects"])
+    errs = []
+    flags = [(f"members[{m['name']}].consent", m.get("consent", False)) for m in c["members"]]
+    flags += [(f"projects[{p['id']}].period", p["period"]) for p in c["projects"]]
+    errs += [f"{k}는 true/false여야 함: {v!r}" for k, v in flags if not isinstance(v, bool)]
+    members = tuple(Member(m["name"], m["org"], m.get("position", ""), m.get("consent", False)) for m in c["members"])
+    projects = tuple(Project(p["id"], p["title"], p["dept"], p["period"]) for p in c["projects"])
     r = Round(round_dir, int(c["round"]), dt.date.fromisoformat(c["review_start"]),
               dt.date.fromisoformat(c["review_end"]), c["chair"], members, projects)
-    errs = []
     names = [m.name for m in members]
     if len(set(names)) != len(names):
         errs.append("members.name 중복")
@@ -307,7 +310,8 @@ def cmd_generate(a) -> int:
             res = run_py(hx / "validate.py", "validate", t, "--baseline", FORMS / f"{FORM_OF[d.kind]}.hwpx")
             if res.returncode:
                 fails += 1
-                print(f"INVALID {t.name}\n{res.stdout}{res.stderr}")
+                t.unlink()  # INVALID 파일을 남기면 텍스트 기반 verify가 통과시킨다
+                print(f"INVALID {t.name} (삭제)\n{res.stdout}{res.stderr}")
     print(f"generate: {len(targets)}건 → {out_root}" + ("" if hx else " (validate 생략)") + (f", INVALID {fails}건" if fails else ""))
     return 1 if fails else 0
 
@@ -362,9 +366,11 @@ def check_doc(r: Round, d: Doc, texts: list[str]) -> list[str]:
         need(f"발주부서 {p.dept}", p.dept in stripped)
         need(f"번호 {p.id}", p.id in stripped)
         need(f"심의기간 {krange(r.start, r.end)}", krange(r.start, r.end) in stripped)
-        need(f"하단 날짜 {kdate(r.end)}", kdate(r.end) in stripped)
+        # 당일 심의면 심의기간 문단도 kdate(r.end)라 개수로 하단 날짜를 따로 확인
+        need(f"하단 날짜 {kdate(r.end)}", stripped.count(kdate(r.end)) == (2 if r.start == r.end else 1))
         need("승인 미체크", "[  ] 승인        [  ] 불가        [  ] 조건부 승인" in stripped)
-        need("검토의견 공란", stripped[stripped.index("[검토의견]") + 1] == "" if "[검토의견]" in stripped else False)
+        i = stripped.index("[검토의견]") + 1 if "[검토의견]" in stripped else len(stripped)
+        need("검토의견 공란", i < len(stripped) and stripped[i] == "")
         need(f"위원 서명란 {k}칸", stripped.count("위       원") == k)
         need("위원장 서명란 1칸", stripped.count("위   원   장") == 1)
         need(f"위원장 {spaced(r.chair)}", spaced(r.chair) in stripped)
@@ -411,8 +417,9 @@ def bundle_parts(r: Round, m: Member) -> list[Doc]:
 def cmd_bundle(a) -> int:
     r = load_round(a.round_dir)
     who = [m for m in r.members if not a.member or m.name in a.member]
-    if a.member and len(who) != len(a.member):
-        sys.exit(f"members에 없는 이름: {set(a.member) - {m.name for m in who}}")
+    unknown = set(a.member or ()) - {m.name for m in r.members}
+    if unknown:
+        sys.exit(f"members에 없는 이름: {unknown}")
     rc = 0
     if a.out:
         a.out.mkdir(parents=True, exist_ok=True)
@@ -470,13 +477,17 @@ def expand(src: Path, work: Path) -> list[Path]:
         t = work / f.name
         shutil.copy2(f, t)
         files.append(t)
-    conv = find_hwpx_scripts() / "convert_hwp.ps1"
     out = []
     for f in files:
         if f.suffix.lower() == ".hwp":
-            res = subprocess.run(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(conv), "-Path", str(f)],
+            # 별도 폴더에서 변환 — 같은 이름 .hwpx가 옆에 있으면 convert_hwp.ps1이 덮어쓰기를 거부한다
+            iso = work / "_hwp" / f.name
+            iso.parent.mkdir(exist_ok=True)
+            f.replace(iso)
+            conv = find_hwpx_scripts() / "convert_hwp.ps1"
+            res = subprocess.run(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(conv), "-Path", str(iso)],
                                  capture_output=True, text=True, encoding="utf-8", errors="replace")
-            h = f.with_suffix(".hwpx")
+            h = iso.with_suffix(".hwpx")
             if res.returncode or not h.exists():
                 sys.exit(f"hwp 변환 실패: {f.name}\n{res.stderr}")
             out.append(h)
@@ -486,20 +497,28 @@ def expand(src: Path, work: Path) -> list[Path]:
 
 
 def comparable_text(f: Path) -> list[str] | None:
+    """비교용 줄 목록. 추출 실패·빈 추출은 None — 빈 목록끼리 SAME(text)로 판정되지 않게."""
     s = f.suffix.lower()
+    lines: list[str] = []
     if s == ".hwpx":
-        hx = find_hwpx_scripts()
-        res = run_py(hx / "text.py", "extract", f, "--include-tables")
-        return [l.rstrip() for l in res.stdout.splitlines() if l.strip()]
-    if s == ".pdf":
+        res = run_py(find_hwpx_scripts() / "text.py", "extract", f, "--include-tables")
+        if res.returncode:
+            return None
+        lines = [l.rstrip() for l in res.stdout.splitlines() if l.strip()]
+    elif s == ".pdf":
         try:
             from pypdf import PdfReader
         except ImportError:
             return None
         d = f.read_bytes()
-        d = d[d.find(b"%PDF"): d.rfind(b"%%EOF") + 5]  # 핸디소프트 결재 컨테이너 대응
-        return [l for pg in PdfReader(io.BytesIO(d)).pages for l in (pg.extract_text() or "").splitlines() if l.strip()]
-    return None
+        start, end = d.find(b"%PDF"), d.rfind(b"%%EOF")
+        if start != -1 and end != -1:
+            d = d[start: end + 5]  # 핸디소프트 결재 컨테이너 대응
+        try:
+            lines = [l for pg in PdfReader(io.BytesIO(d)).pages for l in (pg.extract_text() or "").splitlines() if l.strip()]
+        except Exception:  # 손상·암호화 PDF — 바이트 비교만
+            return None
+    return lines or None
 
 
 def sha(f: Path) -> str:

@@ -10,11 +10,13 @@ import datetime as dt
 import importlib.util
 import io
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest import mock
 
 HERE = Path(__file__).resolve()
 SCRIPT = HERE.parent.parent / "scripts" / "round_setup.py"
@@ -99,6 +101,13 @@ class PlanTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 rs.load_round(write_round(Path(td) / "c", members=MEMBERS5[:1]))
 
+    def test_non_boolean_flags_exit(self):
+        with tempfile.TemporaryDirectory() as td:
+            with self.assertRaises(SystemExit):
+                rs.load_round(write_round(Path(td) / "a", projects=[dict(PROJECTS[0], period="false")]))
+            with self.assertRaises(SystemExit):
+                rs.load_round(write_round(Path(td) / "b", members=[dict(MEMBERS5[0], consent="false"), *MEMBERS5[1:]]))
+
 
 class GenerateVerifyTests(unittest.TestCase):
     def run_round(self, members):
@@ -164,12 +173,112 @@ class GenerateVerifyTests(unittest.TestCase):
         self.assertNotIn("<hp:t></hp:t>", xml)
         self.assertNotIn("{{", xml)
 
+    def test_same_day_round_checks_bottom_date_separately(self):
+        td = tempfile.TemporaryDirectory()
+        self.addCleanup(td.cleanup)
+        rd = write_round(Path(td.name) / "r", start="2026-10-08", end="2026-10-08")
+        self.assertEqual(quiet(rs.main, ["generate", str(rd), "--no-validate"])[0], 0)
+        self.assertEqual(quiet(rs.main, ["verify", str(rd)])[0], 0)
+        f = rd / "2026-036" / "2026-036_3_과업내용 확정 종합 심의 결과서.hwpx"
+        with zipfile.ZipFile(f) as z:
+            entries = [(i, z.read(i)) for i in z.infolist()]
+        with zipfile.ZipFile(f, "w") as z:
+            for i, data in entries:
+                if i.filename == "Contents/section0.xml":
+                    s = data.decode()
+                    at = s.rfind("2026년 10월 8일")
+                    data = (s[:at] + "2026년 10월 9일" + s[at + len("2026년 10월 8일"):]).encode()
+                z.writestr(i, data, compress_type=i.compress_type)
+        rc, out = quiet(rs.main, ["verify", str(rd)])
+        self.assertEqual(rc, 1, out)
+        self.assertIn("하단 날짜", out)
+
+    def test_review_opinion_marker_at_end_is_failure_not_crash(self):
+        with tempfile.TemporaryDirectory() as td:
+            r = rs.load_round(write_round(Path(td) / "r"))
+            d = next(d for d in rs.plan(r) if d.kind == rs.DOC_SUMMARY_RESULT)
+            self.assertIn("검토의견 공란", rs.check_doc(r, d, ["[검토의견]"]))
+
+    def test_invalid_output_is_removed(self):
+        td = tempfile.TemporaryDirectory()
+        self.addCleanup(td.cleanup)
+        rd = write_round(Path(td.name) / "r", members=MEMBERS5[:2])
+        bad = subprocess.CompletedProcess([], 1, "bad", "")
+        with mock.patch.object(rs, "find_hwpx_scripts", return_value=Path(td.name)), \
+                mock.patch.object(rs, "run_py", return_value=bad):
+            rc, _ = quiet(rs.main, ["generate", str(rd)])
+        self.assertEqual(rc, 1)
+        self.assertEqual(list(rd.rglob("*.hwpx")), [])
+
     def test_mimetype_first_and_stored(self):
         rd = self.run_round(MEMBERS5[:2])
         with zipfile.ZipFile(rd / "2026-036" / "2026-036_1_서약서_김승현.hwpx") as z:
             first = z.infolist()[0]
         self.assertEqual(first.filename, "mimetype")
         self.assertEqual(first.compress_type, zipfile.ZIP_STORED)
+
+
+class BundleArgTests(unittest.TestCase):
+    def test_repeated_valid_member_is_not_unknown(self):
+        with tempfile.TemporaryDirectory() as td:
+            rd = write_round(Path(td) / "r")
+            with self.assertRaises(SystemExit) as cm:
+                quiet(rs.main, ["bundle", str(rd), "--member", "김경미", "--member", "김경미"])
+            self.assertNotIn("members에 없는 이름", str(cm.exception))
+            with self.assertRaises(SystemExit) as cm:
+                quiet(rs.main, ["bundle", str(rd), "--member", "없는사람"])
+            self.assertIn("없는사람", str(cm.exception))
+
+
+class DiffFinalTests(unittest.TestCase):
+    def setUp(self):
+        td = tempfile.TemporaryDirectory()
+        self.addCleanup(td.cleanup)
+        self.root = Path(td.name)
+
+    def test_unreadable_or_textless_pdf_is_not_comparable(self):
+        from pypdf import PdfWriter
+        garbage = self.root / "a.pdf"
+        garbage.write_bytes(b"not a pdf")
+        self.assertIsNone(rs.comparable_text(garbage))
+        blank = self.root / "b.pdf"
+        w = PdfWriter()
+        w.add_blank_page(100, 100)
+        with blank.open("wb") as fh:
+            w.write(fh)
+        self.assertIsNone(rs.comparable_text(blank))
+
+    def test_failed_hwpx_extraction_is_not_comparable(self):
+        f = self.root / "a.hwpx"
+        f.write_bytes(b"x")
+        with mock.patch.object(rs, "find_hwpx_scripts", return_value=self.root), \
+                mock.patch.object(rs, "run_py", return_value=subprocess.CompletedProcess([], 1, "", "boom")):
+            self.assertIsNone(rs.comparable_text(f))
+
+    def test_expand_without_hwp_needs_no_plugin(self):
+        src = self.root / "src"
+        src.mkdir()
+        (src / "a.pdf").write_bytes(b"x")
+        with mock.patch.object(rs, "find_hwpx_scripts", side_effect=SystemExit("no plugin")):
+            self.assertEqual([p.name for p in rs.expand(src, self.root / "w")], ["a.pdf"])
+
+    def test_hwp_with_same_named_hwpx_sibling(self):
+        src = self.root / "src"
+        src.mkdir()
+        (src / "제안요청서.hwp").write_bytes(b"hwp")
+        (src / "제안요청서.hwpx").write_bytes(b"orig")
+
+        def fake_convert(cmd, **kw):  # mirrors convert_hwp.ps1: refuses to overwrite, then writes X.hwpx
+            target = Path(cmd[cmd.index("-Path") + 1]).with_suffix(".hwpx")
+            if target.exists():
+                return subprocess.CompletedProcess(cmd, 1, "", "Target already exists")
+            target.write_bytes(b"converted")
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+
+        with mock.patch.object(rs, "find_hwpx_scripts", return_value=self.root), \
+                mock.patch.object(rs.subprocess, "run", side_effect=fake_convert):
+            out = rs.expand(src, self.root / "w")
+        self.assertEqual(sorted(p.read_bytes() for p in out), [b"converted", b"orig"])
 
 
 if __name__ == "__main__":
