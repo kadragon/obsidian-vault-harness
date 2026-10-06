@@ -2,6 +2,10 @@
 
 ## Review Backlog
 
+### PR #27 — [HARNESS] automate gwaeop-simui round paperwork from _round.json (2026-10-07)
+
+- [ ] [debt] `bundle` reads parts from `round_dir` only, so documents made by `generate --out` cannot be bundled; `bundle --out` is the bundle destination, so a separate source option would be needed (source: code-review) — .claude/skills/gwaeop-simui/scripts/round_setup.py:426
+
 ### PR #25 — [REFACTOR] make note-evaluator default to source fact-check table (2026-10-03)
 
 - [ ] [debt] `eval-criteria.md` Evaluator Protocol(기준 5 MOC 확인·잔여분 직접 확인·재평가 루프)과 :113/:117(평가자가 `14_Changes`·`20_Training` 섹션 구조를 직접 대조)이 옛 평가자 계약을 서술한다. 기본 모드 평가자는 구조를 보지 않으므로 incident·improvement·training 노트의 섹션 구조 확인 주체를 메인 스레드로 명시해야 한다 — 3-policy-ssot와 함께 처리 (source: code-review) — `docs/eval-criteria.md:113-127`
