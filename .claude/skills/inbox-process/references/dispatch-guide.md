@@ -8,7 +8,8 @@
 |--------|----------|
 | `.txt`, `.md` | Read 앞부분(~100줄) |
 | `.pdf` | `classify_pdf.py`에 triage 대상 PDF를 한 번에 모두 넘긴 뒤, `action`이 `read`면 `read_path`를 PyMuPDF로 앞 1~2쪽만 읽고, `ocr`·`read+ocr`면 파일명·맥락으로 추정(triage에서 OCR 돌리지 않는다). 절차: `references/pdf-reading.md` |
-| `.hwpx`, `.xlsx`, `.docx` | 파싱 불가. 파일명·맥락으로 추정. 모호하면 사용자에게 문의 |
+| `.hwpx` | `python3 .claude/lib/hwpx_text.py "<파일>" --out "<tmp.md>"` → exit 0이면 `<tmp.md>` 앞부분(~100줄) Read. exit 3(`UNVERIFIED`)이면 아래 `.xlsx` 행처럼 추정 — 파이프(`\| head`)로 받지 않는다(종료 코드가 가려진다) |
+| `.xlsx`, `.docx` | 파싱 불가. 파일명·맥락으로 추정. 모호하면 사용자에게 문의 |
 | `.hwp` | 0단계에서 `.hwpx`로 사전 변환됨. 루트 triage 시 남아 있는 `.hwp`는 변환 실패 건 — 파일명·맥락으로만 추정 |
 
 ```bash
@@ -73,6 +74,8 @@ area: {판단된 area 또는 ?? (사용자 확인 필요)}
 파일:
 - {절대경로1} (맥락 힌트: ...)
 - {절대경로2}
+
+_Wiki 기존 페이지 본문 갱신 범위: yes | no  (근거: 사용자 요청 원문 인용 — 예 "위키에 반영해줘". 명시가 없으면 no)
 
 완료 후 source/wiki/active note 링크 목록 + log 엔트리 + 삭제 권고를 보고. 원본 삭제는 하지 말 것.
 ```

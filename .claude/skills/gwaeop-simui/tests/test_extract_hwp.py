@@ -7,6 +7,7 @@ Run directly (tests below ``.claude/`` are not pytest collection targets):
 from __future__ import annotations
 
 import importlib.util
+import os
 import struct
 import sys
 import tempfile
@@ -176,6 +177,51 @@ class XlsTextTests(unittest.TestCase):
         status, text = self._walk("산출내역서.xls", "<html><table><tr><td>금액</td></tr></table></html>".encode())
         self.assertTrue(status.startswith("OK"), status)
         self.assertIn("<td>금액</td>", text)
+
+
+class HwpxToolPathTests(unittest.TestCase):
+    """prod:hwpx text.py 해석 순서를 고정한다 — marketplaces 우선, 없으면 cache 최신 버전, 둘 다 없으면 None."""
+
+    MARKET = ".claude/plugins/marketplaces/kadragon/prod/skills/hwpx/scripts/text.py"
+    CACHE = ".claude/plugins/cache/kadragon/prod/{ver}/skills/hwpx/scripts/text.py"
+
+    def _resolve(self, home: Path, rels: list[str]) -> str | None:
+        for rel in rels:
+            p = home / rel
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text("", encoding="utf-8")
+        saved = {k: os.environ.get(k) for k in ("HOME", "USERPROFILE")}
+        os.environ["HOME"] = os.environ["USERPROFILE"] = str(home)
+        try:
+            # 경로를 import 시점에 펼치는 구현도 잡도록 모듈을 새로 로드한다.
+            fresh_spec = importlib.util.spec_from_file_location("extract_bundle_fresh", SCRIPT)
+            fresh = importlib.util.module_from_spec(fresh_spec)
+            fresh_spec.loader.exec_module(fresh)
+            return fresh.find_hwpx_text_py()
+        finally:
+            for k, v in saved.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+    def test_marketplaces_wins_over_cache(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            got = self._resolve(Path(tmp), [self.MARKET, self.CACHE.format(ver="0.9.0")])
+            self.assertEqual(Path(got), Path(tmp) / self.MARKET)
+
+    def test_cache_fallback_picks_latest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            got = self._resolve(Path(tmp), [self.CACHE.format(ver="0.8.0"), self.CACHE.format(ver="0.9.0")])
+            self.assertEqual(Path(got), Path(tmp) / self.CACHE.format(ver="0.9.0"))
+
+    def test_missing_tool_is_none(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertIsNone(self._resolve(Path(tmp), []))
+
+    def test_missing_tool_status_without_exception(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(extract_bundle.extract_hwpx("x.hwpx", str(Path(tmp) / "o.txt"), None), "NO_HWPX_TOOL")
 
 
 if __name__ == "__main__":
