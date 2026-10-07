@@ -41,8 +41,8 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 
 ```
 ## 삭제 권고 (action)
-- /Users/.../01_Inbox/action/공문A.pdf
-- /Users/.../01_Inbox/action/폴더B/
+- /Users/.../01_Inbox/action/공문A.pdf  (durable: 10_Areas/{area}/{YYYYMM}_{요약}/공문A.pdf)
+- /Users/.../01_Inbox/action/폴더B/붙임1.hwpx  (durable: 10_Areas/{area}/{YYYYMM}_{요약B}/붙임1.hwpx)
 ```
 
 ## 준수 규칙

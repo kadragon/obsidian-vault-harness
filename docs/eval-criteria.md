@@ -71,16 +71,16 @@ Required frontmatter by note kind (per `99_Template/_메타데이터 규칙.md` 
 
 ### 4. Wikilink Style (10%)
 
-Internal links use plain `[[노트명]]`, never `![[embed]]` unless explicitly requested.
+Internal links use plain `[[노트명]]`. 채점 대상은 **노트 임베드**(`![[노트명]]`)뿐이다 — 첨부 파일 임베드(`![[파일.pdf]]` 등 `.claude/lib/note_rules.py` `ATTACHMENT_EXT` 확장자)는 `AGENTS.md` GP#2가 허용하므로 감점하지 않는다. 규칙의 SSOT는 GP#2이고 이 기준은 그 예외를 반영할 뿐이다.
 
 | Score | Description |
 |-------|-------------|
-| 5 | No embeds; all internal links are `[[link]]` style |
-| 1 | `![[embed]]` present without explicit user request |
+| 5 | No note embeds; all internal note links are `[[link]]` style (attachment embeds allowed) |
+| 1 | Note embed `![[노트명]]` present without explicit user request |
 
-Note: Binary criterion — scores 2/3/4 not applicable. Either embeds exist (1) or they don't (5).
+Note: Binary criterion — scores 2/3/4 not applicable. Either note embeds exist (1) or they don't (5).
 
-**How to test:** Grep for `![[` in note content.
+**How to test:** `check-template.py` Check 1 (`.claude/lib/note_rules.py`) — 같은 GP#2 판정을 쓴다.
 
 ### 5. Wiki Feedback Loop (10%)
 
@@ -110,20 +110,22 @@ Below threshold → findings become fixes in same session before note is committ
 |------|-----------|-----------|
 | 1 Frontmatter | `check-template.py` Check 2·2b·2c·3 (Check 3은 incident·improvement 양쪽) | 심의 서식의 `status:` **부재**는 위반 아님(Check 2b 면제). 값이 있으면 어휘는 계속 검증한다 |
 | 2 Tag | `validate-tags.sh` → `validate_tag.py` (형식) + `check-template.py` Check 5 (`#업무/` **구체** 태그 존재 — `10_Areas`+`type: work`·`14_Changes`, 심의 서식 제외) | area 배정의 문맥 적합성. `20_Training/`의 `#업무/` 부재와 심의 서식의 `#업무/` 부재는 검사 제외이자 **위반 아님**(템플릿·서식 모두 요구하지 않음). `#부서/` 부재는 **감점 대상 아님**(선택 필드) |
-| 3 Template Adherence | `check-template.py` Check 1b·4 — **Check 4는 `10_Areas/`+`type: work`의 업무사안 **본체**(영역 루트 노트 또는 래퍼 폴더의 `_{제목}.md`) 전용 — 래퍼 폴더 안의 자식 문서(메모·수신 원문·계획서)와 `10_Areas/과업심의/`의 심의 서식(파일명 기준)은 제외** | **`14_Changes/`·`20_Training/`·`12_Projects/`·`11_Routines/` 노트의 섹션 구조는 기계 검사가 없다** — 해당 종류는 평가자가 직접 본다. 과업심의 **서식**만 앵커 검사 대상 아님(같은 폴더의 업무사안 노트는 검사됨) |
+| 3 Template Adherence | `check-template.py` Check 1b·4 — **Check 4는 `10_Areas/`+`type: work`의 업무사안 **본체**(영역 루트 노트 또는 래퍼 폴더의 `_{제목}.md`) 전용 — 래퍼 폴더 안의 자식 문서(메모·수신 원문·계획서)와 `10_Areas/과업심의/`의 심의 서식(파일명 기준)은 제외** | **`14_Changes/`·`20_Training/`·`12_Projects/`·`11_Routines/` 노트의 섹션 구조는 기계 검사가 없다** — 해당 종류는 메인 스레드가 직접 본다(`inbox-process/SKILL.md` 5단계-3-a). 과업심의 **서식**만 앵커 검사 대상 아님(같은 폴더의 업무사안 노트는 검사됨) |
 | 4 Wikilink Style | `check-template.py` Check 1 | — |
 | 5 Wiki Feedback Loop | `moc_gate.py` (임계 도달 도메인 검출) | MOC **순방향 등록** 여부 — 노트가 MOC를 링크했는지는 grep |
 
-두 훅은 `Write|Edit` PostToolUse로 자동 발동하므로, **노트를 쓴 직후 훅 경고가 없었다면 기준 1·3·4와 기준 2의 형식·`#업무/` 존재분은 이미 통과**다. **단 기준 3은 `10_Areas/`+`type: work` 노트에 한해서다** — incident·improvement·training 노트의 섹션 구조는 훅이 보지 않으므로 훅 무음이 통과가 아니고, 평가자가 해당 `99_Template/` 템플릿과 직접 대조한다(이 종류는 이모지 별칭 오탐 이력이 없다). 이 상태에서 `note-evaluator`를 부르면 훅이 한 계산을 LLM으로 재실행하는 것이고, 실측 비용은 노트 1건당 약 100k 토큰이다. **단 위 표의 "못 잡는 잔여분" 열은 훅이 무음이어도 통과가 아니다** — 형식 검증기는 값이 아예 없는 경우에 무음이 되는 것이 기본 성질이므로, 훅 무음을 전면 통과로 읽지 말 것.
+두 훅은 `Write|Edit` PostToolUse로 자동 발동하므로, **노트를 쓴 직후 훅 경고가 없었다면 기준 1·3·4와 기준 2의 형식·`#업무/` 존재분은 이미 통과**다. **단 기준 3은 `10_Areas/`+`type: work` 노트에 한해서다** — incident·improvement·training 노트의 섹션 구조는 훅이 보지 않으므로 훅 무음이 통과가 아니고, **메인 스레드가** 해당 `99_Template/` 템플릿과 직접 대조한다(이 종류는 이모지 별칭 오탐 이력이 없다). 기본 모드 평가자는 구조를 보지 않는다. 이 상태에서 `note-evaluator`를 부르면 훅이 한 계산을 LLM으로 재실행하는 것이고, 실측 비용은 노트 1건당 약 100k 토큰이다. **단 위 표의 "못 잡는 잔여분" 열은 훅이 무음이어도 통과가 아니다** — 형식 검증기는 값이 아예 없는 경우에 무음이 되는 것이 기본 성질이므로, 훅 무음을 전면 통과로 읽지 말 것.
 
 **따라서 `note-evaluator`의 고유 가치는 기계가 못 하는 것 하나뿐이다: 노트 본문 사실이 원본 문서와 일치하는지** (공문 번호·기한·담당자·회차 등). 회차성 반복 공문에서 선례를 베끼다 stale 값이 섞이는 위험이 실재하므로 이 검증은 버리지 않되, **조건부로만** 부른다 — 호출 조건은 `inbox-process/SKILL.md` 5단계.
 
 ## Evaluator Protocol
 
-1. 훅 결과 확인 → 훅이 판정한 항목은 그대로 채택한다. 재판정 금지. **단 §기계 검사 커버리지 표의 "못 잡는 잔여분" 열은 직접 확인한다** — 훅 무음이 통과를 뜻하지 않는 항목이다.
-2. 기준 5(Wiki Feedback Loop: MOC 순방향 등록)와 **원본 대조 사실검증**에 집중한다.
-3. 원본 재추출은 **사실검증 대상 필드에 한정**한다(공문번호·시행/접수일·기한·담당자·회차). 위임자가 추출 산출물 경로를 넘겼으면 그것을 재사용하되, **경로가 오는 것을 전제하지 말 것** — 워커의 반환 계약에 추출본 경로는 없고 `/tmp` 산출물은 워커가 정리했을 수 있다.
-4. Below threshold → fix and re-evaluate.
+역할 분담 — 절차·출력 형식의 SSOT는 `.claude/agents/note-evaluator.md`다. 여기서는 누가 무엇을 보는지만 정한다.
+
+1. **메인 스레드** — 훅 결과를 그대로 채택하고(재판정 금지), §기계 검사 커버리지 표의 "못 잡는 잔여분" 열을 직접 확인한다: area 적합성, 기준 5 MOC 순방향 등록, `10_Areas` 업무사안 외 노트 종류(incident·improvement·training 등)의 섹션 구조. 위치: `inbox-process/SKILL.md` 5단계-3-a.
+2. **평가자 기본 모드** — 원본 대조 사실검증만 한다. 구조·태그·MOC는 보지 않는다. 원본 재추출은 **사실검증 대상 필드에 한정**한다(공문번호·시행/접수일·기한·담당자·회차). 위임자가 추출 산출물 경로를 넘겼으면 재사용하되, **경로가 오는 것을 전제하지 말 것** — `/tmp` 산출물은 워커가 정리했을 수 있다.
+3. **평가자 `full-quality` 모드**(명시 요청 시만) — 위 5개 기준으로 채점한다. 기준 1~4·기준 5 임계는 위임자가 넘긴 훅별 결과로 판정하고, 잔여분 열만 직접 본다.
+4. Below threshold(`full-quality`) 또는 사실검증 `FAIL` → 메인 스레드가 지적 항목을 고친다(AGENTS.md 위임 비용 규칙 #5). 재평가는 고친 사실 값을 원본과 다시 대조하는 데 한정한다.
 5. All pass → note done.
 
 **Anti-pattern:** "Tag form looks fine so I'll give it a 4 even though the area is wrong." Score follows evidence, not vibes. Each criterion graded independently.

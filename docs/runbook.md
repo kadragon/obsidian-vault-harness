@@ -136,7 +136,8 @@ Scope: 10_Areas/ → 90_Archive/
 | 스크립트 | 호출처 |
 |---------|-------|
 | `.claude/lib/validate_tag.py` | `validate-tags.sh` 훅 · `incident-analyst`·`improvement-planner`·`training-note-manager` 에이전트 · `inbox-process` 스킬 · `improvement-plan` 워크플로우 |
-| `.claude/lib/moc_gate.py` | `note-evaluator` 에이전트 · `inbox-process` 스킬 · `docs/workflows.md` sweep 헬스체크 |
+| `.claude/lib/moc_gate.py` | `inbox-process` 스킬 · `docs/workflows.md` sweep 헬스체크 |
+| `.claude/lib/hwpx_text.py` | `gwaeop-simui` `extract_bundle.py` · `inbox-process` 스킬(0단계·reference 갈래) · `inbox-reference-worker` 에이전트 |
 
 소비자가 하나뿐인 스크립트는 그 자산의 `scripts/`에 남긴다 — 스킬이면 `{skill}/scripts/`
 (`reorg_archive.py`, `ocr_pdf.py`), 워크플로우면 `workflows/{name}/scripts/`
@@ -151,7 +152,7 @@ Scope: 10_Areas/ → 90_Archive/
 | `vault-navigator` | Past cases / vault search |
 | `tag-validator` | 문맥 의존 태그 판정만 — 규칙 대조는 `validate_tag.py --json` 우선 (AGENTS.md 위임 비용 규칙 #2) |
 | `obsidian-operator` | Create(템플릿)/open/프로퍼티/앱 내 JS — **기존 노트 소규모 수정은 직접 Edit** (규칙 #3) |
-| `note-evaluator` | 생성 직후 품질 게이트 (`docs/eval-criteria.md`) |
+| `note-evaluator` | 생성 직후 원본 대조 사실검증 (조건부 — `inbox-process/SKILL.md` 5단계-3-b). 5축 채점은 `full-quality` 명시 시만 |
 | `training-note-manager` | Training note cleanup |
 | `inbox-action-worker` | Sub-agent of inbox-process (action branch) |
 | `inbox-reference-worker` | Sub-agent of inbox-process (reference branch) |

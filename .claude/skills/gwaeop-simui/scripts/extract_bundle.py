@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """과업심의 자료 번들을 일괄 텍스트 추출한다.
 
-.hwpx      → prod:hwpx 플러그인의 text.py (표 포함 markdown)
+.hwpx      → prod:hwpx 플러그인의 text.py (표 포함 markdown, .claude/lib/hwpx_text.py 경유)
 .hwp       → 레거시 바이너리. 변환 필요로만 표시 (NEEDS_HWPX)
 .pdf       → PyMuPDF 텍스트 레이어. 페이지 단위로 판정해 전면 스캔본은
              SCANNED, 텍스트/이미지 혼재본은 OK+OCR 로 표시 (둘 다 OCR 대상)
@@ -14,14 +14,17 @@
 from __future__ import annotations
 
 import argparse
-import glob
 import io
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 import zipfile
+from pathlib import Path
+
+# .hwpx 도구 해석은 inbox-process reference 갈래와 공유한다.
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "lib"))
+from hwpx_text import extract_hwpx, find_text_py as find_hwpx_text_py  # noqa: E402
 
 TEXTLIKE = {".md", ".txt", ".csv", ".json", ".xml"}
 SKIP = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff",
@@ -118,42 +121,6 @@ def extract_xls(src: str, dst: str) -> str:
 
     return _write_sheets(
         ((sh.name, (typed(sh, i) for i in range(sh.nrows))) for sh in book.sheets()), dst)
-
-HWPX_GLOBS = [
-    os.path.expanduser("~/.claude/plugins/marketplaces/*/prod/skills/hwpx/scripts/text.py"),
-    os.path.expanduser("~/.claude/plugins/cache/*/prod/*/skills/hwpx/scripts/text.py"),
-]
-
-
-def find_hwpx_text_py() -> str | None:
-    """prod:hwpx 플러그인의 text.py 경로. marketplaces 우선, cache는 최신 버전."""
-    for pattern in HWPX_GLOBS:
-        hits = sorted(glob.glob(pattern))
-        if hits:
-            return hits[-1]
-    return None
-
-
-def extract_hwpx(src: str, dst: str, text_py: str | None) -> str:
-    if not text_py:
-        return "NO_HWPX_TOOL"
-    try:
-        r = subprocess.run(
-            [sys.executable, text_py, "extract", src, "-f", "markdown"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180,
-        )
-    except subprocess.TimeoutExpired:
-        return "TIMEOUT"
-    if r.returncode != 0:
-        # stderr 가 비는 실패(도구가 stdout 으로 찍거나 시그널로 죽는 경우)에도
-        # 배치 전체가 IndexError 로 중단되지 않도록 한다.
-        lines = (r.stderr or "").strip().splitlines()
-        return "ERROR: " + (lines[-1][:120] if lines else f"exit code {r.returncode}")
-    body = r.stdout or ""
-    with open(dst, "w", encoding="utf-8") as fh:
-        fh.write(body)
-    return "OK" if body.strip() else "EMPTY"
-
 
 HWPTAG_PARA_TEXT = 67
 # HWP 5.0 제어문자: 확장·인라인 컨트롤은 8 wchar(16 byte)를 차지한다. 나머지(10·13 등)는 1 wchar.

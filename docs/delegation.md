@@ -28,11 +28,11 @@ If any trigger applies, delegate first — do not proceed without it.
 | Weekly system change report needed | `change-log` skill | Date range (default: past week) |
 | Status open→closed sync needed | `status-sync` skill | — |
 | Syncthing conflict files present | `syncthing-conflict-cleanup` skill | — |
-| `.hwpx` 문서 작업 | `productivity:hwpx` skill | File path, operation type |
+| `.hwpx` 문서 작업 | `prod:hwpx` skill | File path, operation type |
 | 대외 발신 문서 초안(공문·회신·안내·업무 메일) | `knue-gongmun` skill | 근거 노트·원문 경로 |
 | 납품 산출물 검수 + 수행사 보완요구 메일 | `deliverable-review` skill | 산출물 폴더 + 과업지시서·계약서 경로 |
 | 개조식 보고서(계획(안)·추진·검토·결과 보고) 작성·수정 | `knue-report` skill | 프로젝트 폴더 또는 원본 hwpx 경로 |
-| Note created by agent (모든 생성 경로) | **메인 스레드가** 게이트 실행: 1차는 기계 검사(`check-template.py`·`validate-tags.sh`·`moc_gate.py`) + 훅이 못 잡는 잔여분 직접 확인(area 적합성·MOC 순방향 등록·`20_Training/`의 `#업무/` 부재·**`10_Areas` 업무사안 외 노트 종류의 섹션 구조**), `note-evaluator`는 **조건 해당 시에만** 호출 (조건 목록 → `inbox-process/SKILL.md` 5단계-3-b). 생성자는 자기 노트를 평가하지 않는다 (AGENTS.md 위임 비용 규칙 #5) | note path, 워커가 반환한 추출본 경로 |
+| Note created by agent (모든 생성 경로) | **메인 스레드가** 게이트 실행: 1차는 기계 검사(`check-template.py`·`validate-tags.sh`·`moc_gate.py`) + 훅이 못 잡는 잔여분 직접 확인(area 적합성·MOC 순방향 등록·**`10_Areas` 업무사안 외 노트 종류의 섹션 구조** — `20_Training/`의 `#업무/` 부재는 위반 아님), `note-evaluator`는 **조건 해당 시에만** 기본 모드(원본 대조 사실검증)로 호출 (조건 목록 → `inbox-process/SKILL.md` 5단계-3-b). `full-quality`를 명시해 부를 때는 `check-template.py`·`validate-tags.sh`·`moc_gate.py` 훅별 출력(통과면 `무출력`)을 프롬프트에 넣는다 — 평가자는 훅을 재실행하지 않는다. 생성자는 자기 노트를 평가하지 않는다 (AGENTS.md 위임 비용 규칙 #5) | note path, 워커가 반환한 추출본 경로 |
 
 ### Escalation
 
