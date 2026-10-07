@@ -430,7 +430,7 @@ def cmd_bundle(a) -> int:
                 c = Path(td) / f"consent_{m.name}.hwpx"
                 c.write_bytes(render("consent", {"회차": str(r.number), "시작일": kdate(r.start), "성명_띄움": spaced(m.name)}, 0))
                 parts.append(c)
-            parts += [r.dir / d.project.id / d.filename for d in bundle_parts(r, m)]
+            parts += [(a.src or r.dir) / d.project.id / d.filename for d in bundle_parts(r, m)]
             missing = [p for p in parts if not p.exists()]
             if missing:
                 sys.exit(f"{m.name}: 없는 파일 {missing[0]} — generate 먼저")
@@ -582,6 +582,7 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("round_dir", type=Path)
     b.add_argument("--member", action="append", help="이 위원만 (반복 가능)")
     b.add_argument("--out", type=Path, help="통합본 저장 폴더 (기본: round_dir)")
+    b.add_argument("--src", type=Path, help="generate --out으로 만든 폴더에서 서류를 읽음 (기본: round_dir)")
     b.add_argument("--pdf-dir", type=Path, help="쪽 순서 확인용 PDF 저장 폴더")
     f = sub.add_parser("diff-final", help="최종본 폴더 ↔ 심의자료 대조 (hwp 변환에 한글 필요)")
     f.add_argument("final_dir", type=Path)
