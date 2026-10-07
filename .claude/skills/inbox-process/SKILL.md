@@ -160,7 +160,7 @@ Glob으로 네 영역을 스캔: 루트(파일만), `action/`(바로 아래 폴�
      python3 .claude/skills/inbox-process/scripts/copy_verified.py verify        "<원본 절대경로>" "<durable 경로>" --vault .
      ```
 
-     exit 0인 파일만 삭제한다. 두 인자는 권고 항목의 `(durable: ...)`가 준다 — 파일명으로 추정하지 않는다. 하위 폴더 단위는 안의 파일이 전부 통과했을 때만 폴더째 삭제하고, 하나라도 실패하면 폴더 전체를 보존한다.
+     exit 0인 파일만 삭제한다. 두 인자는 권고 항목의 `(durable: ...)`가 준다 — 파일명으로 추정하지 않는다. 하위 폴더 단위는 폴더의 **실제 파일 목록**을 직접 나열해 모든 파일이 `(durable: ...)` 항목을 갖고 `verify`를 통과했을 때만 폴더째 삭제한다. 목록에 없는 파일(예: 0단계 변환 전 `.hwp`)이나 실패한 파일이 하나라도 있으면 폴더째 삭제하지 않고 통과한 파일만 지운다.
 
    공통 제외: 부분 실패·열린 질문 잔존 건, 사용자가 보존 의사를 명시한 건, `note-evaluator`가 `HOLD_DELETE: yes`를 낸 건(3-b 해제분 제외), 3-a 경고가 해소되지 않은 건, reference 갈래의 `verify-link` 실패·미실행 건(워커의 `## 미검증` 포함), action 갈래의 `verify` 실패·`durable:` 누락 건. 제외분은 최종 보고에 `UNVERIFIED: <원인>`으로 남기고 원본을 보존한다. auto-mode가 삭제를 차단하면 재시도하지 말고 대상 전체를 `AskUserQuestion` 하나로 묶어 승인 후 진행한다.
 

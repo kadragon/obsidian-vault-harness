@@ -58,6 +58,19 @@ class HwpxTextCliTests(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("# 제목", out.read_text(encoding="utf-8"))
 
+    def test_cache_fallback_sorts_versions_numerically(self):
+        self._tool(CACHE.format(ver="0.9.0"), FAIL_TOOL)
+        self._tool(CACHE.format(ver="0.10.0"), OK_TOOL)
+        r = self._run(str(self.src))
+        self.assertEqual(r.returncode, 0, r.stderr)
+
+    def test_unwritable_out_is_unverified(self):
+        self._tool(MARKET, OK_TOOL)
+        r = self._run(str(self.src), "--out", str(Path(self._tmp.name) / "없는폴더" / "x.md"))
+        self.assertEqual(r.returncode, 3)
+        self.assertIn("UNVERIFIED:", r.stderr)
+        self.assertNotIn("Traceback", r.stderr)
+
     def test_missing_tool_is_unverified_not_exception(self):
         r = self._run(str(self.src))
         self.assertEqual(r.returncode, 3)

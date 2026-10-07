@@ -78,7 +78,7 @@
 
 1. `10_Areas/{area}/`가 없으면 생성하고 `## 열린 질문`에 "신규 area '{area}' 생성함 — 확인 필요".
 2. 경로 산출 — `new_work_path.py` (아래). 첨부가 없으면 `--flat`.
-3. 첨부 복사 (첨부 있을 때만). 파일마다 `copy_verified.py copy`로 복사하고, 반환 JSON의 `relative_destination`(이름 충돌 시 `_2` 접미)을 `## 관련 문서` 링크와 6단계 삭제 권고에 그대로 쓴다. 실패한 파일은 건너뛰고 보고.
+3. 첨부 복사 (첨부 있을 때만). 파일마다 `copy_verified.py copy`로 복사하고, 반환 JSON의 `destination` 파일명(이름 충돌 시 `_2` 접미)으로 `## 관련 문서` 링크 `[[파일명]]`을 쓰고, `relative_destination`(vault 상대 전체 경로)은 6단계 삭제 권고의 `durable:`에 그대로 쓴다. 실패한 파일은 건너뛰고 보고.
 
    ```bash
    python3 .claude/skills/inbox-process/scripts/copy_verified.py copy      "<원본 절대경로>" "<folder>" --vault .
@@ -116,7 +116,7 @@ python3 .claude/skills/inbox-process/scripts/new_work_path.py \
 | `#` 제목 | `{업무 제목}` — 날짜 프리픽스 없음 (날짜는 `doc_date`) |
 | `## 관련` | 후보 `#업무/`·`#부서/{부서명}/{직급}_{이름}` 태그, 유사 노트 `[[노트명]]`, MOC 링크(4-B에서 확인된 경우만) |
 | `## 현황` | 요약 3~5줄 |
-| `## 관련 문서` | 첨부 있을 때만 `[[첨부파일.pdf]]` (embed `!` 금지). 첨부 없으면 헤딩+콜아웃 전체 생략 — 빈 `[[ ]]` 금지 |
+| `## 관련 문서` | 첨부 있을 때만 `[[첨부파일.pdf]]` — 5단계 copy가 반환한 실제 파일명(`_2` 접미 포함) (embed `!` 금지). 첨부 없으면 헤딩+콜아웃 전체 생략 — 빈 `[[ ]]` 금지 |
 | `## 할 일` | `- [ ] 내용 📅 YYYY-MM-DD ➕ YYYY-MM-DD`. 기한이 없으면 `📅`는 오늘 |
 | `## 처리 결과` | `- ` |
 

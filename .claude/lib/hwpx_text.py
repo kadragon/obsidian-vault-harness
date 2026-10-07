@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import glob
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -31,7 +32,9 @@ HWPX_GLOBS = [
 def find_text_py() -> str | None:
     """prod:hwpx 플러그인의 text.py 경로. marketplaces 우선, cache는 최신 버전."""
     for pattern in HWPX_GLOBS:
-        hits = sorted(glob.glob(os.path.expanduser(pattern)))
+        # Natural sort so cache version 0.10.0 outranks 0.9.0.
+        hits = sorted(glob.glob(os.path.expanduser(pattern)),
+                      key=lambda p: [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", p)])
         if hits:
             return hits[-1]
     return None
@@ -54,8 +57,11 @@ def extract_hwpx(src: str, dst: str, text_py: str | None) -> str:
         lines = (r.stderr or "").strip().splitlines()
         return "ERROR: " + (lines[-1][:120] if lines else f"exit code {r.returncode}")
     body = r.stdout or ""
-    with open(dst, "w", encoding="utf-8") as fh:
-        fh.write(body)
+    try:
+        with open(dst, "w", encoding="utf-8") as fh:
+            fh.write(body)
+    except OSError as exc:
+        return f"ERROR: cannot write {dst}: {exc}"[:160]
     return "OK" if body.strip() else "EMPTY"
 
 
@@ -91,7 +97,12 @@ def main(argv: list[str] | None = None) -> int:
             status = extract_hwpx(args.src, tmp, text_py)
             if status == "OK":
                 with open(tmp, encoding="utf-8") as fh:
-                    sys.stdout.write(fh.read())
+                    try:
+                        sys.stdout.write(fh.read())
+                        sys.stdout.flush()
+                    except BrokenPipeError:
+                        # Reader (e.g. `head`) closed early — not an extraction failure.
+                        sys.stdout = open(os.devnull, "w")
         finally:
             os.remove(tmp)
     if status != "OK":

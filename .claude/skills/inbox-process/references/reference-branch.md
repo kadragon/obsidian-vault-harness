@@ -112,7 +112,7 @@ python3 .claude/skills/inbox-process/scripts/copy_verified.py copy \
 
 ### 3. wiki 반영
 
-- 관련 topic, entity, synthesis 페이지가 이미 있으면 링크로 연결한다. 기존 페이지 **본문** 갱신은 `AGENTS.md` GP#1의 사용자 승인 범위 안에서만 한다 — 요청이 `_Wiki/` 갱신을 범위로 지정했으면(예: "위키에 반영해줘") 갱신하고, 아니면 얇은 링크 추가만 하고 본문 수정 필요는 `## 열린 질문`으로 보고한다. 이 문단이 reference 갈래의 기존 페이지 수정 절차 SSOT다.
+- 관련 topic, entity, synthesis 페이지가 이미 있으면 링크로 연결한다. 기존 페이지 **본문** 갱신은 `AGENTS.md` GP#1의 사용자 승인 범위 안에서만 한다 — 요청이 `_Wiki/` 갱신을 범위로 지정했으면(예: "위키에 반영해줘" — 워커는 프롬프트의 `_Wiki 기존 페이지 본문 갱신 범위: yes` 필드로 받는다) 갱신하고, 아니면 얇은 링크 추가만 하고 본문 수정 필요는 `## 열린 질문`으로 보고한다. 이 문단이 reference 갈래의 기존 페이지 수정 절차 SSOT다.
 - 없고 재사용 가치가 분명하면 새 page를 만든다.
 - 새 page는 `_Wiki/contracts.md`의 섹션 계약을 따른다.
 
