@@ -48,6 +48,8 @@ def extract_hwpx(src: str, dst: str, text_py: str | None) -> str:
         r = subprocess.run(
             [sys.executable, text_py, "extract", src, "-f", "markdown"],
             capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180,
+            # Force the child to emit UTF-8; a cp949 console default would decode as mojibake yet pass as OK.
+            env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
         )
     except subprocess.TimeoutExpired:
         return "TIMEOUT"
@@ -72,6 +74,7 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
     ext = os.path.splitext(args.src)[1].lower()
     if ext == ".hwp":

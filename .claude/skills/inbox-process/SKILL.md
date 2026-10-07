@@ -58,7 +58,7 @@ description: |
 
 ## 0단계: HWP/HWPX 문서 라우팅
 
-- `.hwpx`는 `python3 .claude/lib/hwpx_text.py "<파일>" --out "<추출본.md>"`로 추출한다(`prod:hwpx` `text.py` 공용 해석 — gwaeop-simui와 같은 경로). HWPX를 일괄적으로 미지원 첨부로 분류하지 않는다. exit 3은 `UNVERIFIED`(도구 부재·추출 실패) — 그때만 맥락 기반 보류로 내려간다.
+- `.hwpx`는 `python3 .claude/lib/hwpx_text.py "<파일>" --out "/tmp/hwpx_<파일명>.md"`로 추출한다(`prod:hwpx` `text.py` 공용 해석 — gwaeop-simui와 같은 경로). HWPX를 일괄적으로 미지원 첨부로 분류하지 않는다. exit 3은 `UNVERIFIED`(도구 부재·추출 실패) — 그때만 맥락 기반 보류로 내려간다.
 - `.hwp`는 legacy binary라 HWPX와 같은 형식으로 취급하지 않는다. `prod:hwpx`의 변환 절차로 `.hwpx`를 만든 뒤 읽는다. 변환·추출 capability가 없거나 실패하면 `UNVERIFIED: HWP conversion/extraction unavailable`로 보고하고 원본을 보존한다.
 - 변환 성공은 Inbox 원본 삭제 승인이 아니다. durable copy·최종 노트 링크·품질 게이트가 모두 확인된 뒤에만 삭제 권고한다.
 - `prod:hwpx` skill 경로·스크립트가 현재 환경에서 해석되지 않으면 실패 원인과 대상 경로를 보고한다. HWP를 HWPX라고 가장하거나 내용을 추정하지 않는다.
@@ -160,7 +160,7 @@ Glob으로 네 영역을 스캔: 루트(파일만), `action/`(바로 아래 폴�
      python3 .claude/skills/inbox-process/scripts/copy_verified.py verify        "<원본 절대경로>" "<durable 경로>" --vault .
      ```
 
-     exit 0인 파일만 삭제한다. 두 인자는 권고 항목의 `(durable: ...)`가 준다 — 파일명으로 추정하지 않는다. 하위 폴더 단위는 폴더의 **실제 파일 목록**을 직접 나열해 모든 파일이 `(durable: ...)` 항목을 갖고 `verify`를 통과했을 때만 폴더째 삭제한다. 목록에 없는 파일(예: 0단계 변환 전 `.hwp`)이나 실패한 파일이 하나라도 있으면 폴더째 삭제하지 않고 통과한 파일만 지운다.
+     exit 0인 파일만 삭제한다. 두 인자는 권고 항목의 `(durable: ...)`가 준다 — 파일명으로 추정하지 않는다. `(durable: text-absorbed)` 건은 `verify` 대신 원문이 노트 본문에 전부 들어갔는지 확인한다. 하위 폴더 단위는 폴더의 **실제 파일 목록**을 직접 나열해 모든 파일이 `(durable: ...)` 항목을 갖고 `verify`를 통과했을 때만 폴더째 삭제한다. OS·동기화 부산물(`Thumbs.db`, `desktop.ini`, `.DS_Store`, `~syncthing~*`, `.syncthing.*.tmp`)은 완전성 판정에서 빼고 폴더와 함께 지운다. 그 밖에 목록에 없는 파일(예: 0단계 변환 전 `.hwp`)이나 실패한 파일이 하나라도 있으면 폴더째 삭제하지 않고 통과한 파일만 지운다.
 
    공통 제외: 부분 실패·열린 질문 잔존 건, 사용자가 보존 의사를 명시한 건, `note-evaluator`가 `HOLD_DELETE: yes`를 낸 건(3-b 해제분 제외), 3-a 경고가 해소되지 않은 건, reference 갈래의 `verify-link` 실패·미실행 건(워커의 `## 미검증` 포함), action 갈래의 `verify` 실패·`durable:` 누락 건. 제외분은 최종 보고에 `UNVERIFIED: <원인>`으로 남기고 원본을 보존한다. auto-mode가 삭제를 차단하면 재시도하지 말고 대상 전체를 `AskUserQuestion` 하나로 묶어 승인 후 진행한다.
 
