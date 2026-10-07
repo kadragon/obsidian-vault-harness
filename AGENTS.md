@@ -56,7 +56,7 @@ Never perform these directly without the designated agent/skill:
 | 길어진 `12_Projects/` 허브 노트 단계별 분리·프로젝트 폴더 정리 | `project-restructure` skill |
 | Status open→closed sync | `status-sync` skill |
 | Syncthing conflict files | `syncthing-conflict-cleanup` skill |
-| `.hwpx` 문서 생성/읽기/편집 | `productivity:hwpx` skill |
+| `.hwpx` 문서 생성/읽기/편집 | `prod:hwpx` skill |
 | 대외 발신 문서 초안(공문·회신·안내·업무 메일) | `knue-gongmun` skill |
 | 개조식 보고서(계획(안)·추진·검토·결과 보고) 작성·수정 | `knue-report` skill |
 | 납품 산출물 검수 + 수행사 보완요구 메일 | `deliverable-review` skill |

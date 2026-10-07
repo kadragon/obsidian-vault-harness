@@ -78,7 +78,11 @@
 
 1. `10_Areas/{area}/`가 없으면 생성하고 `## 열린 질문`에 "신규 area '{area}' 생성함 — 확인 필요".
 2. 경로 산출 — `new_work_path.py` (아래). 첨부가 없으면 `--flat`.
-3. 첨부 복사 (첨부 있을 때만). 실패한 파일은 건너뛰고 보고.
+3. 첨부 복사 (첨부 있을 때만). 파일마다 `copy_verified.py copy`로 복사하고, 반환 JSON의 `relative_destination`(이름 충돌 시 `_2` 접미)을 `## 관련 문서` 링크와 6단계 삭제 권고에 그대로 쓴다. 실패한 파일은 건너뛰고 보고.
+
+   ```bash
+   python3 .claude/skills/inbox-process/scripts/copy_verified.py copy      "<원본 절대경로>" "<folder>" --vault .
+   ```
 4. `99_Template/_업무사안.md` Read.
 5. `note` 경로에 노트 작성.
 
@@ -120,14 +124,14 @@ python3 .claude/skills/inbox-process/scripts/new_work_path.py \
 
 ## 6. 삭제 권고 (워커는 삭제하지 않음)
 
-성공한 원본 경로를 `## 삭제 권고 (action)`으로 보고한다. 제외: 노트 생성 실패 건, 열린 질문이 남은 건(중복 의심 포함), 인라인 텍스트.
+성공한 원본을 **파일 단위로** `## 삭제 권고 (action)`에 보고하고, 항목마다 `(durable: <5단계 copy가 반환한 relative_destination>)`를 붙인다. 오케스트레이터는 이 쌍으로 사본 동일성을 재확인한다(SKILL.md 5단계-4). 하위 폴더 단위면 안의 파일을 하나씩 적는다. 제외: 노트 생성 실패 건, 열린 질문이 남은 건(중복 의심 포함), 인라인 텍스트, **첨부 복사에 실패한 파일이 있는 단위 전체**.
 
 ```
 ## 처리 완료 (action)
 - 📄 강의평가 결과 조회 관련 → 10_Areas/수업성적/202604_강의평가 결과 조회 관련/
 
 ## 삭제 권고 (action)
-- /.../01_Inbox/action/강의평가 결과 조회 관련.pdf
+- /.../01_Inbox/action/강의평가 결과 조회 관련.pdf  (durable: 10_Areas/수업성적/202604_강의평가 결과 조회 관련/강의평가 결과 조회 관련.pdf)
 ```
 
 `/tmp/extracted_*.pdf`는 워커가 정리해도 되고 오케스트레이터가 일괄 정리한다.

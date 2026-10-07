@@ -8,7 +8,8 @@
 |--------|----------|
 | `.txt`, `.md` | Read 앞부분(~100줄) |
 | `.pdf` | `classify_pdf.py`에 triage 대상 PDF를 한 번에 모두 넘긴 뒤, `action`이 `read`면 `read_path`를 PyMuPDF로 앞 1~2쪽만 읽고, `ocr`·`read+ocr`면 파일명·맥락으로 추정(triage에서 OCR 돌리지 않는다). 절차: `references/pdf-reading.md` |
-| `.hwpx`, `.xlsx`, `.docx` | 파싱 불가. 파일명·맥락으로 추정. 모호하면 사용자에게 문의 |
+| `.hwpx` | `python3 .claude/lib/hwpx_text.py "<파일>" \| head -100`. exit 3(`UNVERIFIED`)이면 아래 `.xlsx` 행처럼 추정 |
+| `.xlsx`, `.docx` | 파싱 불가. 파일명·맥락으로 추정. 모호하면 사용자에게 문의 |
 | `.hwp` | 0단계에서 `.hwpx`로 사전 변환됨. 루트 triage 시 남아 있는 `.hwp`는 변환 실패 건 — 파일명·맥락으로만 추정 |
 
 ```bash

@@ -96,6 +96,18 @@ class DurableCopyTests(unittest.TestCase):
         self.assertFalse((outside / self.source.name).exists())
         self.assertTrue(self.source.exists())
 
+    def test_action_attachment_gate_is_copy_identity_without_link(self):
+        # action 갈래 삭제 게이트: 노트 링크 검사 없이 `verify`(존재 + SHA-256)만 요구한다.
+        folder = "10_Areas/개발공통/202609_업무"
+        copied = copy_verified.copy_verified(self.source, folder, self.vault)
+        args = [str(self.source), copied.relative_destination, "--vault", str(self.vault)]
+        self.assertEqual(0, copy_verified.main(["verify", *args]))
+
+        Path(copied.destination).write_bytes(b"truncated")
+        self.assertEqual(1, copy_verified.main(["verify", *args]))
+        Path(copied.destination).unlink()
+        self.assertEqual(1, copy_verified.main(["verify", *args]))
+
     def test_inbox_destination_and_same_file_are_not_durable(self):
         with self.assertRaises(copy_verified.CopyError):
             copy_verified.copy_verified(self.source, self.source.parent, self.vault)

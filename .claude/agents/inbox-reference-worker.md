@@ -55,11 +55,12 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 
 ## 준수 규칙
 
-- **기존 노트 불변** (Golden Principle #1): 기존 `_Sources`/`_Wiki` 페이지는 얇은 링크 추가만. 본문 수정 필요 시 `## 열린 질문`에 명시하고 오케스트레이터 판단에 맡긴다.
+- **기존 노트 불변** (Golden Principle #1): 기존 `_Sources`/`_Wiki` 페이지 본문을 고칠 수 있는 범위는 `reference-branch.md` §3 wiki 반영 절차를 따른다(오케스트레이터가 넘긴 요청 범위 기준). 범위 밖이면 얇은 링크 추가만 하고 `## 열린 질문`에 명시한다.
 - **위키링크 스타일**: `[[노트명]]`만 사용. embed 접두 `!` 금지.
 - **수정 금지 경로**: `90_Archive/`, `99_Template/`, `.obsidian/`.
 - **Handysoft PDF**: `.claude/skills/inbox-process/scripts/extract_handysoft_pdf.py`로 추출 후 Read.
-- **파싱 불가 포맷** (`.hwp`, `.hwpx`, `.xlsx`, `.docx`): 파일명·사용자 설명·주변 맥락으로 처리. 불확실하면 `## 열린 질문`에 기록.
+- **`.hwpx`**: `python3 .claude/lib/hwpx_text.py "<파일>" --out "<추출본.md>"`로 추출해 읽는다. exit 3(`UNVERIFIED`)일 때만 아래 파싱 불가 포맷처럼 처리하고 사유를 보고한다.
+- **파싱 불가 포맷** (`.hwp`, `.xlsx`, `.docx`): 파일명·사용자 설명·주변 맥락으로 처리. 불확실하면 `## 열린 질문`에 기록.
 - **원본 파일 삭제 금지**: 오케스트레이터가 일괄 처리.
 - **삭제 게이트**: 원본을 durable 위치로 복사(`copy_verified.py copy`)하고 `copy_verified.py verify-link`가 exit 0을 낼 때만 삭제 권고에 올린다. `.md`·`.txt` 텍스트 입력은 복사 대신 원문을 source note에 흡수하고 `text-absorbed`로 표시한다 (`reference-branch.md` 1a·6단계). 검증 실패·미실행은 `UNVERIFIED`로 보고하고 권고하지 않는다 — 추정으로 통과시키지 않는다.
 
