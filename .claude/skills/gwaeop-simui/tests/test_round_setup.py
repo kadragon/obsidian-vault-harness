@@ -229,6 +229,23 @@ class BundleArgTests(unittest.TestCase):
                 quiet(rs.main, ["bundle", str(rd), "--member", "없는사람"])
             self.assertIn("없는사람", str(cm.exception))
 
+    def test_src_reads_parts_from_generate_out(self):
+        with tempfile.TemporaryDirectory() as td:
+            rd = write_round(Path(td) / "r", members=MEMBERS5[:2])
+            src = Path(td) / "gen"
+            self.assertEqual(quiet(rs.main, ["generate", str(rd), "--out", str(src), "--no-validate"])[0], 0)
+            with self.assertRaises(SystemExit) as cm:
+                quiet(rs.main, ["bundle", str(rd), "--member", "김승현"])
+            self.assertIn(str(rd), str(cm.exception))
+            ok = subprocess.CompletedProcess([], 0, "", "")
+            with mock.patch.object(rs, "run_py", return_value=ok) as run:
+                rc, _ = quiet(rs.main, ["bundle", str(rd), "--src", str(src), "--member", "김승현"])
+            self.assertEqual(rc, 0)
+            _, _, out, _, n, *parts = run.call_args.args  # MERGE -o out --expect-pages n *parts
+            self.assertEqual(n, len(parts))
+            self.assertEqual(Path(out).parent, rd)
+            self.assertTrue(parts and all(src in Path(p).parents for p in parts), parts)
+
 
 class DiffFinalTests(unittest.TestCase):
     def setUp(self):
