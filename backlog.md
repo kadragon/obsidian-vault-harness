@@ -1,24 +1,28 @@
 # Backlog
 
+## Skill Review (2026-10-09 — source: docs/design/skill-review-2026-10.md)
+
+- [ ] [verify] `.trash/skills-purge-20261009/` 영구 삭제(`rm -rf`) 전 사용자 확인 — mod 2건(`prompt-cache-control`·`tool-timing-badge`)은 스킬이 아니므로 복구 없이 제거 결정됨 (source: skill-review) — `.trash/skills-purge-20261009/`
+- [x] [debt] `docs/runbook.md` Skills Reference 하단에 "스킬이 아닌 상주 플러그인" 섹션 추가 + Harness Maintenance에 `prod:*` 의존 문서화 (done 2026-10-09) — `docs/runbook.md`
+- [x] [debt] `docs/delegation.md` 라우팅표에 `weekly-report`·`gwaeop-simui` 2행 추가 (done 2026-10-09) — `docs/delegation.md`
+- [x] [debt] `change-log` 트리거에서 불명확 3종 삭제 + `weekly-report` description에 우선순위 추가 (done 2026-10-09) — `.claude/skills/change-log/SKILL.md`, `.claude/skills/weekly-report/SKILL.md`
+- [x] [debt] `knue-gongmun` B유형 vs `deliverable-review` Step 4 메일 톤 단일화 + Step 2·Step 4를 `references/review-axes.md`·`mail-template.md`로 분리, `weekly-report` 4단계→`references/format-rules.md`, `syncthing` mode-review→`references/review-prompt.md` 분리 (done 2026-10-09, SKILL 168→124줄)
+- [x] [debt] `knue-report` 트리거 24개 → 13개 축소 + `inbox-process` 범용 3종에 `01_Inbox` 한정자 (done 2026-10-09)
+- [x] [risk] `syncthing-conflict-cleanup` 회귀 테스트 6개 신설 (done 2026-10-09, pytest 18 passed) — `.claude/skills/syncthing-conflict-cleanup/tests/test_conflict_cleanup.py`
+- [x] [verify] `change-log` 제외기준 스크립트 이관 (done 2026-10-09, 방식 A) — frontmatter `weekly_exclude: true` 플래그를 `is_excluded()`가 판정, 양 수집 경로에서 제외+`excluded` 카운트 출력. SKILL.md Step 2는 2층 구조(자동+수동 폴백)로 개정, 플래그 없는 해당 노트는 제안만(GP#1). pytest 20 passed, 실볼트 end-to-end 정상(count 13, excluded 0)
+- [x] [debt] `gwaeop-simui` 5-2 병렬검증 상한(영향 항목만, 동시 최대 5개) 명시 (done 2026-10-09) — `.claude/skills/gwaeop-simui/SKILL.md:170-174`
+- [x] [debt] `__pycache__/` 확인 (done 2026-10-09) — git 추적 0건, `.gitignore`가 skills/hooks/lib 하위 전부 커버. 작업트리 잔재는 무시 파일이라 조치 불필요
+
 ## Review Backlog
+
+### PR #28 — [FIX] gate action Inbox deletes on copy identity and share HWPX extraction (2026-10-07)
+
+- [ ] [risk] `hwpx_text.py`의 `HWPX_GLOBS`는 Claude 플러그인 경로(marketplaces·cache)만 본다. Codex 런타임에만 `prod:hwpx`가 설치된 환경에서는 `UNVERIFIED: plugin not installed`로 떨어진다 — Codex 플러그인 설치 경로를 실측해 세 번째 패턴으로 추가할지 결정 (source: codex-review) — `.claude/lib/hwpx_text.py:25-28`
+- [ ] [debt] `vault_lint.py --strict`가 볼트 노트 기존 위반(비표준 status·`20_Training` frontmatter 누락·`#업무/` 누락)으로 exit 1이라 회귀 기준으로 못 쓴다. 규칙 파일 변경 없는 브랜치는 "main 대비 신규 발견 0"으로 판정했다 — 기준선 비교 모드(`--baseline`) 도입 또는 노트 백필(GP#1 승인) 필요 (source: code-review) — `.claude/lib/vault_lint.py`
 
 ### PR #25 — [REFACTOR] make note-evaluator default to source fact-check table (2026-10-03)
 
-- [ ] [debt] `eval-criteria.md` Evaluator Protocol(기준 5 MOC 확인·잔여분 직접 확인·재평가 루프)과 :113/:117(평가자가 `14_Changes`·`20_Training` 섹션 구조를 직접 대조)이 옛 평가자 계약을 서술한다. 기본 모드 평가자는 구조를 보지 않으므로 incident·improvement·training 노트의 섹션 구조 확인 주체를 메인 스레드로 명시해야 한다 — 3-policy-ssot와 함께 처리 (source: code-review) — `docs/eval-criteria.md:113-127`
-- [ ] [debt] `docs/delegation.md:35`가 `20_Training/`의 `#업무/` 부재를 메인 확인 항목으로 나열해 `eval-criteria.md` "위반 아님"과 충돌한다. `runbook.md:139`는 `note-evaluator`를 `moc_gate.py` 호출자로, `:154`는 평가자를 "품질 게이트 (eval-criteria.md)"로 적어 새 계약과 어긋난다. full-quality 호출자가 훅별 결과를 넘겨야 한다는 사실도 위임 문서에 없다 (source: code-review) — `docs/delegation.md:35` · `docs/runbook.md:139,154`
-- [ ] [verify] 새 평가자 계약의 실제 호출 1회 관찰 검증(spec Testing Decisions) — 에이전트 정의가 세션 시작 시 로드돼 같은 세션에서는 관찰 불가. 다음 inbox 처리에서 3-b 호출 시 표·`VERDICT`·`HOLD_DELETE` 반환 여부 확인 (source: task-next) — `.claude/agents/note-evaluator.md`
-
-## 3-policy-ssot — 임베드·기존 본문 갱신 정책 SSOT 정리
-
-- [ ] [FIX] 충돌 정책 2건에 소유 문서를 하나씩 정하고 나머지는 참조만 남긴다. (a) `eval-criteria.md:74-81` Wikilink Style binary 채점 대상을 **노트 임베드로 한정**해 `AGENTS.md` GP#2가 허용하는 첨부 `![[...]]`를 감점에서 제외(가중치·임계 불변). (b) `reference-branch.md:97`(기존 페이지 갱신 요구) ↔ `inbox-reference-worker.md:54`(얇은 링크 추가만) 모순을 GP#1 문장 참조로 일원화 (source: 같은 spec Solution §정책 SSOT 정리) — `docs/eval-criteria.md:74-81` · `.claude/skills/inbox-process/references/reference-branch.md:97` · `.claude/agents/inbox-reference-worker.md:54`
-
-## 4-hwpx-shared — HWPX 추출 경로 공용화
-
-- [ ] [REFACTOR] `gwaeop-simui/scripts/extract_bundle.py`의 `find_hwpx_text_py()` 경로 해석(marketplaces 우선·cache 폴백)을 두 진입점이 공유하는 위치로 올리고, reference 갈래의 `.hwpx`를 "파싱 불가"에서 추출 시도 대상으로 재분류한다. 도구 부재·실제 추출 실패일 때만 맥락 기반 보류(`UNVERIFIED`)로 내려가며 `.hwp`(레거시 바이너리)는 변환 필요 판정 유지. `AGENTS.md` 위임표의 없는 이름 `productivity:hwpx` → `prod:hwpx` 정정 포함. `gwaeop-simui` 동작은 회귀 테스트로 고정한 뒤 이동 (source: 같은 spec Solution §HWPX 추출 경로 공유) — `.claude/skills/gwaeop-simui/scripts/extract_bundle.py:30-44` · `.claude/skills/inbox-process/references/reference-branch.md:125` · `.claude/agents/inbox-reference-worker.md:58` · `AGENTS.md`
-
-## PR #23 — [FIX] gate Inbox reference cleanup on a proven durable copy (2026-09-09)
-
-- [ ] [risk] action 갈래는 삭제 게이트에서 전면 면제됐으나, 링크 형식이 안 맞을 뿐 `copy_verified.py verify`(존재 + SHA-256 일치)는 적용 가능하다. 첨부 복사가 조용히 실패하면 아무 검증 없이 공문 원본이 삭제된다 — 링크 실재 검사만 면제하고 사본 동일성 검사는 요구할지 결정 (source: code-review) — `.claude/skills/inbox-process/SKILL.md` 5단계-4 · `.claude/skills/inbox-process/references/action-branch.md`
+- [ ] [verify] 새 평가자 계약의 실제 호출 1회 관찰 검증(spec Testing Decisions) — 에이전트 정의가 세션 시작 시 로드돼 같은 세션에서는 관찰 불가. 다음 inbox 처리에서 3-b 호출 시 표·`VERDICT`·`HOLD_DELETE` 반환 여부 확인 (source: task-next) — `.claude/agents/note-evaluator.md` *(deferred: live inbox run needed — agent definitions load at session start)*
 
 ## 레거시 백필 (PR #18 리뷰에서 실측, 2026-07-30)
 

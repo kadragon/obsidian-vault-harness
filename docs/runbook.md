@@ -100,7 +100,7 @@ Scope: 10_Areas/ → 90_Archive/
 | `gwaeop-simui` | 과업심의 검토, 심의위원이라면 | 심의자료 폴더 → 지적사항·판정(안) |
 | `knue-gongmun` | 공문 작성, 회신 문구, 안내문, 메일 초안, 보냈다고 기록 | 근거 노트 → 발신 본문 → 발송 후 노트 기록 |
 | `deliverable-review` | 산출물 검토, 결과물 받았는데 검토, 보완요구 메일 | 산출물 5종 → 검토 노트 + 메일 초안 |
-| `knue-report` | 보고서 작성, 보고서 수정, 계획(안) 작성 | 근거 자료 → 개조식 보고서 hwpx (수정은 `_수정.hwpx`) |
+| `knue-report` | 보고서 작성, 보고서 초안, 계획(안) 작성 | 근거 자료 → 개조식 보고서 hwpx (수정은 `_수정.hwpx`) |
 | `weekly-report` | 주간업무회의 자료 | Vault scan |
 | `change-log` | 기능 개선 내역 | Vault scan (past week) |
 | `status-sync` | status 동기화 | Vault scan |
@@ -109,6 +109,10 @@ Scope: 10_Areas/ → 90_Archive/
 | `project-restructure` | 허브 노트 너무 길어, 단계별로 나눠줘, 프로젝트 폴더 정리 | 프로젝트 폴더 → 단계 폴더·단계 노트 + 허브 축약 |
 
 > 복합 볼트 작업(여러 스킬/에이전트 연계)은 `docs/delegation.md` § Multi-step Chains 참조.
+
+> 스킬이 아닌 상주 플러그인 — `Skill` 도구로 호출하지 않는다. `.claude/skills/`에 두지 않는다
+> (2026-10-09 `prompt-cache-control`·`tool-timing-badge` 제거, skill-review-2026-10).
+> 훅으로만 동작하며 설정은 `~/.claude/settings.json` 전역에 둔다.
 
 ## Agent Workflows — `.claude/agents/workflows/`
 
@@ -136,7 +140,8 @@ Scope: 10_Areas/ → 90_Archive/
 | 스크립트 | 호출처 |
 |---------|-------|
 | `.claude/lib/validate_tag.py` | `validate-tags.sh` 훅 · `incident-analyst`·`improvement-planner`·`training-note-manager` 에이전트 · `inbox-process` 스킬 · `improvement-plan` 워크플로우 |
-| `.claude/lib/moc_gate.py` | `note-evaluator` 에이전트 · `inbox-process` 스킬 · `docs/workflows.md` sweep 헬스체크 |
+| `.claude/lib/moc_gate.py` | `inbox-process` 스킬 · `docs/workflows.md` sweep 헬스체크 |
+| `.claude/lib/hwpx_text.py` | `gwaeop-simui` `extract_bundle.py` · `inbox-process` 스킬(0단계·reference 갈래) · `inbox-reference-worker` 에이전트 |
 
 소비자가 하나뿐인 스크립트는 그 자산의 `scripts/`에 남긴다 — 스킬이면 `{skill}/scripts/`
 (`reorg_archive.py`, `ocr_pdf.py`), 워크플로우면 `workflows/{name}/scripts/`
@@ -151,7 +156,7 @@ Scope: 10_Areas/ → 90_Archive/
 | `vault-navigator` | Past cases / vault search |
 | `tag-validator` | 문맥 의존 태그 판정만 — 규칙 대조는 `validate_tag.py --json` 우선 (AGENTS.md 위임 비용 규칙 #2) |
 | `obsidian-operator` | Create(템플릿)/open/프로퍼티/앱 내 JS — **기존 노트 소규모 수정은 직접 Edit** (규칙 #3) |
-| `note-evaluator` | 생성 직후 품질 게이트 (`docs/eval-criteria.md`) |
+| `note-evaluator` | 생성 직후 원본 대조 사실검증 (조건부 — `inbox-process/SKILL.md` 5단계-3-b). 5축 채점은 `full-quality` 명시 시만 |
 | `training-note-manager` | Training note cleanup |
 | `inbox-action-worker` | Sub-agent of inbox-process (action branch) |
 | `inbox-reference-worker` | Sub-agent of inbox-process (reference branch) |
@@ -312,6 +317,12 @@ action/reference는 실행 모드가 아니라 문서 분류 결과다).
 (`docs/enforcement.md` § `tools:` 화이트리스트).
 
 ## Harness Maintenance
+
+외부 스킬 의존 (`prod:*`, 마켓플레이스 `kadragon/prod`): `knue-gongmun`은 `prod:gongmun-draft`
+문체 감사에, `knue-report`는 `prod:report-draft` 절차·lint·게이트에, `gwaeop-simui`·`inbox-process`는
+`prod:hwpx` 추출(`~/.claude/plugins/marketplaces/kadragon/prod/skills/hwpx`)에 의존한다.
+외부 스킬이 없거나 깨지면 해당 스킬이 조용히 무력화되므로, 의존 규칙의 최소 스냅샷은 각 SKILL.md 쪽에
+인라인으로 유지하고 외부 변경 시 스냅샷을 갱신한다 (skill-review-2026-10).
 
 Plugin: `kadragon/dev-tools` (versioned cache — locate current scripts per OS below).
 

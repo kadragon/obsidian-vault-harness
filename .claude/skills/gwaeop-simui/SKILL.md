@@ -169,8 +169,10 @@ python3 .claude/skills/gwaeop-simui/scripts/cost_check.py --help
 
 ### 5-2. 지적별 독립 검증 — 전달본 작성 전 필수
 
-A 항목 전부를 **지적 1건당 서브에이전트 1개**(general-purpose, 한 메시지에서 병렬·백그라운드)로 반박 검증한다.
-프롬프트·판정별 처리·노트 기록 형식은 `references/verify-prompt.md`. REJECTED는 전달본 A에서 빼고,
+A 항목 중 **금액·판정에 직접 영향이 있는 항목만** 지적 1건당 서브에이전트 1개(general-purpose,
+한 메시지에서 병렬·백그라운드)로 반박 검증한다. **동시 최대 5개** — 초과분은 영향 큰 순으로
+5건만 검증하고 나머지는 일괄 검증 1개로 묶는다. 프롬프트·판정별 처리·노트 기록 형식은
+`references/verify-prompt.md`. REJECTED는 전달본 A에서 빼고,
 검증자가 출처 없이 단정한 수치는 옮기지 않는다.
 
 ### 5-3. 산출물 2종
@@ -244,6 +246,7 @@ python3 .claude/skills/gwaeop-simui/scripts/render_pdf.py "<scratch>/report.html
 - `scripts/lint_findings.py` — 지적 4요소(근거·당위·실제·요청)·근거 등급 기계 검사
 - `scripts/render_pdf.py` — HTML → PDF (headless Chrome, OS별 경로 자동 탐색)
 - `scripts/merge_sign_bundle.py` — 이 스킬 절차 밖. `과업심의_프로세스.md` Step 7-2(위원별 전자서명 통합본)가 호출한다
+- `scripts/round_setup.py` — 이 스킬 절차 밖. 회차 폴더의 `_round.json`으로 Step 6 서류 생성(`generate`)·Step 9 대조(`verify`)·Step 7-2 통합본(`bundle`)·최종본 대조(`diff-final`). 설정 형식 `references/round-config.md`, 서식 `assets/forms/`
 - 원문 요약: [[_Sources/규정/SW사업-대가산정-가이드-2025]] · [[_Sources/규정/소프트웨어사업-계약-및-관리감독에-관한-지침]] (조문·별표·별지) · [[_Sources/규정/한국교원대학교-과업심의위원회-운영지침-2026]] (간소화·제척·구성)
 - [[_Wiki/topics/공공SW발주계약-MOC]] — 법제도 근거 인덱스
 - `10_Areas/과업심의/과업심의_프로세스.md` — 회차 운영 절차 (이 스킬의 앞뒤 단계)

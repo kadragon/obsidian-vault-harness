@@ -7,6 +7,7 @@ Scans:
   - 14_Changes/incident/          — incidents
 
 Criteria: notes whose `✅ YYYY-MM-DD` completion dates or `date created` frontmatter falls in the target week.
+Excluded: notes with frontmatter `weekly_exclude: true` (counted as `excluded` in output).
 
 Output (stdout): JSON with week range and list of note metadata.
 
@@ -114,6 +115,17 @@ def first_tag(text: str) -> str | None:
     return m.group(0) if m else None
 
 
+def is_excluded(text: str) -> bool:
+    """True when the note opts out of the change-log via frontmatter flag.
+
+    Flag: `weekly_exclude: true` (or `yes`, case-insensitive).
+    Covers both SKILL.md Step 2 exclusion types (단순 1회성 처리·미완료 개발) —
+    the author/orchestrator marks the note once instead of re-judging every week.
+    """
+    m = re.search(r"^weekly_exclude:\s*(\S+)\s*$", text, re.MULTILINE | re.IGNORECASE)
+    return bool(m and m.group(1).lower() in ("true", "yes"))
+
+
 def find_completed_todo_dates(text: str) -> list[date]:
     """Return dates from completed todos — ✅ YYYY-MM-DD (explicit done) or
     📅 YYYY-MM-DD on a checked - [x] line (due date as proxy when no ✅)."""
@@ -175,8 +187,9 @@ def infer_area_from_tag(text: str) -> str | None:
     return first  # Fall through with raw value
 
 
-def collect_10areas(vault: Path, start: date, end: date) -> list[dict]:
+def collect_10areas(vault: Path, start: date, end: date) -> tuple[list[dict], int]:
     results = []
+    excluded = 0
     areas_root = vault / "10_Areas"
     for area in INCLUDED_AREAS:
         area_path = areas_root / area
@@ -186,6 +199,9 @@ def collect_10areas(vault: Path, start: date, end: date) -> list[dict]:
             text = md.read_text(encoding="utf-8", errors="ignore")
             if not text.startswith("---"):
                 continue  # Skip non-markdown attachment files (no frontmatter)
+            if is_excluded(text):
+                excluded += 1
+                continue
             matched = matched_date_in_range(text, start, end)
             if matched:
                 results.append(
@@ -199,11 +215,12 @@ def collect_10areas(vault: Path, start: date, end: date) -> list[dict]:
                         "tag": first_tag(text),
                     }
                 )
-    return results
+    return results, excluded
 
 
-def collect_14changes(vault: Path, start: date, end: date) -> list[dict]:
+def collect_14changes(vault: Path, start: date, end: date) -> tuple[list[dict], int]:
     results = []
+    excluded = 0
     changes_root = vault / "14_Changes"
     for sub in ("improvement", "incident"):
         sub_path = changes_root / sub
@@ -212,6 +229,9 @@ def collect_14changes(vault: Path, start: date, end: date) -> list[dict]:
         for md in sub_path.rglob("*.md"):
             text = md.read_text(encoding="utf-8", errors="ignore")
             if not text.startswith("---"):
+                continue
+            if is_excluded(text):
+                excluded += 1
                 continue
             matched = matched_date_in_range(text, start, end)
             if matched:
@@ -227,7 +247,7 @@ def collect_14changes(vault: Path, start: date, end: date) -> list[dict]:
                         "tag": first_tag(text),
                     }
                 )
-    return results
+    return results, excluded
 
 
 def main() -> int:
@@ -244,7 +264,9 @@ def main() -> int:
     start, end = prev_week_range(ref)
     vault = Path(args.vault).resolve()
 
-    notes = collect_10areas(vault, start, end) + collect_14changes(vault, start, end)
+    notes_10, excluded_10 = collect_10areas(vault, start, end)
+    notes_14, excluded_14 = collect_14changes(vault, start, end)
+    notes = notes_10 + notes_14
     notes.sort(key=lambda n: (n["category"], n["area"], n["matched_date"]))
 
     print(
@@ -253,6 +275,7 @@ def main() -> int:
                 "week_start": start.isoformat(),
                 "week_end": end.isoformat(),
                 "count": len(notes),
+                "excluded": excluded_10 + excluded_14,
                 "notes": notes,
             },
             ensure_ascii=False,
