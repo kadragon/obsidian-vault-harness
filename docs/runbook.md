@@ -48,7 +48,7 @@ Output: 14_Changes/improvement/{year}/ note
 ### Review a 과업심의 Request
 
 ```
-Run: gwaeop-simui skill
+Run: gwaeop-simui-review skill
 Input: 심의자료 폴더 (01_Inbox/action/ 또는 10_Areas/과업심의/{회차}/{번호}/심의자료/)
 Output: 지적사항 + 판정(안) → 10_Areas/과업심의/{회차}/..._심의의견.md (+ 요청 시 PDF)
 Note: 회차 폴더 셋팅·서식 생성은 이 스킬이 아니라
@@ -58,14 +58,14 @@ Note: 회차 폴더 셋팅·서식 생성은 이 스킬이 아니라
 ### Weekly Report
 
 ```
-Run: weekly-report skill
+Run: weekly-report-compile skill
 Output: 주간업무회의 자료 draft
 ```
 
 ### System Change Log
 
 ```
-Run: change-log skill
+Run: change-log-compile skill
 Output: 주간 기능 개선 내역 보고서
 ```
 
@@ -80,7 +80,7 @@ Effect: open notes with all tasks done → status: closed
 ### Clean Syncthing Conflicts
 
 ```
-Run: syncthing-conflict-cleanup skill
+Run: syncthing-conflict-resolve skill
 Scope: entire vault
 Effect: identical conflict files purged; differing ones reviewed
 ```
@@ -88,7 +88,7 @@ Effect: identical conflict files purged; differing ones reviewed
 ### Archive Stale Notes
 
 ```
-Run: vault-cleanup skill
+Run: vault-clean skill
 Scope: 10_Areas/ → 90_Archive/
 ```
 
@@ -97,15 +97,15 @@ Scope: 10_Areas/ → 90_Archive/
 | Skill | Trigger phrase | Entry point |
 |-------|---------------|-------------|
 | `inbox-process` | inbox 처리, 공문 처리 | `01_Inbox/` scan |
-| `gwaeop-simui` | 과업심의 검토, 심의위원이라면 | 심의자료 폴더 → 지적사항·판정(안) |
-| `knue-gongmun` | 공문 작성, 회신 문구, 안내문, 메일 초안, 보냈다고 기록 | 근거 노트 → 발신 본문 → 발송 후 노트 기록 |
+| `gwaeop-simui-review` | 과업심의 검토, 심의위원이라면 | 심의자료 폴더 → 지적사항·판정(안) |
+| `knue-gongmun-draft` | 공문 작성, 회신 문구, 안내문, 메일 초안, 보냈다고 기록 | 근거 노트 → 발신 본문 → 발송 후 노트 기록 |
 | `deliverable-review` | 산출물 검토, 결과물 받았는데 검토, 보완요구 메일 | 산출물 5종 → 검토 노트 + 메일 초안 |
-| `knue-report` | 보고서 작성, 보고서 초안, 계획(안) 작성 | 근거 자료 → 개조식 보고서 hwpx (수정은 `_수정.hwpx`) |
-| `weekly-report` | 주간업무회의 자료 | Vault scan |
-| `change-log` | 기능 개선 내역 | Vault scan (past week) |
+| `knue-report-draft` | 보고서 작성, 보고서 초안, 계획(안) 작성 | 근거 자료 → 개조식 보고서 hwpx (수정은 `_수정.hwpx`) |
+| `weekly-report-compile` | 주간업무회의 자료 | Vault scan |
+| `change-log-compile` | 기능 개선 내역 | Vault scan (past week) |
 | `status-sync` | status 동기화 | Vault scan |
-| `syncthing-conflict-cleanup` | conflict 파일 정리 | Vault scan |
-| `vault-cleanup` | 아카이브 정리 | Vault scan |
+| `syncthing-conflict-resolve` | conflict 파일 정리 | Vault scan |
+| `vault-clean` | 아카이브 정리 | Vault scan |
 | `project-restructure` | 허브 노트 너무 길어, 단계별로 나눠줘, 프로젝트 폴더 정리 | 프로젝트 폴더 → 단계 폴더·단계 노트 + 허브 축약 |
 
 > 복합 볼트 작업(여러 스킬/에이전트 연계)은 `docs/delegation.md` § Multi-step Chains 참조.
@@ -141,7 +141,7 @@ Scope: 10_Areas/ → 90_Archive/
 |---------|-------|
 | `.claude/lib/validate_tag.py` | `validate-tags.sh` 훅 · `incident-analyst`·`improvement-planner`·`training-note-manager` 에이전트 · `inbox-process` 스킬 · `improvement-plan` 워크플로우 |
 | `.claude/lib/moc_gate.py` | `inbox-process` 스킬 · `docs/workflows.md` sweep 헬스체크 |
-| `.claude/lib/hwpx_text.py` | `gwaeop-simui` `extract_bundle.py` · `inbox-process` 스킬(0단계·reference 갈래) · `inbox-reference-worker` 에이전트 |
+| `.claude/lib/hwpx_text.py` | `gwaeop-simui-review` `extract_bundle.py` · `inbox-process` 스킬(0단계·reference 갈래) · `inbox-reference-worker` 에이전트 |
 
 소비자가 하나뿐인 스크립트는 그 자산의 `scripts/`에 남긴다 — 스킬이면 `{skill}/scripts/`
 (`reorg_archive.py`, `ocr_pdf.py`), 워크플로우면 `workflows/{name}/scripts/`
@@ -174,7 +174,7 @@ Scope: 10_Areas/ → 90_Archive/
 
 **Symptom:** Files named `*.sync-conflict-*.md` in vault.  
 **Cause:** Edit collision during sync.  
-**Fix:** Run `syncthing-conflict-cleanup` skill.
+**Fix:** Run `syncthing-conflict-resolve` skill.
 
 ### Note lands in wrong folder
 
@@ -191,7 +191,7 @@ Scope: 10_Areas/ → 90_Archive/
 ### Grep tool returns no results for files under Korean-named folders
 
 **Symptom:** `Grep` (ripgrep-backed) returns "No files found" even when a file with matching content demonstrably exists (confirmed via `Read`/`Glob`) under a Korean-named nested path, e.g. `14_Changes/incident/2024/상반기/*.md`.
-**Cause:** Suspected Unicode normalization mismatch (NFC/NFD) on Korean directory/file names in this Syncthing-synced vault — same root class of issue as the conflict-file NFC normalization handled by `syncthing-conflict-cleanup`.
+**Cause:** Suspected Unicode normalization mismatch (NFC/NFD) on Korean directory/file names in this Syncthing-synced vault — same root class of issue as the conflict-file NFC normalization handled by `syncthing-conflict-resolve`.
 **Fix:** Fall back to PowerShell: `Get-ChildItem -Path "<dir>" -Filter *.md -Recurse | Select-String -Pattern "<term>" -List | Select-Object -ExpandProperty Path`. Do NOT use a `**` glob string with `Select-String -Path` directly — PowerShell 5.1 does not expand `**`; use `Get-ChildItem -Recurse` instead. Prefer `qmd search`/`vsearch` as the first search layer (per `_Wiki/workflow.md`) since it is unaffected by this issue; reserve Grep/PowerShell fallback for exact-string confirmation.
 
 ### python invocation fails on Windows (hwpx skill scripts etc.)
@@ -281,9 +281,11 @@ python3 .claude/skills/status-sync/tests/test_contract.py
 
 ## Harness Asset Placement & Naming
 
-새 하네스 자산(스킬·에이전트·워크플로우·스크립트)을 만들 때 적용한다. 기존 자산은
-그대로 둔다 — 스킬 이름은 곧 호출 경로이고 문서 여러 곳이 참조하므로, 규약을 맞추려고
-바꾸면 트리거 정확도만 잃는다.
+새 하네스 자산(스킬·에이전트·워크플로우·스크립트)을 만들 때 적용한다. 기존 자산 개명은
+호출 경로·문서 참조·트리거 정확도에 영향을 주므로, 개명 시에는 디렉토리·frontmatter·
+상호참조·normative 문서(AGENTS.md·docs/runbook·delegation·workflows·architecture·
+conventions·_Wiki/workflow·contracts·index)를 일괄 갱신하고 스킬·훅 테스트를 통과시킨다.
+이력 문서(backlog·CHANGELOG·harness-log·design·_Wiki/log·_Sources)는 고치지 않는다.
 
 **배치 — 소비자 수로 결정한다**
 
@@ -299,14 +301,17 @@ python3 .claude/skills/status-sync/tests/test_contract.py
 
 **스크립트 규칙 — 볼트 경로·링크 문자열 비교는 `unicodedata.normalize("NFC", ...)` 후에 한다.** macOS는 한글 파일명을 NFD로 저장하고(볼트 실측 10593/10605건) 노트 본문 링크는 NFC라, 정규화 없이 비교하면 한글 이름 전부가 조용히 불일치한다. 선례: `vault_lint.py`·`check-template.py`(`docs/enforcement.md`), `copy_verified.py` 삭제 게이트(2026-09-09, 리뷰에서 P0로 검출).
 
-**이름 — `{도메인}-{동사}`, kebab-case, 영문**
+**이름 — `{도메인}-{동사}`, kebab-case. 로마자 한국어는 도메인 한정으로 허용**
 
-`inbox-process` · `status-sync` · `incident-analyze` · `tag-normalize` · `training-manage`
-· `improvement-plan` (여기서 `plan`은 동사).
-
-동사 없이 산출물만 쓰지 않는다(`weekly-report`·`change-log`가 이 경우다 — 트리거 문구가
-촘촘하고 서로 구분이 미묘해, 이름을 고쳐 얻는 일관성보다 트리거 정확도를 잃을 위험이 커
-의도적으로 동결했다). 순서를 뒤집거나 로마자 한국어를 섞는 형태는 쓰지 않는다
+`inbox-process` · `status-sync` · `change-log-compile` · `weekly-report-compile` ·
+`vault-clean` · `syncthing-conflict-resolve` · `project-restructure` ·
+`deliverable-review` · `gwaeop-simui-review` · `knue-gongmun-draft` ·
+`knue-report-draft` (2026-10-09 전수 개명으로 11개 전부 `{도메인}-{동사}` 일치.
+워크플로우도 동일 규약: `incident-analyze` · `tag-normalize` · `training-manage`
+· `improvement-plan`(여기서 `plan`은 동사).
+`review`·`draft`·`plan`은 동사로 간주. 로마자 한국어(`gwaeop-simui`, `gongmun`)는
+도메인 자리에서만 허용하고 동사 자리는 영문으로 둔다. `knue-` 접두어는 KNUE 전용
+3종에만 둔다). 순서를 뒤집은 형태는 쓰지 않는다
 (`draft-gongmun` → `gongmun-draft`로 정리 완료).
 
 **`references/` 파일명**: 모드 분기는 `mode-{모드명}.md`. 모드가 아닌 분기는 예외이며
@@ -318,8 +323,8 @@ action/reference는 실행 모드가 아니라 문서 분류 결과다).
 
 ## Harness Maintenance
 
-외부 스킬 의존 (`prod:*`, 마켓플레이스 `kadragon/prod`): `knue-gongmun`은 `prod:gongmun-draft`
-문체 감사에, `knue-report`는 `prod:report-draft` 절차·lint·게이트에, `gwaeop-simui`·`inbox-process`는
+외부 스킬 의존 (`prod:*`, 마켓플레이스 `kadragon/prod`): `knue-gongmun-draft`은 `prod:gongmun-draft`
+문체 감사에, `knue-report-draft`는 `prod:report-draft` 절차·lint·게이트에, `gwaeop-simui-review`·`inbox-process`는
 `prod:hwpx` 추출(`~/.claude/plugins/marketplaces/kadragon/prod/skills/hwpx`)에 의존한다.
 외부 스킬이 없거나 깨지면 해당 스킬이 조용히 무력화되므로, 의존 규칙의 최소 스냅샷은 각 SKILL.md 쪽에
 인라인으로 유지하고 외부 변경 시 스냅샷을 갱신한다 (skill-review-2026-10).

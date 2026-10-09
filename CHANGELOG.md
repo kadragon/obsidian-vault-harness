@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- [done] inbox: action copy-identity delete gate, shared .claude/lib/hwpx_text.py, evaluator/policy SSOT doc sync (2026-10-07) → docs/design/inbox-eval-rule-conflicts.md
+- [done] gwaeop-simui round_setup bundle --src reads parts from a generate --out folder (2026-10-07)
 - [done] gwaeop-simui extract_bundle reads legacy .xls via xlrd (2026-10-03)
 - [done] note-evaluator defaults to source fact-check table; 5-axis scoring only on full-quality (2026-10-03)
 - [done] SessionStart 훅으로 Syncthing 머신 간 커밋 이력 갈라짐 방지 — 뒤처짐만이면 `reset --mixed` 자동 정렬 (2026-09-15) → docs/enforcement.md
