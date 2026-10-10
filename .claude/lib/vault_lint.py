@@ -19,6 +19,7 @@
   python3 .claude/lib/vault_lint.py --strict           # 발견 시 exit 1 (자동화용)
 """
 import argparse
+import hashlib
 import json
 import os
 import pathlib
@@ -224,15 +225,71 @@ def run(root, checks):
     return findings, len(note_paths)
 
 
-def render(findings, total, fmt, checks=CHECKS):
+def rules_digest():
+    """Reject snapshots from different lint or template rules."""
+    source = pathlib.Path(__file__).read_text(encoding="utf-8")
+    rules = pathlib.Path(note_rules.__file__).read_text(encoding="utf-8")
+    return hashlib.sha256((source + rules).encode("utf-8")).hexdigest()
+
+
+def finding_key(finding):
+    # Moving a finding down the page does not create a regression.
+    return finding["check"], norm(finding["path"]), finding["detail"]
+
+
+def compare_baseline(findings, baseline_path, checks):
+    """Subtract full-report findings as a multiset, rejecting unsafe input."""
+    report = json.loads(pathlib.Path(baseline_path).read_text(encoding="utf-8"))
+    if not isinstance(report, dict) or report.get("schema_version") != 1:
+        raise ValueError("expected a full vault lint JSON report (schema_version 1)")
+    if "baseline" in report:
+        raise ValueError("a comparison report cannot be used as a full baseline")
+    saved_checks = report.get("checks")
+    if (not isinstance(saved_checks, list) or not all(isinstance(c, str) for c in saved_checks)
+            or set(saved_checks) != set(checks)):
+        raise ValueError("baseline checks differ from selected checks")
+    if report.get("rules_digest") != rules_digest():
+        raise ValueError("baseline rules differ; capture a new full report after reviewing rule changes")
+    old = report.get("findings")
+    if not isinstance(old, list) or type(report.get("notes")) is not int or report["notes"] < 0:
+        raise ValueError("invalid findings or note count")
+    for f in old:
+        if (not isinstance(f, dict) or f.get("check") not in checks
+                or not isinstance(f.get("path"), str) or not f["path"]
+                or not isinstance(f.get("detail"), str) or not f["detail"]
+                or type(f.get("line")) is not int or f["line"] < 0):
+            raise ValueError("invalid baseline finding")
+    if report.get("counts") != dict(Counter(f["check"] for f in old)):
+        raise ValueError("baseline counts do not match findings")
+    remaining = Counter(finding_key(f) for f in old)
+    new = []
+    existing = 0
+    for f in findings:
+        key = finding_key(f)
+        if remaining[key]:
+            remaining[key] -= 1
+            existing += 1
+        else:
+            new.append(f)
+    return new, dict(path=str(baseline_path), total=len(findings), existing=existing,
+                     resolved=sum(remaining.values()), new=len(new))
+
+
+def render(findings, total, fmt, checks=CHECKS, baseline=None):
     counts = Counter(f["check"] for f in findings)
     if fmt == "json":
-        return json.dumps(dict(notes=total, counts=dict(counts), findings=findings),
-                          ensure_ascii=False, indent=1)
+        report = dict(schema_version=1, checks=list(checks), rules_digest=rules_digest(),
+                      notes=total, counts=dict(counts), findings=findings)
+        if baseline is not None:
+            report["baseline"] = baseline
+        return json.dumps(report, ensure_ascii=False, indent=1)
     out = []
     head = f"노트 {total}건 검사 · 발견 {len(findings)}건 (" + \
            ", ".join(f"{c} {counts.get(c, 0)}" for c in checks) + ")"
     out.append(f"# vault lint\n\n{head}" if fmt == "markdown" else head)
+    if baseline is not None:
+        out.append(f"baseline: current {baseline['total']} · existing {baseline['existing']}"
+                   f" · resolved {baseline['resolved']} · new {baseline['new']}")
     for c in checks:
         rows = [f for f in findings if f["check"] == c]
         if not rows:
@@ -251,11 +308,18 @@ def main():
                     help="검사 선택 (기본: %s · opt-in: %s)" % (", ".join(CHECKS), ", ".join(OPTIONAL_CHECKS)))
     ap.add_argument("--format", choices=("text", "markdown", "json"), default="text")
     ap.add_argument("--strict", action="store_true", help="발견이 있으면 exit 1")
+    ap.add_argument("--baseline", help="full --format json report; show only new findings")
     a = ap.parse_args()
     checks = tuple(a.check) if a.check else CHECKS
     findings, total = run(a.vault, checks)
+    baseline = None
+    if a.baseline:
+        try:
+            findings, baseline = compare_baseline(findings, a.baseline, checks)
+        except (OSError, ValueError, UnicodeError) as exc:
+            ap.error(f"invalid baseline: {exc}")
     sys.stdout.reconfigure(encoding="utf-8")
-    print(render(findings, total, a.format, checks))
+    print(render(findings, total, a.format, checks, baseline))
     sys.exit(1 if (a.strict and findings) else 0)
 
 

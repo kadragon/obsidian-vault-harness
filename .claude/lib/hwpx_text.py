@@ -26,11 +26,12 @@ import tempfile
 HWPX_GLOBS = [
     "~/.claude/plugins/marketplaces/*/prod/skills/hwpx/scripts/text.py",
     "~/.claude/plugins/cache/*/prod/*/skills/hwpx/scripts/text.py",
+    "~/.codex/plugins/cache/*/prod/*/skills/hwpx/scripts/text.py",
 ]
 
 
 def find_text_py() -> str | None:
-    """prod:hwpx 플러그인의 text.py 경로. marketplaces 우선, cache는 최신 버전."""
+    """Prefer Claude marketplace, Claude cache, then Codex cache; newest per tier."""
     for pattern in HWPX_GLOBS:
         # Natural sort so cache version 0.10.0 outranks 0.9.0.
         hits = sorted(glob.glob(os.path.expanduser(pattern)),
