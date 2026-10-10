@@ -3,7 +3,7 @@ name: status-sync
 description: |
   할 일이 모두 끝났는데 frontmatter가 `status: open`인 10_Areas/·14_Changes/ 노트를 찾아 `closed`로 동기화.
   트리거: "완료된 업무 정리", "status 동기화", "open 상태 노트 정리", "진행중인데 끝난 거", "업무사안 상태 확인", "개선 상태 닫기".
-  아카이브 이동·중복 정리는 vault-cleanup.
+  아카이브 이동·중복 정리는 vault-clean.
 ---
 
 # Status Sync
@@ -91,4 +91,4 @@ Golden Principle #1의 예외) 적용 전 반드시 사용자 승인을 받는�
 
 설계 배경(토큰 절감 전략, 폴더 프로파일 확장 방법) → `references/design.md`
 
-종결→아카이브 연계: 여기서 남기는 `log.md` `#closed` 이벤트(날짜+경로)가 close-date의 단일 출처다. `vault-cleanup`의 `reorg_archive.py find-closed`가 이를 읽어 N일(기본 90) 경과한 종결 노트를 아카이브 후보로 올린다 — 그러니 닫을 때 log.md append를 반드시 수행할 것(미기록 시 `unlogged_closed`로 분류되어 자동 아카이브 대상에서 빠진다).
+종결→아카이브 연계: 여기서 남기는 `log.md` `#closed` 이벤트(날짜+경로)가 close-date의 단일 출처다. `vault-clean`의 `reorg_archive.py find-closed`가 이를 읽어 N일(기본 90) 경과한 종결 노트를 아카이브 후보로 올린다 — 그러니 닫을 때 log.md append를 반드시 수행할 것(미기록 시 `unlogged_closed`로 분류되어 자동 아카이브 대상에서 빠진다).

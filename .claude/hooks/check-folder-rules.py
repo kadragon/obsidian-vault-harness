@@ -38,7 +38,7 @@ if "/12_Projects/" in fp_norm:
 
 # Rule 2: 90_Archive/ — any write is a violation (no skip!)
 if "/90_Archive/" in fp_norm:
-    violations.append("90_Archive/ 에 직접 파일 생성 금지 — vault-cleanup 스킬로만 이동 (GP#4)")
+    violations.append("90_Archive/ 에 직접 파일 생성 금지 — vault-clean 스킬로만 이동 (GP#4)")
 
 # Rule 3: 10_Areas/ — depth, no-attachment wrapper folder
 if "/10_Areas/" in fp_norm:

@@ -25,3 +25,7 @@ Check 5가 `14_Changes/`로 확장되면서 새로 검출되는 분량. 템플�
 - [ ] `14_Changes/` **24/203건**에 구체 `#업무/` 태그 없음 → area 배정 판단이 필요해 `tag-validator` 경유 권장
 
 > 참고 — 이 PR과 무관한 선행 백로그가 더 크다. 볼트 477건 전수 스캔 시 `status:` 누락 **220건**(2026-07-31 재측정 — improvement 백필로 57건 해소), incident `change_type` 누락 79건. 전부 이번 변경 이전부터 있던 것으로, 위 항목과 함께 일괄 처리 여부를 결정하는 편이 낫다.
+
+### PR #29 — [REFACTOR] clarify skill boundaries and standardize canonical names (2026-10-10)
+
+- [ ] [debt] Restrict permanent `weekly_exclude: true` suggestions to one-time processing; unfinished development must remain eligible after completion, via temporary exclusion or an explicit unflagging procedure (source: codex, P2; introduced here) — `.claude/skills/change-log-compile/SKILL.md:72-73`

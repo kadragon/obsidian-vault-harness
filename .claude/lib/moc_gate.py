@@ -3,7 +3,7 @@
 
 Flags 10_Areas domains that crossed the MOC threshold but have no operational
 MOC yet. Detection only — MOC authoring stays with vault-navigator (사전조사)
-+ obsidian-operator (생성). Run periodically / during vault-cleanup.
++ obsidian-operator (생성). Run periodically / during vault-clean.
 
 Thresholds (AGENTS.md): 도메인 노트 20+ 누적, 또는 동일 인시던트 유형 3회+.
 The note-count gate is exact; recurring-incident-type is judgment, so this

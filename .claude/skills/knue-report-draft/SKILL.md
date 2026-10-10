@@ -1,0 +1,26 @@
+---
+name: knue-report-draft
+description: |
+  볼트에서 한국교원대학교 **개조식 보고서**(사업 계획(안)·추진 계획 보고·검토 보고·결과 보고·상황 보고·회의 결과 보고·행사/평가 계획)를 작성하거나 기존 보고서 hwpx를 고친다. prod:report-draft의 절차·lint·게이트를 쓰고, KNUE 보고서 관행(정보전산원 1쪽 보고·계획서 형태, 날짜·부서 줄, 유형별 실제 골격)과 본부 배포 서식(대학회계 사업평가 성과지표 설정·실적보고서, 국립대학육성사업 실적보고서, 중기재정운용계획)을 덧씌운다.
+  트리거: "보고서 작성", "성과지표 설정 보고서", "실적보고서 작성", "보고서 초안", "계획(안) 작성", "사업 계획서 작성", "추진 계획 보고", "결과 보고서", "상황 보고", "회의 결과 보고", "평가 계획", "행사 계획", "이 hwpx 수정해줘".
+  "보고서 수정"처럼 대상이 불명확한 문구는 deliverable-review(산출물 검수) 또는 weekly-report-compile(회의 자료)가 받는다.
+  볼트에서는 prod:report-draft보다 이 스킬을 먼저 쓴다. 구분: 대외 발신 공문·회신·메일은 knue-gongmun-draft. 주간업무회의 자료는 weekly-report-compile. 과업심의 보완요청은 gwaeop-simui-review. 납품 산출물 검수는 deliverable-review.
+---
+
+# KNUE 보고서 작성·수정
+
+prod:report-draft 위에 KNUE 관행을 덧씌운다. 절차·lint·게이트(G1~G4)는 prod:report-draft가 정하고, 이 스킬은 근거 위치와 기관 관행만 더한다.
+
+## 절차
+
+1. Skill 도구를 "prod:report-draft"로 호출해 절차를 로드한다. 이후 그 절차(A 작성 / B 수정, 공통 게이트, 완료 보고)를 따른다.
+2. prod:report-draft Step 1의 **기관 관행 문서**는 이 스킬의 `references/knue-house-style.md`다. 함께 Read하고, 일반 규칙(`style-rules.md`)과 다르면 이 문서 첫머리의 우선순위를 따른다.
+3. 근거는 볼트에서 모은다: 프로젝트 폴더(`12_Projects/…`)의 노트·기존 보고서·조사 결과, 업무 노트(`10_Areas/…`).
+4. A3에서 스타일 참조 파일이 필요하면 `knue-house-style.md` §8 표본 중 같은 유형의 파일을 쓴다.
+5. 본부가 배포한 서식이면 `knue-house-style.md` §7의 고정 골격과 제출 전 점검을 적용한다. lint는 `--allow-numbered`로 돌린다.
+
+## KNUE 고정 사항
+
+- 부서명은 `정보전산원`이다. 2026. 7. 이전 문서의 `교육정보원`은 새 보고서에 쓰지 않는다.
+- 정보전산원 보고서는 `○`, 본부 배포 서식은 서식의 `◦`를 유지한다.
+- 사용자 직접 지시는 `docs/harness-log.md` 규칙 근거 표에 있다. 관행 문서보다 우선한다.

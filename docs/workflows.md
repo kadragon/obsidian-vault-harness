@@ -82,7 +82,7 @@ Create or update a domain MOC when: (a) a domain has 20+ notes, or (b) the same 
 
 Run periodically (between feature completions, or monthly).
 
-1. `vault-cleanup` skill: check 90_Archive and 10_Areas.
+1. `vault-clean` skill: check 90_Archive and 10_Areas.
 2. `moc_gate.py` — 임계 넘은 도메인 MOC 누락 탐지. `reorg_archive.py find-closed` — 종결 90일+ 아카이브 후보.
 3. Review unresolved manual items in `plan.md`.
 3. Audit AGENTS.md rules for continued validity.

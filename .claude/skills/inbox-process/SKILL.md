@@ -2,8 +2,9 @@
 name: inbox-process
 description: |
   01_Inbox/ 문서를 '업무사안(action)'과 '참고자료(reference)'로 판별해 각각 10_Areas/{area}/ 업무사안 노트 또는 _Sources·_Wiki/에 반영.
-  트리거: 'inbox 처리', 'inbox 정리', 'inbox 비워줘', '01_Inbox 처리', '공문 처리', '공문 읽어줘', '받은 문서 정리', '받은 자료 정리', '수집함 처리', 'InfoBox 처리', '문서 정리해줘', '자료 정리해줘', '위키에 반영해줘', 'scraps 처리해줘', '웹 클립 정리해줘'.
-  inbox·공문·받은 문서·수집함·참고자료·웹 클립 처리 요청이면 '01_Inbox'를 명시하지 않아도 해당된다. 발신 공문 작성은 knue-gongmun.
+  트리거: 'inbox 처리', 'inbox 정리', 'inbox 비워줘', '01_Inbox 처리', '공문 처리', '공문 읽어줘', '받은 문서 정리', '받은 자료 정리', '수집함 처리', 'InfoBox 처리', 'scraps 처리해줘', '웹 클립 정리해줘'.
+  '문서 정리해줘'·'자료 정리해줘'·'위키에 반영해줘'는 01_Inbox/수집함 대상일 때만 해당된다.
+  inbox·공문·받은 문서·수집함·참고자료·웹 클립 처리 요청이면 '01_Inbox'를 명시하지 않아도 해당된다. 발신 공문 작성은 knue-gongmun-draft.
 ---
 
 # Inbox 처리 오케스트레이터
@@ -58,7 +59,7 @@ description: |
 
 ## 0단계: HWP/HWPX 문서 라우팅
 
-- `.hwpx`는 `python3 .claude/lib/hwpx_text.py "<파일>" --out "/tmp/hwpx_<파일명>.md"`로 추출한다(`prod:hwpx` `text.py` 공용 해석 — gwaeop-simui와 같은 경로). HWPX를 일괄적으로 미지원 첨부로 분류하지 않는다. exit 3은 `UNVERIFIED`(도구 부재·추출 실패) — 그때만 맥락 기반 보류로 내려간다.
+- `.hwpx`는 `python3 .claude/lib/hwpx_text.py "<파일>" --out "/tmp/hwpx_<파일명>.md"`로 추출한다(`prod:hwpx` `text.py` 공용 해석 — gwaeop-simui-review와 같은 경로). HWPX를 일괄적으로 미지원 첨부로 분류하지 않는다. exit 3은 `UNVERIFIED`(도구 부재·추출 실패) — 그때만 맥락 기반 보류로 내려간다.
 - `.hwp`는 legacy binary라 HWPX와 같은 형식으로 취급하지 않는다. `prod:hwpx`의 변환 절차로 `.hwpx`를 만든 뒤 읽는다. 변환·추출 capability가 없거나 실패하면 `UNVERIFIED: HWP conversion/extraction unavailable`로 보고하고 원본을 보존한다.
 - 변환 성공은 Inbox 원본 삭제 승인이 아니다. durable copy·최종 노트 링크·품질 게이트가 모두 확인된 뒤에만 삭제 권고한다.
 - `prod:hwpx` skill 경로·스크립트가 현재 환경에서 해석되지 않으면 실패 원인과 대상 경로를 보고한다. HWP를 HWPX라고 가장하거나 내용을 추정하지 않는다.

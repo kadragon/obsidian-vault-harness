@@ -11,6 +11,7 @@
 !.claude/
 !.claude/**
 .claude/change-log-report.txt
+.claude/change-log-compile-report.txt
 .claude/scheduled_tasks.lock
 .claude/.cache/
 .claude/hooks/**/__pycache__/
