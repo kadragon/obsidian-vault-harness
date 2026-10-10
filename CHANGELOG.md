@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- [done] Skill trigger cleanup, reference extraction, exclusion regressions and seven canonical skill renames (2026-10-10) → docs/design/skill-review-2026-10.md
 - [done] inbox: action copy-identity delete gate, shared .claude/lib/hwpx_text.py, evaluator/policy SSOT doc sync (2026-10-07) → docs/design/inbox-eval-rule-conflicts.md
 - [done] gwaeop-simui round_setup bundle --src reads parts from a generate --out folder (2026-10-07)
 - [done] gwaeop-simui extract_bundle reads legacy .xls via xlrd (2026-10-03)

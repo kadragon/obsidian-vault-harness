@@ -1,18 +1,5 @@
 # Backlog
 
-## Skill Review (2026-10-09 — source: docs/design/skill-review-2026-10.md)
-
-- [ ] [verify] `.trash/skills-purge-20261009/` 영구 삭제(`rm -rf`) 전 사용자 확인 — mod 2건(`prompt-cache-control`·`tool-timing-badge`)은 스킬이 아니므로 복구 없이 제거 결정됨 (source: skill-review) — `.trash/skills-purge-20261009/`
-- [x] [debt] `docs/runbook.md` Skills Reference 하단에 "스킬이 아닌 상주 플러그인" 섹션 추가 + Harness Maintenance에 `prod:*` 의존 문서화 (done 2026-10-09) — `docs/runbook.md`
-- [x] [debt] `docs/delegation.md` 라우팅표에 `weekly-report`·`gwaeop-simui` 2행 추가 (done 2026-10-09) — `docs/delegation.md`
-- [x] [debt] `change-log` 트리거에서 불명확 3종 삭제 + `weekly-report` description에 우선순위 추가 (done 2026-10-09) — `.claude/skills/change-log/SKILL.md`, `.claude/skills/weekly-report/SKILL.md`
-- [x] [debt] `knue-gongmun` B유형 vs `deliverable-review` Step 4 메일 톤 단일화 + Step 2·Step 4를 `references/review-axes.md`·`mail-template.md`로 분리, `weekly-report` 4단계→`references/format-rules.md`, `syncthing` mode-review→`references/review-prompt.md` 분리 (done 2026-10-09, SKILL 168→124줄)
-- [x] [debt] `knue-report` 트리거 24개 → 13개 축소 + `inbox-process` 범용 3종에 `01_Inbox` 한정자 (done 2026-10-09)
-- [x] [risk] `syncthing-conflict-cleanup` 회귀 테스트 6개 신설 (done 2026-10-09, pytest 18 passed) — `.claude/skills/syncthing-conflict-cleanup/tests/test_conflict_cleanup.py`
-- [x] [verify] `change-log` 제외기준 스크립트 이관 (done 2026-10-09, 방식 A) — frontmatter `weekly_exclude: true` 플래그를 `is_excluded()`가 판정, 양 수집 경로에서 제외+`excluded` 카운트 출력. SKILL.md Step 2는 2층 구조(자동+수동 폴백)로 개정, 플래그 없는 해당 노트는 제안만(GP#1). pytest 20 passed, 실볼트 end-to-end 정상(count 13, excluded 0)
-- [x] [debt] `gwaeop-simui` 5-2 병렬검증 상한(영향 항목만, 동시 최대 5개) 명시 (done 2026-10-09) — `.claude/skills/gwaeop-simui/SKILL.md:170-174`
-- [x] [debt] `__pycache__/` 확인 (done 2026-10-09) — git 추적 0건, `.gitignore`가 skills/hooks/lib 하위 전부 커버. 작업트리 잔재는 무시 파일이라 조치 불필요
-
 ## Review Backlog
 
 ### PR #28 — [FIX] gate action Inbox deletes on copy identity and share HWPX extraction (2026-10-07)
