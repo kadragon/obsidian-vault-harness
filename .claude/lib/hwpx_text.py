@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Extract text from a .hwpx file through the installed prod:hwpx ``text.py``.
 
-Shared by gwaeop-simui ``extract_bundle.py`` and the inbox-process reference
+Shared by gwaeop-simui-review ``extract_bundle.py`` and the inbox-process reference
 branch so both entry points resolve the same tool the same way. stdlib only.
 
 CLI::

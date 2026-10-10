@@ -43,7 +43,7 @@
 바이너리·문서 파일(`.pdf`·`.hwpx`·이미지 등) 입력이면 source note를 쓰기 전에 원본을 durable 위치로 복사한다.
 
 - **인라인 텍스트**: 원본 파일이 없으므로 건너뛴다.
-- **텍스트 파일(`.md`·`.txt`, `scraps/` 웹 클립 포함)**: durable copy를 만들지 않는다 — `_Sources/_Assets/`에 `.md` 사본을 두면 `vault_lint.py`가 노트로 린트하고 qmd가 이중 색인해 `vault-cleanup` dedupe가 source note와 중복으로 잡는다. 대신 **원문 전체를 source note 본문에 흡수**하고(출처 URL·제목 포함), 6단계에서 `verify-link` 대신 `text-absorbed`로 보고한다.
+- **텍스트 파일(`.md`·`.txt`, `scraps/` 웹 클립 포함)**: durable copy를 만들지 않는다 — `_Sources/_Assets/`에 `.md` 사본을 두면 `vault_lint.py`가 노트로 린트하고 qmd가 이중 색인해 `vault-clean` dedupe가 source note와 중복으로 잡는다. 대신 **원문 전체를 source note 본문에 흡수**하고(출처 URL·제목 포함), 6단계에서 `verify-link` 대신 `text-absorbed`로 보고한다.
 
 ```bash
 python3 .claude/skills/inbox-process/scripts/copy_verified.py copy \
