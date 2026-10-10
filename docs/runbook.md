@@ -134,6 +134,37 @@ Scope: 10_Areas/ → 90_Archive/
 
 ## Shared Scripts — `.claude/lib/`
 
+### Lint regression baseline
+
+Capture a full report before changing the vault, then compare after the change:
+
+```bash
+python3 .claude/lib/vault_lint.py --format json > .git/vault-lint-baseline.json
+python3 .claude/lib/vault_lint.py --baseline .git/vault-lint-baseline.json --strict
+```
+
+Baseline mode reports only new findings. `--strict` exits 1 when new findings exist;
+existing findings remain debt. Without `--baseline`, strict mode still fails on any
+finding. JSON includes current, existing, resolved, and new counts in `baseline`.
+Identity is check + NFC-normalized vault-relative path + detail; line shifts are
+ignored, but an increased occurrence count fails. Moving a note or changing a
+finding's detail makes it new.
+
+Use the same vault and selected `--check` set for both commands. Reports record
+the lint/template rule digest; changed rules require reviewing a fresh full report
+and capturing a new baseline. Missing, malformed, incompatible, and comparison-only
+reports are rejected with exit 2. Keep snapshots outside scanned note folders;
+the commands read notes without editing them.
+
+`hwpx_text.py` resolves installed `prod:hwpx` in this order: Claude marketplace,
+Claude cache, then Codex cache (`~/.codex/plugins/cache/*/prod/*/skills/hwpx/scripts/text.py`).
+Each cache tier uses natural version ordering. Regression checks:
+
+```bash
+python3 .claude/lib/tests/test_hwpx_text.py
+python3 .claude/lib/tests/test_vault_lint.py
+```
+
 소비자가 한 스킬을 넘어서는 결정론적 스크립트는 스킬 폴더가 아니라 `.claude/lib/`에 둔다.
 스킬 안에 두면 그 스킬을 옮기거나 없앨 때 훅·에이전트·docs가 조용히 깨진다.
 

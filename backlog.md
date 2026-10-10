@@ -2,11 +2,6 @@
 
 ## Review Backlog
 
-### PR #28 — [FIX] gate action Inbox deletes on copy identity and share HWPX extraction (2026-10-07)
-
-- [ ] [risk] `hwpx_text.py`의 `HWPX_GLOBS`는 Claude 플러그인 경로(marketplaces·cache)만 본다. Codex 런타임에만 `prod:hwpx`가 설치된 환경에서는 `UNVERIFIED: plugin not installed`로 떨어진다 — Codex 플러그인 설치 경로를 실측해 세 번째 패턴으로 추가할지 결정 (source: codex-review) — `.claude/lib/hwpx_text.py:25-28`
-- [ ] [debt] `vault_lint.py --strict`가 볼트 노트 기존 위반(비표준 status·`20_Training` frontmatter 누락·`#업무/` 누락)으로 exit 1이라 회귀 기준으로 못 쓴다. 규칙 파일 변경 없는 브랜치는 "main 대비 신규 발견 0"으로 판정했다 — 기준선 비교 모드(`--baseline`) 도입 또는 노트 백필(GP#1 승인) 필요 (source: code-review) — `.claude/lib/vault_lint.py`
-
 ### PR #25 — [REFACTOR] make note-evaluator default to source fact-check table (2026-10-03)
 
 - [ ] [verify] 새 평가자 계약의 실제 호출 1회 관찰 검증(spec Testing Decisions) — 에이전트 정의가 세션 시작 시 로드돼 같은 세션에서는 관찰 불가. 다음 inbox 처리에서 3-b 호출 시 표·`VERDICT`·`HOLD_DELETE` 반환 여부 확인 (source: task-next) — `.claude/agents/note-evaluator.md` *(deferred: live inbox run needed — agent definitions load at session start)*

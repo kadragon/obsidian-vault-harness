@@ -16,6 +16,7 @@ HERE = Path(__file__).resolve()
 SCRIPT = HERE.parent.parent / "hwpx_text.py"
 MARKET = ".claude/plugins/marketplaces/kadragon/prod/skills/hwpx/scripts/text.py"
 CACHE = ".claude/plugins/cache/kadragon/prod/{ver}/skills/hwpx/scripts/text.py"
+CODEX_CACHE = ".codex/plugins/cache/kadragon/prod/{ver}/skills/hwpx/scripts/text.py"
 
 OK_TOOL = "import sys\nprint('# 제목\\n\\n| 항목 | 값 |')\n"
 FAIL_TOOL = "import sys\nsys.stderr.write('bad zip\\n')\nsys.exit(1)\n"
@@ -61,6 +62,20 @@ class HwpxTextCliTests(unittest.TestCase):
     def test_cache_fallback_sorts_versions_numerically(self):
         self._tool(CACHE.format(ver="0.9.0"), FAIL_TOOL)
         self._tool(CACHE.format(ver="0.10.0"), OK_TOOL)
+        r = self._run(str(self.src))
+        self.assertEqual(r.returncode, 0, r.stderr)
+
+    def test_codex_only_cache_sorts_versions_numerically(self):
+        self._tool(CODEX_CACHE.format(ver="3.9.0"), FAIL_TOOL)
+        self._tool(CODEX_CACHE.format(ver="3.10.0"), OK_TOOL)
+        out = Path(self._tmp.name) / "codex.md"
+        r = self._run(str(self.src), "--out", str(out))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("# 제목", out.read_text(encoding="utf-8"))
+
+    def test_claude_cache_precedes_codex_cache(self):
+        self._tool(CACHE.format(ver="0.9.0"), OK_TOOL)
+        self._tool(CODEX_CACHE.format(ver="3.10.0"), FAIL_TOOL)
         r = self._run(str(self.src))
         self.assertEqual(r.returncode, 0, r.stderr)
 
