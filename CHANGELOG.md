@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- [done] Backfill local change-note business tag (2026-10-10) → docs/change-note-backfill-2026-10.md
 - [done] Backfill local work-note tags and required anchors (2026-10-10) → docs/work-note-backfill-2026-10.md
 - [done] Support Codex HWPX discovery and lint regression baselines (2026-10-10)
 - [done] Skill trigger cleanup, reference extraction, exclusion regressions and seven canonical skill renames (2026-10-10) → docs/design/skill-review-2026-10.md
