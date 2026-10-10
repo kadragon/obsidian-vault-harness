@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- [done] Backfill local work-note tags and required anchors (2026-10-10) → docs/work-note-backfill-2026-10.md
 - [done] Support Codex HWPX discovery and lint regression baselines (2026-10-10)
 - [done] Skill trigger cleanup, reference extraction, exclusion regressions and seven canonical skill renames (2026-10-10) → docs/design/skill-review-2026-10.md
 - [done] inbox: action copy-identity delete gate, shared .claude/lib/hwpx_text.py, evaluator/policy SSOT doc sync (2026-10-07) → docs/design/inbox-eval-rule-conflicts.md
