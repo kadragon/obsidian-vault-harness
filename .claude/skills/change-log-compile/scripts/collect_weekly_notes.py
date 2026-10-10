@@ -122,8 +122,15 @@ def is_excluded(text: str) -> bool:
     Covers both SKILL.md Step 2 exclusion types (단순 1회성 처리·미완료 개발) —
     the author/orchestrator marks the note once instead of re-judging every week.
     """
-    m = re.search(r"^weekly_exclude:\s*(\S+)\s*$", text, re.MULTILINE | re.IGNORECASE)
-    return bool(m and m.group(1).lower() in ("true", "yes"))
+    frontmatter = re.match(r"\A---[ \t]*\r?\n(.*?)^---[ \t]*\r?$", text, re.MULTILINE | re.DOTALL)
+    if frontmatter is None:
+        return False
+    m = re.search(
+        r"^weekly_exclude:[ \t]*(true|yes)[ \t]*(?:#.*)?$",
+        frontmatter.group(1),
+        re.MULTILINE | re.IGNORECASE,
+    )
+    return m is not None
 
 
 def find_completed_todo_dates(text: str) -> list[date]:

@@ -125,3 +125,13 @@ def test_collect_14changes_skips_flagged(tmp_path):
     )
     got, excluded = cw.collect_14changes(tmp_path, date(2026, 9, 28), date(2026, 10, 4))
     assert got == [] and excluded == 1
+
+
+def test_body_flag_does_not_exclude_note():
+    text = '---\ntype: work\n---\n# Flag documentation\nweekly_exclude: true\n'
+    assert cw.is_excluded(text) is False
+
+
+def test_frontmatter_flag_with_yaml_comment_excludes_note():
+    text = '---\ntype: work\nweekly_exclude: true # one-time processing\n---\n# t\n'
+    assert cw.is_excluded(text) is True

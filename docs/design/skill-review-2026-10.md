@@ -69,3 +69,17 @@ Skill 도구로 디스커버리되지 않으면서 스킬 디렉토리를 점유
   (필요 시 upstream에서 재설치).
 - [ ] 제거물은 `.trash/skills-purge-20261009/`에 보관 중 — 영구 삭제(`rm -rf`) 전 사용자 확인 필요.
 - [ ] P1·P2 항목은 승인된 순서대로 별도 작업으로 수행한다 (본 설계는 P0만 실행).
+
+## Recovered delivery status (2026-10-10)
+
+The resumed cycle covers the implemented trigger boundaries, reference extraction,
+weekly exclusion flag, verdict and conflict regressions, and seven canonical skill
+renames. The original P0-only wording above records intake history; it does not
+add optional P2 ideas to the reconstructed Sprint Contract.
+
+The completed Skill Review queue section was pruned into CHANGELOG.md. The trash
+item was already marked complete by the user; this resumed cycle performs no
+permanent deletion. Upstream HWPX extraction and round paperwork changes are
+preserved under the renamed paths. Generated weekly report output remains local
+and is ignored. Live trigger observations and the existing deferred Inbox
+evaluator observation require a later real invocation.
