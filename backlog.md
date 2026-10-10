@@ -9,7 +9,3 @@
 ## 레거시 메타데이터 참고 (2026-07-31 실측)
 
 > 참고 — 이 PR과 무관한 선행 백로그가 더 크다. 볼트 477건 전수 스캔 시 `status:` 누락 **220건**(2026-07-31 재측정 — improvement 백필로 57건 해소), incident `change_type` 누락 79건. 태그 보완과는 별도 범위이며 이번 작업에서는 수정하지 않았다.
-
-### PR #29 — [REFACTOR] clarify skill boundaries and standardize canonical names (2026-10-10)
-
-- [ ] [debt] Restrict permanent `weekly_exclude: true` suggestions to one-time processing; unfinished development must remain eligible after completion, via temporary exclusion or an explicit unflagging procedure (source: codex, P2; introduced here) — `.claude/skills/change-log-compile/SKILL.md:72-73`
