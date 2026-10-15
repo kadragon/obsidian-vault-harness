@@ -177,6 +177,9 @@ class RenderTests(unittest.TestCase):
         for area in ('10_Areas', '14_Changes'):
             (vault / area).mkdir()
         renderer.render(project, self.config, self.data)
+        for i, note in enumerate(project.rglob('*.md')):
+            if i % 2 == 0:
+                note.write_bytes(note.read_bytes().replace(b'\n', b'\r\n'))
         manual = project / 'manual.md'
         manual.write_text('---\nstatus: active\n---\nManual project')
         (vault / '14_Changes' / 'change.md').write_text('---\nstatus: open\n---')

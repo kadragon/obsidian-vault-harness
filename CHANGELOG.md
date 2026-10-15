@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- [done] Serialize homepage sync and exclude CRLF generated views from weekly reports (2026-10-15)
 - [done] Keep unfinished development eligible for weekly change reports (2026-10-10)
 - [done] Backfill local change-note business tag (2026-10-10) → docs/change-note-backfill-2026-10.md
 - [done] Backfill local work-note tags and required anchors (2026-10-10) → docs/work-note-backfill-2026-10.md
