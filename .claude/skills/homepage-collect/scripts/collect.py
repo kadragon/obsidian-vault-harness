@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import hashlib
 import http.cookiejar
 import json
@@ -385,14 +386,14 @@ def main():
     if args.verify:
         verify(root)
         return
-    config = json.loads(args.config.read_text(encoding='utf-8'))
-    canonical = [s['name'] for s in config['sites']]
-    if len(canonical) != 14 or len(set(canonical)) != 14:
-        raise CollectionError('Expected 14 unique canonical sites')
-    dataset_path = root / '원본데이터' / 'dataset.json'
-    previous = json.loads(dataset_path.read_text(encoding='utf-8')) if dataset_path.exists() else None
+    with output_lock(root):
+        refresh(root, args.config, args.env or args.vault / '.env', args.delay)
+
+
+@contextmanager
+def output_lock(root):
+    """Serialize writers for one output, including the full sync pipeline."""
     root.mkdir(parents=True, exist_ok=True)
-    # Exclusive lock prevents concurrent refresh from mixing versions or temporary files.
     lock = root / '.collection.lock'
     try:
         descriptor = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
@@ -400,15 +401,26 @@ def main():
         raise CollectionError('Collection lock exists; check running process before removing it')
     try:
         os.close(descriptor)
-        client = Client(max(0.1, args.delay))
-        credentials = read_env(args.env or args.vault / '.env')
-        client.login(credentials)
-        credentials.clear()
-        data = collect(root, config, client, previous)
-        verify(root)
-        print(json.dumps({'changes': data['changes']}, ensure_ascii=False))
+        yield
     finally:
         lock.unlink()
+
+
+def refresh(root, config_path, env_path, delay=0.35):
+    """Collect and verify data; the caller must hold output_lock(root)."""
+    config = json.loads(config_path.read_text(encoding='utf-8'))
+    canonical = [s['name'] for s in config['sites']]
+    if len(canonical) != 14 or len(set(canonical)) != 14:
+        raise CollectionError('Expected 14 unique canonical sites')
+    dataset_path = root / '원본데이터' / 'dataset.json'
+    previous = json.loads(dataset_path.read_text(encoding='utf-8')) if dataset_path.exists() else None
+    client = Client(max(0.1, delay))
+    credentials = read_env(env_path)
+    client.login(credentials)
+    credentials.clear()
+    data = collect(root, config, client, previous)
+    verify(root)
+    print(json.dumps({'changes': data['changes']}, ensure_ascii=False))
 
 
 if __name__ == '__main__':

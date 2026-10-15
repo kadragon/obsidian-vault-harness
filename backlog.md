@@ -2,11 +2,6 @@
 
 ## Review Backlog
 
-### PR #31 — Homepage collection and report checks (2026-10-15)
-
-- [ ] [debt] Hold one output lock across collection, rendering, and verification to prevent concurrent sync runs from racing on dataset and note temporary files (source: codex) — `.claude/skills/homepage-collect/scripts/sync.py:21` (introduced here)
-- [ ] [debt] Recognize CRLF marker lines when excluding generated homepage notes from weekly active-note collection (source: agy) — `.claude/skills/weekly-report-compile/scripts/collect_active_notes.sh:10` (introduced here)
-
 ### PR #25 — [REFACTOR] make note-evaluator default to source fact-check table (2026-10-03)
 
 - [ ] [verify] 새 평가자 계약의 실제 호출 1회 관찰 검증(spec Testing Decisions) — 에이전트 정의가 세션 시작 시 로드돼 같은 세션에서는 관찰 불가. 다음 inbox 처리에서 3-b 호출 시 표·`VERDICT`·`HOLD_DELETE` 반환 여부 확인 (source: task-next) — `.claude/agents/note-evaluator.md` *(deferred: live inbox run needed — agent definitions load at session start)*
