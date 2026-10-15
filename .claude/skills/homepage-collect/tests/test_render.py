@@ -177,14 +177,19 @@ class RenderTests(unittest.TestCase):
         for area in ('10_Areas', '14_Changes'):
             (vault / area).mkdir()
         renderer.render(project, self.config, self.data)
+        generated = list(project.rglob('*.md'))
         manual = project / 'manual.md'
         manual.write_text('---\nstatus: active\n---\nManual project')
         (vault / '14_Changes' / 'change.md').write_text('---\nstatus: open\n---')
         script = Path(__file__).resolve().parents[2] / 'weekly-report-compile/scripts/collect_active_notes.sh'
-        result = subprocess.run(['bash', str(script), str(vault)], capture_output=True, text=True, check=True)
-        self.assertIn(str(manual), result.stdout)
-        self.assertNotIn('사업진행-', result.stdout)
-        self.assertNotIn('_사업 진행 종합.md', result.stdout)
+        for newline in ('\n', '\r\n'):
+            with self.subTest(newline=repr(newline)):
+                for note in generated:
+                    note.write_bytes(note.read_text(encoding='utf-8').replace('\n', newline).encode('utf-8'))
+                result = subprocess.run(['bash', str(script), str(vault)], capture_output=True, text=True, check=True)
+                paths = set(result.stdout.splitlines())
+                self.assertIn(str(manual), paths)
+                self.assertTrue(all(str(note) not in paths for note in generated))
 
 
 if __name__ == '__main__':

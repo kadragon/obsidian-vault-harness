@@ -3,6 +3,9 @@ import argparse
 from pathlib import Path
 import subprocess
 import sys
+import urllib.error
+
+import collect
 
 
 def main():
@@ -14,13 +17,11 @@ def main():
     args = parser.parse_args()
     scripts = Path(__file__).resolve().parent
     config = args.config or scripts.parent / 'references' / 'sites.json'
-    output = args.output or args.vault / '12_Projects/2026/통합 홈페이지/10. 사업 진행 정보'
-    command = [sys.executable, str(scripts / 'collect.py'), '--vault', str(args.vault), '--output', str(output), '--config', str(config)]
-    if args.env:
-        command += ['--env', str(args.env)]
-    subprocess.run(command, check=True)
-    subprocess.run([sys.executable, str(scripts / 'render_notes.py'), '--output', str(output), '--config', str(config)], check=True)
-    subprocess.run([sys.executable, str(scripts / 'verify_notes.py'), '--output', str(output), '--vault', str(args.vault)], check=True)
+    output = (args.output or args.vault / collect.DEFAULT_OUTPUT).resolve()
+    with collect.output_lock(output):
+        collect.refresh(root=output, config_path=config, env_path=args.env or args.vault / '.env')
+        subprocess.run([sys.executable, str(scripts / 'render_notes.py'), '--output', str(output), '--config', str(config)], check=True)
+        subprocess.run([sys.executable, str(scripts / 'verify_notes.py'), '--output', str(output), '--vault', str(args.vault)], check=True)
 
 
 if __name__ == '__main__':
@@ -28,3 +29,8 @@ if __name__ == '__main__':
         main()
     except subprocess.CalledProcessError as error:
         sys.exit(error.returncode)
+    except (collect.CollectionError, urllib.error.URLError, OSError, ValueError, KeyError) as error:
+        # Keep collection failures sanitized just as in the standalone collector.
+        message = str(error) if isinstance(error, collect.CollectionError) else type(error).__name__
+        print('Collection failed: ' + message, file=sys.stderr)
+        sys.exit(1)
