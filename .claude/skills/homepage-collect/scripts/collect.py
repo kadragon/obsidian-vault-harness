@@ -236,11 +236,13 @@ def classify(post, config):
     post.update(sites=sites, classification_evidence=evidence, category=category)
 
 
-def safe_filename(name):
+def safe_filename(name, max_bytes=220):
     name = nfc(re.sub(r'[<>:"/\\|?*\x00-\x1f\[\]#^]', '_', name)).strip(' .')
     suffix = Path(name).suffix
     stem = name[:-len(suffix)] if suffix else name
-    return (stem[:90] or 'attachment') + suffix[:12]
+    suffix = suffix[:12]
+    stem = stem.encode('utf-8')[:max_bytes - len(suffix.encode('utf-8'))].decode('utf-8', errors='ignore')
+    return (stem or 'attachment') + suffix
 
 
 def download(client, attachment, postid, root):
@@ -271,7 +273,9 @@ def download(client, attachment, postid, root):
             if size == 0 or (declared_size and size != int(declared_size)):
                 raise CollectionError('Empty or truncated attachment')
         checksum = sha.hexdigest()
-        destination = folder / f'{attachment["id"]}-{checksum[:12]}-{safe_filename(attachment["name"])}'
+        prefix = f'{attachment["id"]}-{checksum[:12]}-'
+        filename = safe_filename(attachment['name'], max_bytes=240 - len(prefix.encode('utf-8')))
+        destination = folder / (prefix + filename)
         if destination.exists():
             if digest(destination.read_bytes()) != checksum:
                 raise CollectionError('Existing attachment hash mismatch')

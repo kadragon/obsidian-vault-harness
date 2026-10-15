@@ -74,6 +74,21 @@ class RenderTests(unittest.TestCase):
             renderer.render(self.output, self.config, self.data)
         self.assertFalse(list(self.output.rglob('*.md')))
 
+    def test_local_links_resolve_through_symlinked_output(self):
+        from urllib.parse import unquote
+        alias = self.output / 'alias'
+        actual = self.output / 'actual'
+        actual.mkdir()
+        alias.symlink_to(actual, target_is_directory=True)
+        attachment = actual / 'attachment.pdf'
+        attachment.write_bytes(b'original')
+        note = Path('notes/source.md')
+        (alias / note).parent.mkdir()
+        link = renderer.local_link('attachment.pdf', note, alias)
+        target = (alias / note).parent / unquote(link.split('](', 1)[1][:-1])
+        self.assertEqual(target.resolve(), attachment.resolve())
+        self.assertTrue(target.is_file())
+
     def test_override_common_and_unknown_keep_original_dataset(self):
         self.config['overrides']['2695-89136'] = {'sites': [], 'category': '공통'}
         renderer.render(self.output, self.config, self.data)
@@ -121,6 +136,52 @@ class RenderTests(unittest.TestCase):
         self.assertNotIn('사이트0 · body · 명칭: 사이트0', text)
         self.assertIn('override', text)
         self.assertIn('Shared project template', text)
+
+
+    def test_source_markdown_is_literal_and_attachment_labels_verify(self):
+        import sys
+        from urllib.parse import unquote
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+        import verify_notes
+        post = self.data['posts'][0]
+        post['title'] = '[[메인]] <!-- hidden -->'
+        post['body_text'] = '#태그 [[메인]] [참고](첨부 확인) <!-- homepage-collect:end -->'
+        post['comments'][0]['text'] = '[참고](missing) #태그 <!-- hidden'
+        post['attachments'][0]['name'] = '회의록[1차](최종).hwp'
+        for field in ('path',):
+            target = self.output / post['attachments'][0][field]
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(b'abc')
+        archive = self.output / post['source_html']
+        archive.parent.mkdir(parents=True, exist_ok=True)
+        archive.write_text('source')
+        (self.output / '원본데이터').mkdir()
+        import json
+        (self.output / '원본데이터/dataset.json').write_text(json.dumps(self.data))
+        renderer.render(self.output, self.config, self.data)
+        text = (self.output / '원문노트/사업진행-2695-89136.md').read_text()
+        self.assertNotIn('[[메인]]', text)
+        self.assertNotIn('#태그', text)
+        self.assertEqual(text.count(renderer.END), 1)
+        verify_notes.verify(self.output, Path(__file__).resolve().parents[4])
+        self.assertEqual(renderer.render(self.output, self.config, self.data)['unchanged'], 17)
+
+    def test_weekly_collector_skips_generated_views_but_keeps_manual_project(self):
+        import subprocess
+        vault = self.output / 'vault'
+        project = vault / '12_Projects'
+        project.mkdir(parents=True)
+        for area in ('10_Areas', '14_Changes'):
+            (vault / area).mkdir()
+        renderer.render(project, self.config, self.data)
+        manual = project / 'manual.md'
+        manual.write_text('---\nstatus: active\n---\nManual project')
+        (vault / '14_Changes' / 'change.md').write_text('---\nstatus: open\n---')
+        script = Path(__file__).resolve().parents[2] / 'weekly-report-compile/scripts/collect_active_notes.sh'
+        result = subprocess.run(['bash', str(script), str(vault)], capture_output=True, text=True, check=True)
+        self.assertIn(str(manual), result.stdout)
+        self.assertNotIn('사업진행-', result.stdout)
+        self.assertNotIn('_사업 진행 종합.md', result.stdout)
 
 
 if __name__ == '__main__':

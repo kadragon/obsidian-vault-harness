@@ -6,20 +6,20 @@ description: Collect or refresh the 2026 KNUE homepage project collaboration boa
 # Homepage project collection
 
 Use the maintained collector, not newly generated one-off login code.
-Canonical skill and scripts: `C:/Dev/ObsidianVault/.claude/skills/homepage-collect/`.
-Default vault: `C:/Dev/ObsidianVault`.
+Resolve `<vault>` from the current vault root and `<skill>` as `<vault>/.claude/skills/homepage-collect/`.
+Windows example: `C:/Dev/ObsidianVault`; macOS example: `/Users/kadragon/ObsidianVault`.
 Default output: `12_Projects/2026/통합 홈페이지/10. 사업 진행 정보/`.
 
 ## Run
 
-1. Resolve a real Python 3.11+ interpreter (`py -0p` on Windows). Use that same interpreter for dependencies and execution. The currently verified interpreter is `C:/Users/KNUE/AppData/Local/Programs/Python/Python313/python.exe`.
+1. Resolve a real Python 3.11+ interpreter (`py -0p` on Windows). Use that same interpreter for dependencies and execution. On macOS, resolve `python3` and check its version. Do not reuse another machine's absolute interpreter path.
 2. Install dependencies only when missing: `<python> -m pip install -r <skill>/scripts/requirements.txt`.
-3. Run `<python> <skill>/scripts/sync.py --vault C:/Dev/ObsidianVault`.
+3. Delegate note-producing execution to `obsidian-operator`: run `<python> <skill>/scripts/sync.py --vault <vault>` there. The operator uses the maintained renderer; do not create notes manually.
 4. Confirm exit 0, board totals, comment counts, attachment SHA-256 checks and note links. Open `_사업 진행 종합.md`; report new/updated/missing counts and unresolved site classification.
 
 An offline integrity check is available with `collect.py --vault <vault> --verify`.
 Offline rerender: `render_notes.py --output <output> --config <skill>/references/sites.json`.
-When changing implementation, run both test files in `tests/` and independently check the live schema. New note generation is routed to `obsidian-operator`; bulk renderer implements the verified project template and deterministic gates. Existing small in-scope note edits may be direct.
+When changing implementation, run both test files in `tests/` and independently check the live schema. New note generation, including script execution, is routed to `obsidian-operator`; the bulk renderer implements the verified project template and deterministic gates. Existing small in-scope note edits may be direct.
 
 ## Sources and behavior
 

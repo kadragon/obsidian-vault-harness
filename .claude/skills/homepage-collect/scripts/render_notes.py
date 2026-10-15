@@ -21,7 +21,14 @@ DISCLAIMER = ('사이트 분류는 제목·본문·댓글의 명칭을 자동 �
 
 
 def cell(value):
-    return str(value or '').replace('|', '\\|').replace('\n', ' ').replace('\r', '')
+    return literal(str(value or '')).replace('|', '\\|').replace('\n', ' ').replace('\r', '')
+
+
+def literal(value):
+    """Preserve displayed source text without activating Markdown or HTML syntax."""
+    entities = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '[': '&#91;', ']': '&#93;',
+                '#': '&#35;', '`': '&#96;', '*': '&#42;', '_': '&#95;', '\\': '&#92;'}
+    return ''.join(entities.get(char, char) for char in str(value or ''))
 
 
 def snippet(value, length=240):
@@ -30,7 +37,7 @@ def snippet(value, length=240):
 
 
 def quoted(value):
-    return '\n'.join('> ' + line for line in str(value or '').splitlines()) or '> (내용 없음)'
+    return '\n'.join('> ' + literal(line) for line in str(value or '').splitlines()) or '> (내용 없음)'
 
 
 def date_key(value):
@@ -82,24 +89,24 @@ def local_link(path, note, output, name=None):
     target = (output / str(path)).resolve()
     if not target.is_relative_to(output.resolve()):
         raise ValueError(f'Attachment/source path escapes output: {path}')
-    relative = os.path.relpath(target, (output / note).parent).replace('\\', '/')
-    label = str(name or target.name).replace('[', '\\[').replace(']', '\\]')
+    relative = os.path.relpath(target, (output / note).parent.resolve()).replace('\\', '/')
+    label = literal(name or target.name)
     return '[' + label + '](' + quote(relative, safe='/') + ')'
 
 
 def document(title, summary, sections):
-    body = f'# {title}\n\n> [!abstract] 프로젝트 요약\n> {summary}\n\n## 관련\n\n- #업무/홈페이지\n\n'
+    body = f'# {literal(title)}\n\n> [!abstract] 프로젝트 요약\n> {summary}\n\n## 관련\n\n- #업무/홈페이지\n\n'
     body += '\n\n'.join(f'## {heading}\n\n{content}' for heading, content in sections if content)
     return '---\ntype: project\nstatus: active\n---\n\n' + BEGIN + '\n' + body.rstrip() + '\n' + END + '\n'
 
 
 def source_note(p, output, name):
-    metadata = '\n'.join(f'- {label}: {value}' for label, value in [
+    metadata = '\n'.join(f'- {label}: {cell(value)}' for label, value in [
         ('게시판', p['board']), ('글 번호', p['id']), ('작성자', p.get('author', '')),
         ('소속', p.get('department', '')), ('작성일', p.get('created_at', '')),
         ('처리구분', p.get('status') or '표시 없음'), ('사이트 자동 분류', ', '.join(p.get('sites', [])) or p.get('category', '미분류')),
-        ('추가 범위', ', '.join(p.get('supplemental_sites', [])) or '표시 없음'),
-        ('원문', f"[게시판 원문]({p['url']})")])
+        ('추가 범위', ', '.join(p.get('supplemental_sites', [])) or '표시 없음')])
+    metadata += '\n- 원문: [게시판 원문](' + quote(p['url'], safe=':/?=&%') + ')'
     evidence = '\n'.join('- ' + cell(e.get('site')) + ' · ' + cell(e.get('field')) +
                          (' · 근거: ' if e.get('field') == 'override' else ' · 명칭: ') + cell(e.get('alias'))
                          for e in p.get('classification_evidence', []))

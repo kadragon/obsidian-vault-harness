@@ -5,7 +5,12 @@ VAULT=${1:-.}
 
 echo "=== 12_Projects ==="
 grep -rlE "^status:[[:space:]]*\"?(open|active|in-progress)\"?" \
-  "$VAULT/12_Projects/" 2>/dev/null
+  "$VAULT/12_Projects/" 2>/dev/null | while IFS= read -r note; do
+    # Generated board snapshots and views are evidence, not separate active work.
+    if ! grep -q '^<!-- homepage-collect:begin v1 -->$' "$note"; then
+      printf '%s\n' "$note"
+    fi
+  done
 
 echo "=== 10_Areas ==="
 grep -rlE "^status:[[:space:]]*\"?(open|active|in-progress)\"?" \

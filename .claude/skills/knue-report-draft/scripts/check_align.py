@@ -1,4 +1,4 @@
-"""Fail when an hwpx has text paragraphs that are left-aligned.
+"""Fail when an hwpx has left-aligned body text outside tables.
 
 Official documents use justified body text; LEFT usually leaks in from a
 style-reference file's paraPr. Usage:
@@ -12,6 +12,7 @@ before packing.
 import re
 import sys
 import zipfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -25,16 +26,47 @@ def load(target):
             header = z.read("Contents/header.xml").decode("utf-8")
             names = sorted(n for n in z.namelist() if re.fullmatch(r"Contents/section\d+\.xml", n))
             sections = [z.read(n).decode("utf-8") for n in names]
+    if not sections:
+        raise ValueError("No document sections found")
+    ET.fromstring(header)
+    for section in sections:
+        ET.fromstring(section)
     return header, sections
 
 
 def left_ids(header):
     ids = set()
-    for m in re.finditer(r'<hh:paraPr id="(\d+)".*?</hh:paraPr>', header, flags=re.S):
-        align = re.search(r'<hh:align horizontal="(\w+)"', m.group(0))
-        if align and align.group(1) == "LEFT":
-            ids.add(m.group(1))
+    for paragraph in ET.fromstring(header).iter():
+        if paragraph.tag.rsplit('}', 1)[-1] != 'paraPr':
+            continue
+        for align in paragraph:
+            if align.tag.rsplit('}', 1)[-1] == 'align' and align.get('horizontal') == 'LEFT':
+                ids.add(paragraph.get('id'))
     return ids
+
+
+def paragraph_text(node):
+    """Collect this paragraph's text without attributing nested table paragraphs to it."""
+    parts = []
+    for child in node:
+        name = child.tag.rsplit('}', 1)[-1]
+        if name == 'p':
+            continue
+        if name == 't':
+            parts.append(''.join(child.itertext()))
+        else:
+            parts.append(paragraph_text(child))
+    return ''.join(parts)
+
+
+def body_paragraphs(node):
+    """Table cells keep their own layout; inspect body paragraphs only."""
+    if node.tag.rsplit('}', 1)[-1] in {'tbl', 'tc'}:
+        return
+    if node.tag.rsplit('}', 1)[-1] == 'p':
+        yield node
+    for child in node:
+        yield from body_paragraphs(child)
 
 
 def main():
@@ -43,17 +75,17 @@ def main():
         return 2
     try:
         header, sections = load(sys.argv[1])
-    except (OSError, KeyError, zipfile.BadZipFile) as e:
+    except (OSError, KeyError, ValueError, ET.ParseError, zipfile.BadZipFile) as e:
         print(f"ERROR: {e}")
         return 2
     left = left_ids(header)
     hits = []
     for sec in sections:
-        # innermost paragraphs only: a <hp:p> span holding no nested <hp:p>
-        for m in re.finditer(r'<hp:p [^>]*paraPrIDRef="(\d+)"[^>]*>((?:(?!<hp:p ).)*?)</hp:p>', sec, flags=re.S):
-            text = "".join(re.findall(r"<hp:t>(.*?)</hp:t>", m.group(2), flags=re.S)).strip()
-            if text and m.group(1) in left:
-                hits.append((m.group(1), text))
+        for paragraph in body_paragraphs(ET.fromstring(sec)):
+            text = paragraph_text(paragraph).strip()
+            pid = paragraph.get('paraPrIDRef')
+            if text and pid in left:
+                hits.append((pid, text))
     if not hits:
         print("OK: no left-aligned text paragraph")
         return 0

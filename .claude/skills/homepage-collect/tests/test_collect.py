@@ -119,5 +119,14 @@ class Tests(unittest.TestCase):
         self.assertNotEqual(collect.post_hash(post), collect.post_hash(dict(updated, body_text='edited')))
 
 
+    def test_long_korean_attachment_name_fits_filesystem_byte_limit(self):
+        attachment = {'id': '123456789', 'name': '한글' * 100 + '.hwp', 'url': Response.url}
+        collect.download(FakeClient(), attachment, '2695-1', self.root)
+        path = self.root / attachment['path']
+        self.assertLessEqual(len(path.name.encode('utf-8')), 240)
+        self.assertTrue(path.name.endswith('.hwp'))
+        self.assertEqual(path.read_bytes(), b'%PDF-1.7 original')
+
+
 if __name__ == '__main__':
     unittest.main()

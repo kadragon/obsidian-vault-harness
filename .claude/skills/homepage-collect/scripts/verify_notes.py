@@ -30,7 +30,7 @@ def verify(output, vault):
             target = link.split('|', 1)[0].split('#', 1)[0]
             if len(names.get(unicodedata.normalize('NFC', target), [])) != 1:
                 errors.append(f'Unresolved/ambiguous note link in {path.name}: {target}')
-        for link in re.findall(r'\]\(([^\n]+?)\)', text):
+        for link in re.findall(r'(?<!\\)\]\(([^\n]+?)\)', text):
             if urlsplit(link).scheme or link.startswith('#'):
                 continue
             target = (path.parent / unquote(link)).resolve()

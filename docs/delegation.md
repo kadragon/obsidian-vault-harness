@@ -26,7 +26,7 @@ If any trigger applies, delegate first — do not proceed without it.
 | Periodic vault cleanup | `vault-clean` skill | — |
 | 프로젝트 허브 120줄 초과 또는 프로젝트 폴더 정리 요청 | `project-restructure` skill | 프로젝트 폴더 경로 |
 | Weekly system change report needed | `change-log-compile` skill | Date range (default: past week) |
-| 2026 홈페이지 사업 진행 정보 수집·갱신 | `homepage-collect` skill | Vault path; existing `.env`; newknue boards and 14-site config |
+| 2026 홈페이지 사업 진행 정보 수집·갱신 | `homepage-collect` skill | Vault path; existing `.env`; newknue boards and 14-site config; note-producing sync runs via `obsidian-operator` |
 | 이번 주/다음 주 진행·예정 주간업무회의 자료 요청 | `weekly-report-compile` skill | 1주/2주 범위 (직전주 실적 집계는 `change-log-compile`가 먼저) |
 | 과업심의 요청 검토 (위원 관점 지적·판정) | `gwaeop-simui-review` skill | 심의요청서·제안요청서·산출내역서 경로 + 회차 폴더 |
 | Status open→closed sync needed | `status-sync` skill | — |
