@@ -12,6 +12,7 @@ import re
 from collections import Counter
 from pathlib import Path
 from urllib.parse import quote
+from classification import apply_override
 
 BEGIN = '<!-- homepage-collect:begin v1 -->'
 END = '<!-- homepage-collect:end -->'
@@ -133,18 +134,9 @@ def build_documents(dataset, config, output):
     for site in sites:
         if re.search(r'[<>:"/\\|?*]', site) or site in {'.', '..'} or site.rstrip(' .') != site:
             raise ValueError(f'Unsafe site folder: {site}')
-    posts = [dict(p, **{k: v for k, v in config.get('overrides', {}).get(p['id'], {}).items()
-                       if k in {'sites', 'category', 'supplemental_sites'}}) for p in dataset['posts']]
+    posts = [dict(p) for p in dataset['posts']]
     for post in posts:
-        override = config.get('overrides', {}).get(post['id'])
-        if override:
-            post['classification_evidence'] = [
-                {'site': site, 'field': 'override', 'alias': override.get('evidence') or site}
-                for site in post.get('sites', [])]
-            if not post.get('sites'):
-                post['classification_evidence'] = [{'site': post.get('category', '미분류'),
-                                                    'field': 'override',
-                                                    'alias': override.get('evidence') or 'sites.json'}]
+        apply_override(post, config)
     ids = [p['id'] for p in posts]
     if len(set(ids)) != len(ids) or any(not re.fullmatch(r'\d+-\d+', i) for i in ids):
         raise ValueError('Post IDs must be unique board-number pairs')

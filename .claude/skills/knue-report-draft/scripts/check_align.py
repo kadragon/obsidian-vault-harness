@@ -1,4 +1,4 @@
-"""Fail when an hwpx has left-aligned body text outside tables.
+"""Fail when an hwpx has left-aligned body text outside tables and page/drawing containers.
 
 Official documents use justified body text; LEFT usually leaks in from a
 style-reference file's paraPr. Usage:
@@ -61,7 +61,7 @@ def paragraph_text(node):
 
 def body_paragraphs(node):
     """Table cells keep their own layout; inspect body paragraphs only."""
-    if node.tag.rsplit('}', 1)[-1] in {'tbl', 'tc'}:
+    if node.tag.rsplit('}', 1)[-1] in {'tbl', 'tc', 'header', 'footer', 'subList', 'drawText'}:
         return
     if node.tag.rsplit('}', 1)[-1] == 'p':
         yield node

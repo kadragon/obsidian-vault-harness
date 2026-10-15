@@ -5,6 +5,7 @@
 ### PR #31 — Homepage collection and report checks (2026-10-15)
 
 - [ ] [debt] Hold one output lock across collection, rendering, and verification to prevent concurrent sync runs from racing on dataset and note temporary files (source: codex) — `.claude/skills/homepage-collect/scripts/sync.py:21` (introduced here)
+- [ ] [debt] Recognize CRLF marker lines when excluding generated homepage notes from weekly active-note collection (source: agy) — `.claude/skills/weekly-report-compile/scripts/collect_active_notes.sh:10` (introduced here)
 
 ### PR #25 — [REFACTOR] make note-evaluator default to source fact-check table (2026-10-03)
 

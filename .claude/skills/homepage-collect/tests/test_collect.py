@@ -118,6 +118,52 @@ class Tests(unittest.TestCase):
         self.assertEqual(collect.post_hash(post), collect.post_hash(updated))
         self.assertNotEqual(collect.post_hash(post), collect.post_hash(dict(updated, body_text='edited')))
 
+    def test_local_reclassification_does_not_report_a_board_edit(self):
+        client = FakeClient()
+        with patch.object(collect, 'BOARDS', [(2695, 3774, 'board')]):
+            first = collect.collect(self.root, self.config, client)
+            self.config['sites'][1]['aliases'].append('인권센터')
+            second = collect.collect(self.root, self.config, client, first)
+        self.assertNotEqual(first['posts'][0]['sites'], second['posts'][0]['sites'])
+        self.assertEqual(second['changes']['updated'], [])
+        self.assertNotEqual(first['posts'][0]['content_hash'], second['posts'][0]['content_hash'])
+
+    def test_view_counter_does_not_create_another_html_snapshot(self):
+        client = FakeClient()
+        with patch.object(collect, 'BOARDS', [(2695, 3774, 'board')]):
+            client.view = VIEW.replace('</div></div>', '</div><span>조회수 1</span></div>', 1)
+            first = collect.collect(self.root, self.config, client)
+            client.view = client.view.replace('조회수 1', '조회수 2')
+            second = collect.collect(self.root, self.config, client, first)
+        self.assertEqual(second['changes']['updated'], [])
+        self.assertEqual(len(list(self.root.rglob('*.html'))), 1)
+
+    def test_html_errors_never_become_verified_attachments(self):
+        for content, mime in [(b'\xef\xbb\xbf<html>Login</html>', ''),
+                              (b'<script>alert("denied")</script>', ''),
+                              (b'Not a PDF', 'text/html; charset=utf-8')]:
+            with self.subTest(content=content):
+                response = Response(content)
+                response.headers['Content-Type'] = mime
+                client = FakeClient()
+                with patch.object(client, 'open', return_value=response):
+                    with self.assertRaises(collect.CollectionError):
+                        collect.download(client, {'id': '1', 'name': 'file.pdf', 'url': Response.url}, '2695-1', self.root)
+        self.assertFalse(list(self.root.rglob('*.pdf')))
+        self.assertFalse(list(self.root.rglob('*.part')))
+
+    def test_override_metadata_matches_renderer_classification(self):
+        import render_notes
+        self.config['overrides']['2695-1'] = {'sites': [], 'category': '추가 범위',
+            'supplemental_sites': ['시설 예약'], 'evidence': 'Source-backed scope'}
+        post, _ = collect.parse_post(BeautifulSoup(VIEW, 'html.parser'), 2695, 3774, 'board', 1)
+        collect.classify(post, self.config)
+        before = json.loads(json.dumps(post))
+        render_notes.apply_override(post, self.config)
+        self.assertEqual(post, before)
+        self.assertEqual(post['classification_evidence'][0]['alias'], 'Source-backed scope')
+        self.assertEqual(post['supplemental_sites'], ['시설 예약'])
+
 
     def test_long_korean_attachment_name_fits_filesystem_byte_limit(self):
         attachment = {'id': '123456789', 'name': '한글' * 100 + '.hwp', 'url': Response.url}

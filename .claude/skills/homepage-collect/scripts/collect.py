@@ -17,6 +17,7 @@ import urllib.parse
 import urllib.request
 
 from bs4 import BeautifulSoup
+from classification import apply_override
 
 BASE = 'https://cop.hanshinit.co.kr'
 BOARDS = [(2695, 3774, '업무협의(소통공간)'), (2696, 3775, '주간 및 월간보고'), (2697, 3776, '자료실')]
@@ -43,6 +44,16 @@ def json_bytes(value):
 def post_hash(post):
     # Archive layout is storage metadata, not a business-content change.
     return digest(json_bytes({k: v for k, v in post.items() if k not in {'content_hash', 'source_html'}}))
+
+
+def source_hash(post):
+    """Detect board edits independently of local classification and archive layout."""
+    fields = ('id', 'bbs_no', 'ntt_no', 'board', 'title', 'author', 'department',
+              'status', 'created_at', 'body_text', 'body_html', 'comments')
+    content = {key: post.get(key) for key in fields}
+    content['attachments'] = [{key: a.get(key) for key in ('id', 'name', 'sha256', 'size')}
+                              for a in post.get('attachments', [])]
+    return digest(json_bytes(content))
 
 
 def write_changed(path, data):
@@ -191,7 +202,8 @@ def parse_post(soup, board, key, name, ntt):
     if not count or int(count[1]) != len(comments):
         raise CollectionError(f'Comment count mismatch: {board}-{ntt}')
     # Archive content only: omit authentication UI, forms, scripts and mutation controls.
-    archive = BeautifulSoup(str(soup.select_one('.bbsInfo')) + str(table) + str(reply), 'html.parser')
+    stable_info = '<div class="bbsInfo"><div class="bbsCount">작성일 ' + date.group(0) + '</div></div>'
+    archive = BeautifulSoup(stable_info + str(table) + str(reply), 'html.parser')
     for element in archive.select('script, style, form, button, .bbs_ico'):
         element.decompose()
     post = {'id': f'{board}-{ntt}', 'bbs_no': board, 'ntt_no': ntt, 'board': name,
@@ -217,23 +229,14 @@ def classify(post, config):
                 evidence.append({'site': site['name'], 'field': field, 'alias': aliases[0]})
         if any(e['site'] == site['name'] for e in evidence):
             sites.append(site['name'])
-    override = config.get('overrides', {}).get(post['id'])
-    if override:
-        canonical = {s['name'] for s in config['sites']}
-        if not set(override.get('sites', [])) <= canonical:
-            raise CollectionError('Unknown site in classification override')
-        sites = override.get('sites', [])
-        evidence = [{'site': site, 'field': 'override', 'alias': site} for site in sites]
-        category = override.get('category', '사이트별' if sites else '미분류')
-        if category not in {'사이트별', '공통', '미분류', '추가 범위'}:
-            raise CollectionError('Unknown override category')
-    elif sites:
+    if sites:
         category = '사이트별'
     else:
         common_terms = ['주간보고', '월간보고', '회의록', '현행프로그램', '현행게시판',
                         '킥오프', '착수', '전체', '공통', '통합 홈페이지', '통합홈페이지', '사이트키']
         category = '공통' if post['bbs_no'] == 2696 or any(t in fields['title'] for t in common_terms) else '미분류'
     post.update(sites=sites, classification_evidence=evidence, category=category)
+    apply_override(post, config)
 
 
 def safe_filename(name, max_bytes=220):
@@ -260,11 +263,13 @@ def download(client, attachment, postid, root):
             if urllib.parse.urlsplit(response.url).path.endswith('loginForm.do'):
                 raise CollectionError('Attachment redirected to login')
             declared_size = response.headers.get('Content-Length')
+            if response.headers.get('Content-Type', '').split(';', 1)[0].strip().lower() == 'text/html':
+                raise CollectionError('Unexpected HTML instead of attachment')
             first = True
             while chunk := response.read(1024 * 1024):
                 if first:
-                    beginning = chunk[:4096].lower().lstrip()
-                    if (beginning.startswith(b'<!doctype html') or beginning.startswith(b'<html')):
+                    beginning = chunk[:4096].removeprefix(b'\xef\xbb\xbf').lower().lstrip()
+                    if beginning.startswith((b'<!doctype html', b'<html', b'<script')):
                         raise CollectionError('Unexpected HTML instead of attachment')
                     first = False
                 output.write(chunk)
@@ -324,7 +329,7 @@ def collect(root, config, client, previous=None):
     old = {post['id']: post for post in (previous or {}).get('posts', [])}
     now = {post['id']: post for post in posts}
     changes = {'new': sorted(now.keys() - old.keys()),
-               'updated': sorted(p for p in now.keys() & old.keys() if post_hash(now[p]) != post_hash(old[p])),
+               'updated': sorted(p for p in now.keys() & old.keys() if source_hash(now[p]) != source_hash(old[p])),
                'missing': sorted(old.keys() - now.keys())}
     dataset = {'schema_version': 1,
                'collected_at': datetime.now(timezone(timedelta(hours=9))).isoformat(timespec='seconds'),

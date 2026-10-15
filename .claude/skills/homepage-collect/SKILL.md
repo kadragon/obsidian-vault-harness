@@ -16,6 +16,7 @@ Default output: `12_Projects/2026/통합 홈페이지/10. 사업 진행 정보/`
 2. Install dependencies only when missing: `<python> -m pip install -r <skill>/scripts/requirements.txt`.
 3. Delegate note-producing execution to `obsidian-operator`: run `<python> <skill>/scripts/sync.py --vault <vault>` there. The operator uses the maintained renderer; do not create notes manually.
 4. Confirm exit 0, board totals, comment counts, attachment SHA-256 checks and note links. Open `_사업 진행 종합.md`; report new/updated/missing counts and unresolved site classification.
+5. After successful note verification, refresh semantic search with `qmd update --quiet` then `qmd embed --quiet` from the vault root. If qmd is unavailable, report that indexing remains pending. The subprocess writes do not trigger Write/Edit hooks; `verify_notes.py` explicitly checks shared note rules, tags and links.
 
 An offline integrity check is available with `collect.py --vault <vault> --verify`.
 Offline rerender: `render_notes.py --output <output> --config <skill>/references/sites.json`.

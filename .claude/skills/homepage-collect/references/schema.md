@@ -15,7 +15,9 @@ Top-level keys: `schema_version`, `collected_at` (Asia/Seoul ISO), `boards`, `po
 Boards contain `id`, `key`, `name`, `total`, `collected`.
 Post identity is `<bbs_no>-<ntt_no>`, stable across title changes. Fields include source URL, title, sender, department, created timestamp, source processing status, plain/HTML body, comments, attachments, sites, classification evidence/category, source HTML path and semantic content hash.
 Comments retain author/date/text. Attachments retain file ID/name/source URL/local relative path/size/SHA-256. Paths resolve inside the destination.
-`changes` compares current post content hashes with the previous verified dataset: `new`, `updated`, `missing`. Snapshots and old notes remain available for missing records.
+`changes` compares current source-content hashes with the previous verified dataset: `new`, `updated`, `missing`. Snapshots and old notes remain available for missing records.
+
+Board-edit detection hashes source fields and attachment identities/content only; local site classifications and storage paths do not mark a post as edited. Full snapshot hashes also include classification metadata. Archived metadata retains the source timestamp, excluding volatile view counters. Overrides use the same evidence rules for stored records and rendered views.
 
 ## Checks
 

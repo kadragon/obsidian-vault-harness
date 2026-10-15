@@ -3,6 +3,9 @@ import importlib.util
 import tempfile
 import unittest
 from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 
 SPEC = importlib.util.spec_from_file_location('render_notes', Path(__file__).parents[1] / 'scripts' / 'render_notes.py')
 renderer = importlib.util.module_from_spec(SPEC)

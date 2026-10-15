@@ -47,6 +47,14 @@ class AlignmentTests(unittest.TestCase):
         section = '<sec><p paraPrIDRef="1"><run><tbl><tr><tc><p paraPrIDRef="1"><run><t>Table label</t></run></p></tc></tr></tbl></run></p></sec>'
         self.assertEqual(self.run_check(header, section).returncode, 0)
 
+    def test_headers_footers_and_text_boxes_are_not_body_paragraphs(self):
+        header = '<head><paraPr id="1"><align horizontal="LEFT"/></paraPr></head>'
+        text = '<p paraPrIDRef="1"><run><t>Page label</t></run></p>'
+        for container in ('header', 'footer', 'subList', 'drawText'):
+            with self.subTest(container=container):
+                section = f'<sec><p paraPrIDRef="1"><run><{container}>{text}</{container}></run></p></sec>'
+                self.assertEqual(self.run_check(header, section).returncode, 0)
+
 
 if __name__ == '__main__':
     unittest.main()
