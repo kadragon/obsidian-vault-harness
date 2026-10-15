@@ -23,4 +23,6 @@ prod:report-draft 위에 KNUE 관행을 덧씌운다. 절차·lint·게이트(G1
 
 - 부서명은 `정보전산원`이다. 2026. 7. 이전 문서의 `교육정보원`은 새 보고서에 쓰지 않는다.
 - 정보전산원 보고서는 `○`, 본부 배포 서식은 서식의 `◦`를 유지한다.
+- 본문 문단은 양쪽 정렬이다. 좌정렬은 쓰지 않는다. 스타일 참조 파일의 `paraPr`가 `LEFT`면 `header.xml`에서 `JUSTIFY`로 바꾼 뒤 패키징한다.
+- hwpx를 만들거나 고친 뒤 `python3 .claude/skills/knue-report-draft/scripts/check_align.py <결과.hwpx>`가 exit 0이어야 한다(G3 다음).
 - 사용자 직접 지시는 `docs/harness-log.md` 규칙 근거 표에 있다. 관행 문서보다 우선한다.

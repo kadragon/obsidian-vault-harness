@@ -119,31 +119,12 @@ python3 .claude/skills/change-log-compile/scripts/collect_weekly_notes.py --vaul
 3. 헤더(`[YYYY-MM-DD~YYYY-MM-DD]`)는 스크립트의 `week_start` / `week_end` 사용
 4. 마지막 줄에 `※ 건의사항 및 문의: kadragon@knue.ac.kr` 추가
 
-### Step 4 — 클립보드 복사
+보고서는 화면에만 출력한다 — 파일 저장·클립보드 복사는 하지 않는다.
 
-1. **파일 저장** — Bash heredoc으로 저장한다 (`.claude/change-log-compile-report.txt`는 재실행마다 존재하므로 Write tool은 read-first 오류 발생 — Bash redirect 사용):
-
-```bash
-cat > ".claude/change-log-compile-report.txt" << 'REPORT'
-[보고서 전문 붙여넣기]
-REPORT
-```
-
-2. **클립보드 복사** — OS에 맞는 클립보드 도구로 복사한다 (mac=`pbcopy`, Windows/git-bash=`clip`):
-
-```bash
-f=.claude/change-log-compile-report.txt
-if command -v pbcopy >/dev/null 2>&1; then pbcopy < "$f"
-elif command -v clip >/dev/null 2>&1; then clip < "$f"
-else echo "클립보드 도구 없음 — 파일 직접 복사: $f"; fi
-```
-
-완료 후 "클립보드에 복사되었습니다. 바로 붙여넣기 하세요."라고 안내한다 (클립보드 도구가 없으면 파일 경로를 안내).
-
-### Step 5 — 불확실한 항목 처리
+### Step 4 — 불확실한 항목 처리
 
 카테고리나 서브메뉴 추론이 불명확한 경우:
 - 서브메뉴는 `(확인 필요❓)` 표기 후 추후 수정 요청
 - 도메인이 CATEGORY_MAP에 없는 경우 `[기타 > {태그값}]`으로 표기하고 사용자에게 안내
 
-수정 요청이 있으면 보고서를 다시 생성하고 Step 4를 반복한다.
+수정 요청이 있으면 보고서를 다시 생성해 출력한다.

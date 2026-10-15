@@ -310,6 +310,12 @@ python3 .claude/skills/status-sync/tests/test_contract.py
 **Cause:** `99_Template/` is missing the expected template file.  
 **Fix:** Check `99_Template/` contents. Template name must match exactly what skill expects.
 
+## Homepage project collection
+
+`homepage-collect` uses `.claude/skills/homepage-collect/scripts/sync.py` for on-demand collection of the three authenticated newknue boards. Run with a real Python 3.11+ interpreter and `--vault <current-vault-root>` (for example `/Users/kadragon/ObsidianVault` on macOS or `C:/Dev/ObsidianVault` on Windows); dependencies are listed in its `scripts/requirements.txt`. Output lives under `12_Projects/2026/통합 홈페이지/10. 사업 진행 정보/`; start at `_사업 진행 종합.md`. Credentials remain in `.env`; cookies stay in memory. Site mappings and evidence-based overrides live in `references/sites.json`. Offline checks: `collect.py --verify --vault <vault>`, plus the tests in the skill's `tests/`. No scheduled jobs or external reports are created.
+
+An observed login follows `login.do` → `index.do` → `sub.do` → `selectBbsNttList.do`. Unexpected endpoints fail closed; inspect redirects rather than allowing arbitrary `.do` actions. A failed collection retains the previous verified dataset. Generated note markers separate refreshable content from manual additions.
+
 ## Harness Asset Placement & Naming
 
 새 하네스 자산(스킬·에이전트·워크플로우·스크립트)을 만들 때 적용한다. 기존 자산 개명은
