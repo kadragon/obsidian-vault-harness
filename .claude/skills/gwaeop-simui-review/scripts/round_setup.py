@@ -86,10 +86,18 @@ class Round:
 
 
 def load_round(round_dir: Path) -> Round:
+    round_dir = round_dir.resolve()  # `bundle .` must still name files after the round folder.
     cfg_path = round_dir / "_round.json"
     if not cfg_path.is_file():
         sys.exit(f"_round.json 없음: {cfg_path}")
     c = json.loads(cfg_path.read_text(encoding="utf-8"))
+    # Report missing keys as the aggregated error list, not a raw KeyError traceback.
+    missing = [k for k in ("round", "review_start", "review_end", "chair", "members", "projects") if k not in c]
+    missing += [f"members[{i}].{k}" for i, m in enumerate(c.get("members", [])) for k in ("name", "org") if k not in m]
+    missing += [f"projects[{i}].{k}" for i, p in enumerate(c.get("projects", []))
+                for k in ("id", "title", "dept", "period") if k not in p]
+    if missing:
+        sys.exit("_round.json 오류:\n  필수 키 없음: " + ", ".join(missing))
     errs = []
     flags = [(f"members[{m['name']}].consent", m.get("consent", False)) for m in c["members"]]
     flags += [(f"projects[{p['id']}].period", p["period"]) for p in c["projects"]]

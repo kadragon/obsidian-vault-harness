@@ -50,7 +50,7 @@ python3 .claude/skills/change-log-compile/scripts/collect_weekly_notes.py --vaul
 스크립트 출력 JSON:
 - `week_start` / `week_end` : 보고 기간 (항상 월~일)
 - `notes[]` : 각 노트의 `path`, `area`, `category`, `source`, `title`, `tag`
-- `excluded` : `weekly_exclude: true`로 자동 제외된 노트 수 (재판단 없이 통과)
+- `excluded` / `excluded_paths` : 보고 주에 해당하지만 `weekly_exclude: true`로 자동 제외된 노트 수와 경로 (재판단 없이 통과 — 미완료 개발 플래그 점검에만 경로를 쓴다)
 
 노트가 0개이면 "직전 주(YYYY-MM-DD ~ YYYY-MM-DD)에 해당하는 노트가 없습니다."라고 안내하고 종료한다.
 
