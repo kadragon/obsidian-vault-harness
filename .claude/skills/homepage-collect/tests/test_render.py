@@ -187,9 +187,10 @@ class RenderTests(unittest.TestCase):
                 for note in generated:
                     note.write_bytes(note.read_text(encoding='utf-8').replace('\n', newline).encode('utf-8'))
                 result = subprocess.run(['bash', str(script), str(vault)], capture_output=True, text=True, check=True)
-                paths = set(result.stdout.splitlines())
-                self.assertIn(str(manual), paths)
-                self.assertTrue(all(str(note) not in paths for note in generated))
+                # The script prints '<vault>/12_Projects/...' — compare as POSIX on every platform.
+                paths = {line.replace('\\', '/') for line in result.stdout.splitlines()}
+                self.assertIn(manual.as_posix(), paths)
+                self.assertTrue(all(note.as_posix() not in paths for note in generated))
 
 
 if __name__ == '__main__':

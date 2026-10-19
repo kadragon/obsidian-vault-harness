@@ -280,15 +280,19 @@ def render(form: str, v: dict[str, str], k: int) -> bytes:
 
 def find_hwpx_scripts() -> Path:
     for pattern in HWPX_GLOBS:
-        hits = sorted(glob.glob(pattern))
+        # Natural sort so cache version 3.2.10 outranks 3.2.8.
+        hits = sorted(glob.glob(pattern),
+                      key=lambda p: [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", p)])
         if hits:
             return Path(hits[-1])
     sys.exit("prod:hwpx 플러그인 scripts 폴더를 찾지 못함")
 
 
 def run_py(script: Path, *args) -> subprocess.CompletedProcess:
+    # Force the child to emit UTF-8; a cp949 console default would turn Hangul into U+FFFD.
     return subprocess.run([sys.executable, str(script), *map(str, args)], capture_output=True,
-                          text=True, encoding="utf-8", errors="replace")
+                          text=True, encoding="utf-8", errors="replace",
+                          env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"})
 
 
 # ---- generate ---------------------------------------------------------------
