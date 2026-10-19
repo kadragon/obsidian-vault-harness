@@ -74,7 +74,7 @@ Full context manifest → `docs/delegation.md`
    따라서 `.claude/agents/*.md` 전부에 `tools:` 화이트리스트를 명시해 `Agent`·`Task`·`Workflow`를 제외한다(`Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSearch`). 새 에이전트를 추가할 때도 이 줄을 반드시 넣는다 — 빠뜨리면 규칙이 조용히 무효가 된다.
 
    위임이 꼭 필요하면 **보고에 적어 메인 스레드가 호출**하게 한다. `check-nested-delegation.py` 훅은 **산문 위임 지시만** 잡는 문서 린터다(런타임 Agent 호출은 검사 범위 밖) — 런타임 차단은 위 `tools:` 화이트리스트가 담당한다.
-2. **스크립트 우선.** 규칙표 대조·경로 계산·해시 비교처럼 결정론적인 일은 스크립트로 끝내고, **판단이 필요한 잔여분만** 에이전트로 에스컬레이션한다 (status-sync·vault-clean·syncthing-cleanup이 이 패턴).
+2. **스크립트 우선.** 규칙표 대조·경로 계산·해시 비교처럼 결정론적인 일은 스크립트로 끝내고, **판단이 필요한 잔여분만** 에이전트로 에스컬레이션한다 (status-sync·vault-clean·syncthing-conflict-resolve가 이 패턴).
 3. **소규모 편집은 직접.** 수 줄·1~2파일 수정에 풀에이전트 왕복(수만 토큰·수십 초)은 금지. `_Wiki/log.md` 한 줄 append도 직접 Edit.
 4. **검증자 ≥ 생성자.** 품질 게이트 에이전트의 모델은 생성자와 같거나 강해야 한다.
 5. **품질 게이트는 메인 스레드 책임 — 기계 검사가 1차, `note-evaluator`의 기본 모드는 원본 대조 사실검증** (2026-07-30 개정). 노트 생성 에이전트(`improvement-planner`·`incident-analyst`·`training-note-manager`·`inbox-action-worker`)가 반환하면 메인 스레드가 게이트를 돌린다. 생성자가 스스로 부를 수 없고(규칙 #1), 불러서도 안 된다(self-preference).

@@ -59,7 +59,7 @@ description: |
 
 ## 0단계: HWP/HWPX 문서 라우팅
 
-- `.hwpx`는 `python3 .claude/lib/hwpx_text.py "<파일>" --out "/tmp/hwpx_<파일명>.md"`로 추출한다(`prod:hwpx` `text.py` 공용 해석 — gwaeop-simui-review와 같은 경로). HWPX를 일괄적으로 미지원 첨부로 분류하지 않는다. exit 3은 `UNVERIFIED`(도구 부재·추출 실패) — 그때만 맥락 기반 보류로 내려간다.
+- `.hwpx`는 `python3 .claude/lib/hwpx_text.py "<파일>" --out "$(python3 -c 'import tempfile;print(tempfile.gettempdir())')/hwpx_<파일명>.md"`로 추출한다(`prod:hwpx` `text.py` 공용 해석 — gwaeop-simui-review와 같은 경로). HWPX를 일괄적으로 미지원 첨부로 분류하지 않는다. exit 3은 `UNVERIFIED`(도구 부재·추출 실패) — 그때만 맥락 기반 보류로 내려간다.
 - `.hwp`는 legacy binary라 HWPX와 같은 형식으로 취급하지 않는다. `prod:hwpx`의 변환 절차로 `.hwpx`를 만든 뒤 읽는다. 변환·추출 capability가 없거나 실패하면 `UNVERIFIED: HWP conversion/extraction unavailable`로 보고하고 원본을 보존한다.
 - 변환 성공은 Inbox 원본 삭제 승인이 아니다. durable copy·최종 노트 링크·품질 게이트가 모두 확인된 뒤에만 삭제 권고한다.
 - `prod:hwpx` skill 경로·스크립트가 현재 환경에서 해석되지 않으면 실패 원인과 대상 경로를 보고한다. HWP를 HWPX라고 가장하거나 내용을 추정하지 않는다.

@@ -206,10 +206,10 @@ def collect_10areas(vault: Path, start: date, end: date) -> tuple[list[dict], in
             text = md.read_text(encoding="utf-8", errors="ignore")
             if not text.startswith("---"):
                 continue  # Skip non-markdown attachment files (no frontmatter)
-            if is_excluded(text):
-                excluded += 1
-                continue
             matched = matched_date_in_range(text, start, end)
+            if matched and is_excluded(text):
+                excluded += 1  # Count only exclusions that would have landed in this week.
+                continue
             if matched:
                 results.append(
                     {
@@ -237,10 +237,10 @@ def collect_14changes(vault: Path, start: date, end: date) -> tuple[list[dict], 
             text = md.read_text(encoding="utf-8", errors="ignore")
             if not text.startswith("---"):
                 continue
-            if is_excluded(text):
-                excluded += 1
-                continue
             matched = matched_date_in_range(text, start, end)
+            if matched and is_excluded(text):
+                excluded += 1  # Count only exclusions that would have landed in this week.
+                continue
             if matched:
                 area = infer_area_from_tag(text)
                 results.append(
