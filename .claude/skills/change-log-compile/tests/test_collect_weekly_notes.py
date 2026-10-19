@@ -87,8 +87,19 @@ def test_collect_10areas_tmp_path_week_filter(tmp_path):
     got, excluded = cw.collect_10areas(tmp_path, date(2026, 9, 28), date(2026, 10, 4))
     titles = [n["title"] for n in got]
     assert "주내 완료" in titles and "범위 밖" not in titles
-    assert excluded == 0
+    assert excluded == []
     assert got[0]["category"] == "학사"
+
+
+def test_collect_10areas_excludes_only_flagged_notes_in_week(tmp_path):
+    area = tmp_path / "10_Areas" / "수업성적"
+    area.mkdir(parents=True)
+    flagged = "---\ntype: work\nweekly_exclude: true\n---\n# t\n- [x] 반영 ✅ {}\n"
+    (area / "in.md").write_text(flagged.format("2026-09-30"), encoding="utf-8")
+    (area / "old.md").write_text(flagged.format("2026-08-01"), encoding="utf-8")
+    got, excluded = cw.collect_10areas(tmp_path, date(2026, 9, 28), date(2026, 10, 4))
+    assert got == []
+    assert excluded == [str(area / "in.md")]
 
 
 def test_is_excluded_flag_variants():
@@ -113,7 +124,7 @@ def test_collect_10areas_skips_flagged_and_counts(tmp_path):
     got, excluded = cw.collect_10areas(tmp_path, date(2026, 9, 28), date(2026, 10, 4))
     titles = [n["title"] for n in got]
     assert "주내 완료" in titles and "1회성 처리" not in titles
-    assert excluded == 1
+    assert len(excluded) == 1
 
 
 def test_collect_14changes_skips_flagged(tmp_path):
@@ -124,7 +135,7 @@ def test_collect_14changes_skips_flagged(tmp_path):
         encoding="utf-8",
     )
     got, excluded = cw.collect_14changes(tmp_path, date(2026, 9, 28), date(2026, 10, 4))
-    assert got == [] and excluded == 1
+    assert got == [] and len(excluded) == 1
 
 
 def test_body_flag_does_not_exclude_note():

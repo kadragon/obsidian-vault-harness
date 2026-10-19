@@ -119,8 +119,11 @@ def extract_xls(src: str, dst: str) -> str:
             out.append(v)
         return out
 
-    return _write_sheets(
-        ((sh.name, (typed(sh, i) for i in range(sh.nrows))) for sh in book.sheets()), dst)
+    try:
+        return _write_sheets(
+            ((sh.name, (typed(sh, i) for i in range(sh.nrows))) for sh in book.sheets()), dst)
+    except Exception as exc:                          # noqa: BLE001 - 셀 하나의 오류로 번들 전체가 멈추지 않게
+        return f"ERROR: {exc}"[:120]
 
 HWPTAG_PARA_TEXT = 67
 # HWP 5.0 제어문자: 확장·인라인 컨트롤은 8 wchar(16 byte)를 차지한다. 나머지(10·13 등)는 1 wchar.
