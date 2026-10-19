@@ -43,7 +43,7 @@
 바이너리·문서 파일(`.pdf`·`.hwpx`·이미지 등) 입력이면 source note를 쓰기 전에 원본을 durable 위치로 복사한다.
 
 - **인라인 텍스트**: 원본 파일이 없으므로 건너뛴다.
-- **텍스트 파일(`.md`·`.txt`, `scraps/` 웹 클립 포함)**: durable copy를 만들지 않는다 — `_Sources/_Assets/`에 `.md` 사본을 두면 `vault_lint.py`가 노트로 린트하고 qmd가 이중 색인해 `vault-cleanup` dedupe가 source note와 중복으로 잡는다. 대신 **원문 전체를 source note 본문에 흡수**하고(출처 URL·제목 포함), 6단계에서 `verify-link` 대신 `text-absorbed`로 보고한다.
+- **텍스트 파일(`.md`·`.txt`, `scraps/` 웹 클립 포함)**: durable copy를 만들지 않는다 — `_Sources/_Assets/`에 `.md` 사본을 두면 `vault_lint.py`가 노트로 린트하고 qmd가 이중 색인해 `vault-clean` dedupe가 source note와 중복으로 잡는다. 대신 **원문 전체를 source note 본문에 흡수**하고(출처 URL·제목 포함), 6단계에서 `verify-link` 대신 `text-absorbed`로 보고한다.
 
 ```bash
 python3 .claude/skills/inbox-process/scripts/copy_verified.py copy \
@@ -112,7 +112,7 @@ python3 .claude/skills/inbox-process/scripts/copy_verified.py copy \
 
 ### 3. wiki 반영
 
-- 관련 topic, entity, synthesis 페이지가 이미 있으면 갱신한다.
+- 관련 topic, entity, synthesis 페이지가 이미 있으면 링크로 연결한다. 기존 페이지 **본문** 갱신은 `AGENTS.md` GP#1의 사용자 승인 범위 안에서만 한다 — 요청이 `_Wiki/` 갱신을 범위로 지정했으면(예: "위키에 반영해줘" — 워커는 프롬프트의 `_Wiki 기존 페이지 본문 갱신 범위: yes` 필드로 받는다) 갱신하고, 아니면 얇은 링크 추가만 하고 본문 수정 필요는 `## 열린 질문`으로 보고한다. 이 문단이 reference 갈래의 기존 페이지 수정 절차 SSOT다.
 - 없고 재사용 가치가 분명하면 새 page를 만든다.
 - 새 page는 `_Wiki/contracts.md`의 섹션 계약을 따른다.
 
@@ -150,7 +150,8 @@ exit 0 = durable copy 존재 + 원본과 SHA-256 동일 + 노트 본문에 그 w
 
 - `.pdf`: `references/pdf-reading.md` 절차 (분류 → PyMuPDF → 필요 시 OCR). 원본이 아니라 `read_path`를 읽고, `error`·OCR 실패 건은 건너뛰고 보고한다.
 - `.txt`, `.md`: Read 도구로 읽는다.
-- `.hwp`, `.hwpx`, `.xlsx`, `.docx`: 내용 직접 파싱 불가. 파일명·사용자 설명·주변 맥락으로 판단. 불확실하면 보고의 열린 질문으로 "핵심 내용 확인 필요"를 반환한다 (워커가 사용자에게 직접 묻지 않음).
+- `.hwpx`: `python3 .claude/lib/hwpx_text.py "<파일>" --out "/tmp/hwpx_<파일명>.md"`로 추출한 뒤 추출본을 Read한다(추출본은 볼트 밖 임시 경로에 둔다 — 볼트 안에 쓰면 qmd·vault_lint가 노트로 취급한다). exit 3(`UNVERIFIED`: 도구 부재·추출 실패)일 때만 아래 맥락 기반 판단으로 내려가고, 그 사유를 보고에 남긴다.
+- `.hwp`(0단계 변환 실패분 — 헬퍼는 `NEEDS_HWPX`로 거부), `.xlsx`, `.docx`: 내용 직접 파싱 불가. 파일명·사용자 설명·주변 맥락으로 판단. 불확실하면 보고의 열린 질문으로 "핵심 내용 확인 필요"를 반환한다 (워커가 사용자에게 직접 묻지 않음).
 
 ## 기본 산출물
 

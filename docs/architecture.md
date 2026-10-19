@@ -83,7 +83,7 @@ ObsidianVault/
 | `_Sources/` 개별 노트 | `90_Archive/reference/` |
 | `00_DailyNote/` (종료됨) | `90_Archive/daily-note/` ✅ |
 
-`90_Archive/changes/`, `90_Archive/training/`, `90_Archive/reference/` 는 agent가 vault-cleanup skill을 통해 생성한다.
+`90_Archive/changes/`, `90_Archive/training/`, `90_Archive/reference/` 는 agent가 vault-clean skill을 통해 생성한다.
 
 ## Constraints
 

@@ -2,8 +2,9 @@
 name: inbox-process
 description: |
   01_Inbox/ 문서를 '업무사안(action)'과 '참고자료(reference)'로 판별해 각각 10_Areas/{area}/ 업무사안 노트 또는 _Sources·_Wiki/에 반영.
-  트리거: 'inbox 처리', 'inbox 정리', 'inbox 비워줘', '01_Inbox 처리', '공문 처리', '공문 읽어줘', '받은 문서 정리', '받은 자료 정리', '수집함 처리', 'InfoBox 처리', '문서 정리해줘', '자료 정리해줘', '위키에 반영해줘', 'scraps 처리해줘', '웹 클립 정리해줘'.
-  inbox·공문·받은 문서·수집함·참고자료·웹 클립 처리 요청이면 '01_Inbox'를 명시하지 않아도 해당된다. 발신 공문 작성은 knue-gongmun.
+  트리거: 'inbox 처리', 'inbox 정리', 'inbox 비워줘', '01_Inbox 처리', '공문 처리', '공문 읽어줘', '받은 문서 정리', '받은 자료 정리', '수집함 처리', 'InfoBox 처리', 'scraps 처리해줘', '웹 클립 정리해줘'.
+  '문서 정리해줘'·'자료 정리해줘'·'위키에 반영해줘'는 01_Inbox/수집함 대상일 때만 해당된다.
+  inbox·공문·받은 문서·수집함·참고자료·웹 클립 처리 요청이면 '01_Inbox'를 명시하지 않아도 해당된다. 발신 공문 작성은 knue-gongmun-draft.
 ---
 
 # Inbox 처리 오케스트레이터
@@ -58,7 +59,7 @@ description: |
 
 ## 0단계: HWP/HWPX 문서 라우팅
 
-- `.hwpx`는 설치된 `prod:hwpx` skill을 `read/extract` 의도로 호출한다. HWPX를 일괄적으로 미지원 첨부로 분류하지 않는다.
+- `.hwpx`는 `python3 .claude/lib/hwpx_text.py "<파일>" --out "/tmp/hwpx_<파일명>.md"`로 추출한다(`prod:hwpx` `text.py` 공용 해석 — gwaeop-simui-review와 같은 경로). HWPX를 일괄적으로 미지원 첨부로 분류하지 않는다. exit 3은 `UNVERIFIED`(도구 부재·추출 실패) — 그때만 맥락 기반 보류로 내려간다.
 - `.hwp`는 legacy binary라 HWPX와 같은 형식으로 취급하지 않는다. `prod:hwpx`의 변환 절차로 `.hwpx`를 만든 뒤 읽는다. 변환·추출 capability가 없거나 실패하면 `UNVERIFIED: HWP conversion/extraction unavailable`로 보고하고 원본을 보존한다.
 - 변환 성공은 Inbox 원본 삭제 승인이 아니다. durable copy·최종 노트 링크·품질 게이트가 모두 확인된 뒤에만 삭제 권고한다.
 - `prod:hwpx` skill 경로·스크립트가 현재 환경에서 해석되지 않으면 실패 원인과 대상 경로를 보고한다. HWP를 HWPX라고 가장하거나 내용을 추정하지 않는다.
@@ -133,14 +134,16 @@ Glob으로 네 영역을 스캔: 루트(파일만), `action/`(바로 아래 폴�
    - **태그 area 배정이 내용과 맞는지** — 훅은 `#업무/` 존재만 본다. `#부서/`는 선택 필드다: 부재를 지적하거나 억지로 채우지 않고, 원본에 담당 부서가 명시돼 있을 때만 넣는다.
    - **기준 5 MOC 순방향 등록** — `moc_gate.py`가 임계 도달을 보고했으면 원본 삭제 전에 끝낸다. MOC가 있으면 노트→MOC 링크와 MOC→노트 등록을 grep으로 확인해 채우고 `_Wiki/index.md`·`_Wiki/log.md`까지 등록. MOC가 없으면 `docs/workflows.md` → `moc` 워크플로를 수행한다(`vault-navigator` 사전 조사 → `obsidian-operator` 생성 → index·log 등록). 확인만 하고 넘어가지 않는다.
 
-   **3-b. `note-evaluator` 호출 — 아래 중 하나라도 해당할 때만**:
-   - 3-a 경고가 남았는데 수정 방향이 자명하지 않다
+   3-a 경고가 남았는데 수정 방향이 자명하지 않으면 평가자에게 넘기지 않는다 — 평가자 기본 모드는 구조·태그를 보지 않는다. 메인이 해당 템플릿·`eval-criteria.md`를 보고 고치고, 그래도 남으면 그 노트를 4단계 삭제에서 제외한다. 워커가 신규 area를 만든 건은 `tag-validator`(validate 모드)로 area 적합성을 확인한다.
+
+   **3-b. `note-evaluator` 호출 — 아래 중 하나라도 해당할 때만** (전부 원본 값이 틀렸을 위험이다):
    - 원본이 OCR·스캔 PDF이거나 워커가 추출 품질에 의문을 보고했다
-   - 워커가 신규 area를 생성했다
    - Grill 2차로 해소되지 않은 `## 열린 질문`이 남았다
    - 회차성 반복 공문을 선례 참조로 작성했다 (stale 값 혼입 검증)
 
-   해당 없으면 호출하지 않는다. 호출 시 스코프를 **원본 대조 사실검증 + Wiki Feedback Loop**로 한정하고 구조·태그 재채점을 금지한다. 원본 경로(`01_Inbox/` 파일)를 넘기고 재추출은 검증 대상 필드(공문번호·시행/접수일·기한·담당자·회차)로 한정한다. FAIL이면 지적 항목을 수정한 뒤 진행한다.
+   해당 없으면 호출하지 않는다. 호출은 **기본 모드(원본 대조 사실검증)** 다 — `full-quality`를 넣지 않는다. 구조·태그·MOC는 3-a에서 끝났으므로 평가자에게 넘기지 않고, 평가자도 훅을 재실행하지 않는다. 프롬프트에는 노트 경로(이번 작업에서 새로 만든 노트임을 명시), 원본 경로(`01_Inbox/` 파일)와 워커가 남긴 추출본 경로(있으면), 검증 대상 필드(공문번호·시행/접수일·기한·담당자·회차)를 넣는다.
+
+   반환은 노트별 `필드 | 원본 값 | 노트 값 | 결과` 표와 `VERDICT`·`HOLD_DELETE` 줄이다. `FAIL`은 평가자가 고친 `FIXES`를 확인하고, 수정 후에도 `FAIL`이 남으면 직접 원본 값으로 고친다. `HOLD_DELETE: yes`인 노트의 원본은 4단계에서 삭제하지 않는다 — 단 `UNVERIFIED` 행 없이 `FAIL`만 원인이었고 메인이 그 행을 원본 값과 다시 대조해 일치시켰으면 보류를 해제한다.
 4. **일괄 삭제**: 갈래마다 조건이 다르다. 사용자 승인을 기다리지 않는다.
 
    - **reference 갈래** — 워커의 `## 삭제 권고 (reference)`는 **삭제 직전 건별로 게이트를 재확인**한다. 워커 보고를 그대로 믿지 않는 이유는 보고와 삭제 사이에 노트가 더 편집되기 때문이다.
@@ -152,9 +155,15 @@ Glob으로 네 영역을 스캔: 루트(파일만), `action/`(바로 아래 폴�
 
      exit 0인 건만 삭제한다 (durable copy 존재 + SHA-256 일치 + 노트에 그 wikilink 실재). 세 인자는 워커의 삭제 권고 항목이 `(source: ..., durable: ...)`로 함께 준다 — 파일명으로 추정하지 않는다.
 
-   - **action 갈래** — 워커의 `## 삭제 권고 (action)`은 노트·첨부 생성이 확인된 건을 그대로 삭제한다. `verify-link`를 적용하지 않는다: action 노트는 source note가 아니고 첨부 링크가 `[[첨부.pdf]]` 형식이라(`action-branch.md`) 게이트가 구조적으로 통과할 수 없다.
+   - **action 갈래** — 워커의 `## 삭제 권고 (action)`도 삭제 직전 파일별로 **사본 동일성**을 재확인한다. 노트 링크 검사(`verify-link`)만 면제한다: action 노트는 source note가 아니고 첨부 링크가 `[[첨부.pdf]]` 형식이라(`action-branch.md`) 링크 검사가 구조적으로 통과할 수 없다. 첨부 복사가 조용히 실패한 채 원본이 지워지는 것은 막아야 하므로 존재·SHA-256 검사는 그대로 요구한다.
 
-   공통 제외: 부분 실패·열린 질문 잔존 건, 사용자가 보존 의사를 명시한 건, reference 갈래의 `verify-link` 실패·미실행 건(워커의 `## 미검증` 포함). 제외분은 최종 보고에 `UNVERIFIED: <원인>`으로 남기고 원본을 보존한다. auto-mode가 삭제를 차단하면 재시도하지 말고 대상 전체를 `AskUserQuestion` 하나로 묶어 승인 후 진행한다.
+     ```bash
+     python3 .claude/skills/inbox-process/scripts/copy_verified.py verify        "<원본 절대경로>" "<durable 경로>" --vault .
+     ```
+
+     exit 0인 파일만 삭제한다. 두 인자는 권고 항목의 `(durable: ...)`가 준다 — 파일명으로 추정하지 않는다. `(durable: text-absorbed)` 건은 `verify` 대신 원문이 노트 본문에 전부 들어갔는지 확인한다. 하위 폴더 단위는 폴더의 **실제 파일 목록**을 직접 나열해 모든 파일이 `(durable: ...)` 항목을 갖고 `verify`를 통과했을 때만 폴더째 삭제한다. OS·동기화 부산물(`Thumbs.db`, `desktop.ini`, `.DS_Store`, `~syncthing~*`, `.syncthing.*.tmp`)은 완전성 판정에서 빼고 폴더와 함께 지운다. 그 밖에 목록에 없는 파일(예: 0단계 변환 전 `.hwp`)이나 실패한 파일이 하나라도 있으면 폴더째 삭제하지 않고 통과한 파일만 지운다.
+
+   공통 제외: 부분 실패·열린 질문 잔존 건, 사용자가 보존 의사를 명시한 건, `note-evaluator`가 `HOLD_DELETE: yes`를 낸 건(3-b 해제분 제외), 3-a 경고가 해소되지 않은 건, reference 갈래의 `verify-link` 실패·미실행 건(워커의 `## 미검증` 포함), action 갈래의 `verify` 실패·`durable:` 누락 건. 제외분은 최종 보고에 `UNVERIFIED: <원인>`으로 남기고 원본을 보존한다. auto-mode가 삭제를 차단하면 재시도하지 말고 대상 전체를 `AskUserQuestion` 하나로 묶어 승인 후 진행한다.
 
 5. **최종 보고** (`dispatch-guide.md` §최종 보고 형식). 임시 파일 정리: `rm -f /tmp/extracted_*.pdf`.
 
