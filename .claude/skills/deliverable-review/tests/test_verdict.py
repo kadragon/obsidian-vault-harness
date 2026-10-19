@@ -34,5 +34,5 @@ def test_wording_only_returns_fixable():
     assert cv.decide_verdict(findings) == "정정 요청 후 검수 가능"
 
 
-def test_empty_findings_returns_fixable():
-    assert cv.decide_verdict([]) == "정정 요청 후 검수 가능"
+def test_empty_findings_returns_fit():
+    assert cv.decide_verdict([]) == "검수 적합"

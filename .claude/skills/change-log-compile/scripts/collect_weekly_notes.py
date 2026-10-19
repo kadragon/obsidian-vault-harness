@@ -7,7 +7,7 @@ Scans:
   - 14_Changes/incident/          — incidents
 
 Criteria: notes whose `✅ YYYY-MM-DD` completion dates or `date created` frontmatter falls in the target week.
-Excluded: notes with frontmatter `weekly_exclude: true` (counted as `excluded` in output).
+Excluded: in-week notes with frontmatter `weekly_exclude: true` (`excluded` count + `excluded_paths`).
 
 Output (stdout): JSON with week range and list of note metadata.
 
@@ -119,8 +119,8 @@ def is_excluded(text: str) -> bool:
     """True when the note opts out of the change-log-compile via frontmatter flag.
 
     Flag: `weekly_exclude: true` (or `yes`, case-insensitive).
-    Covers both SKILL.md Step 2 exclusion types (단순 1회성 처리·미완료 개발) —
-    the author/orchestrator marks the note once instead of re-judging every week.
+    Intended for 단순 1회성 처리 only (SKILL.md Step 2) — 미완료 개발 must not be flagged,
+    so the orchestrator reviews `excluded_paths` and proposes unflagging such notes.
     """
     frontmatter = re.match(r"\A---[ \t]*\r?\n(.*?)^---[ \t]*\r?$", text, re.MULTILINE | re.DOTALL)
     if frontmatter is None:
@@ -194,9 +194,9 @@ def infer_area_from_tag(text: str) -> str | None:
     return first  # Fall through with raw value
 
 
-def collect_10areas(vault: Path, start: date, end: date) -> tuple[list[dict], int]:
+def collect_10areas(vault: Path, start: date, end: date) -> tuple[list[dict], list[str]]:
     results = []
-    excluded = 0
+    excluded = []
     areas_root = vault / "10_Areas"
     for area in INCLUDED_AREAS:
         area_path = areas_root / area
@@ -206,10 +206,10 @@ def collect_10areas(vault: Path, start: date, end: date) -> tuple[list[dict], in
             text = md.read_text(encoding="utf-8", errors="ignore")
             if not text.startswith("---"):
                 continue  # Skip non-markdown attachment files (no frontmatter)
-            if is_excluded(text):
-                excluded += 1
-                continue
             matched = matched_date_in_range(text, start, end)
+            if matched and is_excluded(text):
+                excluded.append(str(md))  # Only exclusions that would have landed in this week.
+                continue
             if matched:
                 results.append(
                     {
@@ -225,9 +225,9 @@ def collect_10areas(vault: Path, start: date, end: date) -> tuple[list[dict], in
     return results, excluded
 
 
-def collect_14changes(vault: Path, start: date, end: date) -> tuple[list[dict], int]:
+def collect_14changes(vault: Path, start: date, end: date) -> tuple[list[dict], list[str]]:
     results = []
-    excluded = 0
+    excluded = []
     changes_root = vault / "14_Changes"
     for sub in ("improvement", "incident"):
         sub_path = changes_root / sub
@@ -237,10 +237,10 @@ def collect_14changes(vault: Path, start: date, end: date) -> tuple[list[dict], 
             text = md.read_text(encoding="utf-8", errors="ignore")
             if not text.startswith("---"):
                 continue
-            if is_excluded(text):
-                excluded += 1
-                continue
             matched = matched_date_in_range(text, start, end)
+            if matched and is_excluded(text):
+                excluded.append(str(md))  # Only exclusions that would have landed in this week.
+                continue
             if matched:
                 area = infer_area_from_tag(text)
                 results.append(
@@ -282,7 +282,8 @@ def main() -> int:
                 "week_start": start.isoformat(),
                 "week_end": end.isoformat(),
                 "count": len(notes),
-                "excluded": excluded_10 + excluded_14,
+                "excluded": len(excluded_10) + len(excluded_14),
+                "excluded_paths": excluded_10 + excluded_14,
                 "notes": notes,
             },
             ensure_ascii=False,
