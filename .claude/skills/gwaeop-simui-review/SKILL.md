@@ -3,7 +3,7 @@ name: gwaeop-simui-review
 description: |
   접수된 과업심의 요청 건을 위원 발송 전에 간사가 사전검토하여 **발주부서에 보낼 보완요청 PDF**와 판단 근거 노트를 산출한다. 심의요청서·제안요청서(과업지시서)·예산 산출내역서·적정 사업기간 산정표·유사사업 자료를 원문 대조하고, 「SW사업 대가산정 가이드」로 사업대가를 역산 검증하며, 조달청 구매업무 협의에서 이미 지적받은 항목의 재발을 탐지하고, SW사업 법령준수 18개 항목의 제안요청서 명시 요소를 조문 기준으로 대조한다. 모든 지적은 `근거 조문 → 당위 → 실제 기재 → 요청` 4요소로 작성한다.
   트리거: "과업심의 분석", "과업심의 검토", "과업심의 사전검토", "심의위원이라면", "과업심의 요청 봐줘", "제안요청서 검토해줘", "과업지시서 검토", "산출내역서 적정한지", "적정 사업기간 맞아", "심의의견 작성", "위원 검토의견", "이 사업 지적할 부분", "보완요청 공문 만들어줘", "발주부서에 보낼 검토결과", "구매업무 협의 지적사항 검토", "법령 준수 권고 반영".
-  발주부서가 심의를 요청한 자료를 **받아서 검토**할 때 쓴다. 심의 회차 폴더 셋팅·서약서/결과서 서식 일괄 생성·위원 발송 zip은 `10_Areas/과업심의/과업심의_프로세스.md`(Step 1~11)를 따르고 이 스킬 대상이 아니다. 발신 공문 기안은 knue-gongmun-draft.
+  발주부서가 심의를 요청한 자료를 **받아서 검토**할 때 쓴다. 심의 회차 폴더 셋팅·서약서/결과서 서식 일괄 생성·위원별 통합본·심의 결과 기입은 gwaeop-round-manage. 발신 공문 기안은 knue-gongmun-draft.
 ---
 
 # 과업심의 요청 사전검토 (간사 — 위원 발송 전)
@@ -245,8 +245,7 @@ python3 .claude/skills/gwaeop-simui-review/scripts/render_pdf.py "<scratch>/repo
 - `assets/report.html` — 전달본 A4 템플릿 (자리표시자 채워 쓰고 Chrome headless로 렌더)
 - `scripts/lint_findings.py` — 지적 4요소(근거·당위·실제·요청)·근거 등급 기계 검사
 - `scripts/render_pdf.py` — HTML → PDF (headless Chrome, OS별 경로 자동 탐색)
-- `scripts/merge_sign_bundle.py` — 이 스킬 절차 밖. `과업심의_프로세스.md` Step 7-2(위원별 전자서명 통합본)가 호출한다
-- `scripts/round_setup.py` — 이 스킬 절차 밖. 회차 폴더의 `_round.json`으로 Step 6 서류 생성(`generate`)·Step 9 대조(`verify`)·Step 7-2 통합본(`bundle`)·최종본 대조(`diff-final`). 설정 형식 `references/round-config.md`, 서식 `assets/forms/`
+- 회차 서류 생성·통합본 스크립트(`round_setup.py`·`merge_sign_bundle.py`)는 gwaeop-round-manage 스킬에 있다
 - 원문 요약: [[_Sources/규정/SW사업-대가산정-가이드-2025]] · [[_Sources/규정/소프트웨어사업-계약-및-관리감독에-관한-지침]] (조문·별표·별지) · [[_Sources/규정/한국교원대학교-과업심의위원회-운영지침-2026]] (간소화·제척·구성)
 - [[_Wiki/topics/공공SW발주계약-MOC]] — 법제도 근거 인덱스
 - `10_Areas/과업심의/과업심의_프로세스.md` — 회차 운영 절차 (이 스킬의 앞뒤 단계)

@@ -51,8 +51,16 @@ Output: 14_Changes/improvement/{year}/ note
 Run: gwaeop-simui-review skill
 Input: 심의자료 폴더 (01_Inbox/action/ 또는 10_Areas/과업심의/{회차}/{번호}/심의자료/)
 Output: 지적사항 + 판정(안) → 10_Areas/과업심의/{회차}/..._심의의견.md (+ 요청 시 PDF)
-Note: 회차 폴더 셋팅·서식 생성은 이 스킬이 아니라
-      10_Areas/과업심의/과업심의_프로세스.md (Step 1~11)
+Note: 회차 폴더 셋팅·서식 생성은 이 스킬이 아니라 gwaeop-round-manage
+```
+
+### Run a 과업심의 Round
+
+```
+Run: gwaeop-round-manage skill
+Input: 10_Areas/과업심의/{연월}_제{N}차과업심의/ (+ _round.json)
+Output: 서약서·결과서·산정서, 위원별 전자서명 통합본, 결과 기입, 결재상신 붙임
+Note: 절차 원본은 10_Areas/과업심의/과업심의_프로세스.md — 필요한 Step 구간만 읽는다
 ```
 
 ### Weekly Report
@@ -98,6 +106,7 @@ Scope: 10_Areas/ → 90_Archive/
 |-------|---------------|-------------|
 | `inbox-process` | inbox 처리, 공문 처리 | `01_Inbox/` scan |
 | `gwaeop-simui-review` | 과업심의 검토, 심의위원이라면 | 심의자료 폴더 → 지적사항·판정(안) |
+| `gwaeop-round-manage` | 제N차 과업심의 준비, 위원별 통합본, 심의 결과 기입, 종합산정서 | 회차 폴더 + `_round.json` → 회차 서류 |
 | `knue-gongmun-draft` | 공문 작성, 회신 문구, 안내문, 메일 초안, 보냈다고 기록 | 근거 노트 → 발신 본문 → 발송 후 노트 기록 |
 | `deliverable-review` | 산출물 검토, 결과물 받았는데 검토, 보완요구 메일 | 산출물 5종 → 검토 노트 + 메일 초안 |
 | `knue-report-draft` | 보고서 작성, 보고서 초안, 계획(안) 작성 | 근거 자료 → 개조식 보고서 hwpx (수정은 `_수정.hwpx`) |
@@ -342,7 +351,7 @@ conventions·_Wiki/workflow·contracts·index)를 일괄 갱신하고 스킬·�
 
 `inbox-process` · `status-sync` · `change-log-compile` · `weekly-report-compile` ·
 `vault-clean` · `syncthing-conflict-resolve` · `project-restructure` ·
-`deliverable-review` · `gwaeop-simui-review` · `knue-gongmun-draft` ·
+`deliverable-review` · `gwaeop-simui-review` · `gwaeop-round-manage` · `knue-gongmun-draft` ·
 `knue-report-draft` (2026-10-09 전수 개명으로 11개 전부 `{도메인}-{동사}` 일치.
 워크플로우도 동일 규약: `incident-analyze` · `tag-normalize` · `training-manage`
 · `improvement-plan`(여기서 `plan`은 동사).

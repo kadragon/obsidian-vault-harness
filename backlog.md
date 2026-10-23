@@ -8,12 +8,20 @@
 
 ### PR #33 — [HARNESS] rename vault skills to verb-suffixed names and add homepage-collect (2026-10-19)
 
-- [ ] [debt] Generated round documents keep the source form's stale `Preview/PrvText.txt` (old project name, `[√] 승인`); regenerate or drop preview entries (source: codex) — `.claude/skills/gwaeop-simui-review/scripts/round_setup.py:274` (introduced here)
-- [ ] [debt] `verify` compares on-disk Korean filenames without NFC normalization — macOS NFD names report as EXTRA (source: codex) — `.claude/skills/gwaeop-simui-review/scripts/round_setup.py:407` (introduced here)
+- [ ] [debt] `verify` compares on-disk Korean filenames without NFC normalization — macOS NFD names report as EXTRA (source: codex) — `.claude/skills/gwaeop-round-manage/scripts/round_setup.py:407` (introduced here)
 - [ ] [debt] Manual links outside managed markers are resolved only against the collector output folder, so a valid hub link fails verification (source: codex) — `.claude/skills/homepage-collect/scripts/verify_notes.py:29` (introduced here)
-- [ ] [debt] `find_hwpx_scripts` duplicates `hwpx_text.find_text_py` and lacks the Codex cache tier (source: code-review conf 45, agy P3) — `.claude/skills/gwaeop-simui-review/scripts/round_setup.py:43` (introduced here)
+- [ ] [debt] `find_hwpx_scripts` duplicates `hwpx_text.find_text_py` and lacks the Codex cache tier (source: code-review conf 45, agy P3) — `.claude/skills/gwaeop-round-manage/scripts/round_setup.py:43` (introduced here)
 - [ ] [debt] Baseline read with `utf-8`, so a PowerShell 5.1 `>` redirect (BOM/UTF-16) is rejected as invalid; use `utf-8-sig` or an `--output` flag (source: code-review conf 40) — `.claude/lib/vault_lint.py:242` (introduced here)
 - [ ] [debt] Generated homepage snapshot notes are stamped `type: project / status: active`; only the weekly collector's duplicated marker filters them out (source: code-review conf 45) — `.claude/skills/homepage-collect/scripts/render_notes.py:101` (introduced here)
+
+### Public history scrub — personal data in past commits (2026-10-19)
+
+- [ ] [security] Rewrite public repo history to remove real committee/staff names, extension number, real org/project names and hwpx `Preview/` thumbnails (current tree already pseudonymized). Needs explicit user permission (auto-mode blocked `git-filter-repo` install as Git Destructive).
+  - Steps: commit current tree → `python3 -m pip install git-filter-repo` → `git filter-repo --replace-text <rules> --blob-callback <blank Preview/PrvText.txt·PrvImage.png in PK blobs>` over all refs → re-add origin → `git push --force-with-lease` `main` and `harness/pdf-classify-and-simui`.
+  - Replace rules: 7 committee names (incl. spaced forms) → 홍길동·박문수·이몽룡·성춘향·임꺽정·장길산·전우치; staff name + extension number → `홍길동`·`1234`; 2 orgs → 가상교육청·다라대학교; 3 sample project titles → `샘플 …`; harness-log `9차 {name} 통합본` → `9차 외부위원 통합본`.
+  - Affected paths: `.claude/skills/gwaeop-simui{,-review}/{tests,scripts,references,assets/forms}/`, `assets/fp-period-form.hwpx`, `.claude/skills/knue-report{,-draft}/references/knue-house-style.md`, `docs/harness-log.md`.
+  - After: other clones (Syncthing peer) need `git fetch && git reset --hard origin/main`; GitHub `refs/pull/*` and cached commit views survive force push — file a GitHub Support purge request.
+  - Done when: `git log --all -p --text` has 0 hits for the name list and every historical hwpx `Preview/PrvText.txt` is empty.
 
 ## 레거시 메타데이터 참고 (2026-07-31 실측)
 

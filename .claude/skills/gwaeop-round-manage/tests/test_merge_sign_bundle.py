@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Regression tests for merge_sign_bundle.py (pure functions only — no Hancom COM).
 
-Run directly: ``python3 .claude/skills/gwaeop-simui-review/tests/test_merge_sign_bundle.py`` must exit 0.
+Run directly: ``python3 .claude/skills/gwaeop-round-manage/tests/test_merge_sign_bundle.py`` must exit 0.
 """
 from __future__ import annotations
 
@@ -57,9 +57,9 @@ class DedupeTests(unittest.TestCase):
 
 class ReplaceTests(unittest.TestCase):
     def test_substring_inside_text_node(self):
-        secs = [p("1", "본인은 2026년도 제8회 한국교원대학교"), p("2", "전 우 치")]
+        secs = [p("1", "본인은 2026년도 제8회 가나대학교"), p("2", "전 우 치")]
         out = msb.apply_replacements(secs, [("제8회", "제9회"), ("전 우 치", "장 길 산")])
-        self.assertIn("<hp:t>본인은 2026년도 제9회 한국교원대학교</hp:t>", out[0])
+        self.assertIn("<hp:t>본인은 2026년도 제9회 가나대학교</hp:t>", out[0])
         self.assertIn("<hp:t>장 길 산</hp:t>", out[1])
 
     def test_missing_or_ambiguous_exits(self):

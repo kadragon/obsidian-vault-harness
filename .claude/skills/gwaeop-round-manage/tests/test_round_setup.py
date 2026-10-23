@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Regression tests for round_setup.py — generate/verify without Hancom COM.
 
-Run directly: ``python3 .claude/skills/gwaeop-simui-review/tests/test_round_setup.py`` must exit 0.
+Run directly: ``python3 .claude/skills/gwaeop-round-manage/tests/test_round_setup.py`` must exit 0.
 """
 from __future__ import annotations
 
@@ -27,22 +27,22 @@ sys.modules[spec.name] = rs
 spec.loader.exec_module(rs)
 
 MEMBERS5 = [
-    {"name": "홍길동", "org": "정보전산원", "position": "정보전산원장"},
-    {"name": "박문수", "org": "컴퓨터교육과", "position": "교수"},
+    {"name": "홍길동", "org": "전산센터", "position": "전산센터장"},
+    {"name": "박문수", "org": "가상학과", "position": "교수"},
     {"name": "이몽룡", "org": "가상교육청", "position": "과장", "consent": True},
-    {"name": "임꺽정", "org": "다라대학교", "position": "정보화과장"},
-    {"name": "성춘향", "org": "교육부", "position": "", "consent": True},
+    {"name": "임꺽정", "org": "다라대학교", "position": "과장"},
+    {"name": "성춘향", "org": "가상부처", "position": "", "consent": True},
 ]
 PROJECTS = [
     {"id": "2026-035", "title": "샘플 플랫폼 구축 용역", "dept": "가상연구소", "period": True},
-    {"id": "2026-036", "title": "샘플 <교과> 콘텐츠 개발 & 보급", "dept": "산학협력단", "period": False},
+    {"id": "2026-036", "title": "샘플 <교과> 콘텐츠 개발 & 보급", "dept": "가상협력단", "period": False},
 ]
 
 
 def write_round(d: Path, members=MEMBERS5, projects=PROJECTS, start="2026-10-08", end="2026-10-12", chair="홍길동") -> Path:
     d.mkdir(parents=True, exist_ok=True)
     (d / "_round.json").write_text(json.dumps({
-        "round": 10, "review_start": start, "review_end": end, "chair": chair,
+        "round": 10, "institution": "가나대학교", "review_start": start, "review_end": end, "chair": chair,
         "members": members, "projects": projects}, ensure_ascii=False), encoding="utf-8")
     return d
 
@@ -172,6 +172,11 @@ class GenerateVerifyTests(unittest.TestCase):
         xml = zipfile.ZipFile(rd / "2026-035" / "2026-035_1_서약서_성춘향.hwpx").read("Contents/section0.xml").decode()
         self.assertNotIn("<hp:t></hp:t>", xml)
         self.assertNotIn("{{", xml)
+
+    def test_institution_comes_from_config(self):
+        rd = self.run_round(MEMBERS5)
+        xml = zipfile.ZipFile(rd / "2026-035" / "2026-035_1_서약서_성춘향.hwpx").read("Contents/section0.xml").decode()
+        self.assertEqual(xml.count("가나대학교"), 3)
 
     def test_same_day_round_checks_bottom_date_separately(self):
         td = tempfile.TemporaryDirectory()

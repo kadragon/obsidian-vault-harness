@@ -29,6 +29,7 @@ If any trigger applies, delegate first — do not proceed without it.
 | 2026 홈페이지 사업 진행 정보 수집·갱신 | `homepage-collect` skill | Vault path; existing `.env`; newknue boards and 14-site config; note-producing sync runs via `obsidian-operator` |
 | 이번 주/다음 주 진행·예정 주간업무회의 자료 요청 | `weekly-report-compile` skill | 1주/2주 범위 (직전주 실적 집계는 `change-log-compile`가 먼저) |
 | 과업심의 요청 검토 (위원 관점 지적·판정) | `gwaeop-simui-review` skill | 심의요청서·제안요청서·산출내역서 경로 + 회차 폴더 |
+| 과업심의 회차 운영 (셋팅·서류 생성·통합본·결과 기입·붙임) | `gwaeop-round-manage` skill | 회차 폴더 + `_round.json` |
 | Status open→closed sync needed | `status-sync` skill | — |
 | Syncthing conflict files present | `syncthing-conflict-resolve` skill | — |
 | `.hwpx` 문서 작업 | `prod:hwpx` skill | File path, operation type |

@@ -78,6 +78,7 @@ class Project:
 class Round:
     dir: Path
     number: int
+    institution: str
     start: dt.date
     end: dt.date
     chair: str
@@ -92,7 +93,7 @@ def load_round(round_dir: Path) -> Round:
         sys.exit(f"_round.json 없음: {cfg_path}")
     c = json.loads(cfg_path.read_text(encoding="utf-8"))
     # Report missing keys as the aggregated error list, not a raw KeyError traceback.
-    missing = [k for k in ("round", "review_start", "review_end", "chair", "members", "projects") if k not in c]
+    missing = [k for k in ("round", "institution", "review_start", "review_end", "chair", "members", "projects") if k not in c]
     missing += [f"members[{i}].{k}" for i, m in enumerate(c.get("members", [])) for k in ("name", "org") if k not in m]
     missing += [f"projects[{i}].{k}" for i, p in enumerate(c.get("projects", []))
                 for k in ("id", "title", "dept", "period") if k not in p]
@@ -104,7 +105,7 @@ def load_round(round_dir: Path) -> Round:
     errs += [f"{k}는 true/false여야 함: {v!r}" for k, v in flags if not isinstance(v, bool)]
     members = tuple(Member(m["name"], m["org"], m.get("position", ""), m.get("consent", False)) for m in c["members"])
     projects = tuple(Project(p["id"], p["title"], p["dept"], p["period"]) for p in c["projects"])
-    r = Round(round_dir, int(c["round"]), dt.date.fromisoformat(c["review_start"]),
+    r = Round(round_dir, int(c["round"]), c["institution"], dt.date.fromisoformat(c["review_start"]),
               dt.date.fromisoformat(c["review_end"]), c["chair"], members, projects)
     names = [m.name for m in members]
     if len(set(names)) != len(names):
@@ -182,7 +183,7 @@ def values(r: Round, d: Doc) -> dict[str, str]:
     v = {
         "사업명": d.project.title, "발주부서": d.project.dept, "번호": d.project.id,
         "시작일": kdate(r.start), "종료일": kdate(r.end), "심의기간": krange(r.start, r.end),
-        "위원장_띄움": spaced(r.chair), "회차": str(r.number),
+        "위원장_띄움": spaced(r.chair), "회차": str(r.number), "기관명": r.institution,
     }
     if d.member:
         v.update({"성명": d.member.name, "성명_띄움": spaced(d.member.name),
@@ -440,7 +441,7 @@ def cmd_bundle(a) -> int:
             parts: list[Path] = []
             if m.consent:
                 c = Path(td) / f"consent_{m.name}.hwpx"
-                c.write_bytes(render("consent", {"회차": str(r.number), "시작일": kdate(r.start), "성명_띄움": spaced(m.name)}, 0))
+                c.write_bytes(render("consent", {"회차": str(r.number), "기관명": r.institution, "시작일": kdate(r.start), "성명_띄움": spaced(m.name)}, 0))
                 parts.append(c)
             parts += [(a.src or r.dir) / d.project.id / d.filename for d in bundle_parts(r, m)]
             missing = [p for p in parts if not p.exists()]

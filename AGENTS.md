@@ -49,6 +49,7 @@ Never perform these directly without the designated agent/skill:
 | 노트 품질 평가 (기본: 원본 대조 사실검증; 명시 요청 시 full-quality 5축) | `note-evaluator` agent |
 | `01_Inbox/` document processing (공문·참고자료 모두) | `inbox-process` skill |
 | 과업심의 요청 검토 (위원 관점 지적·판정) | `gwaeop-simui-review` skill |
+| 과업심의 회차 운영 (셋팅·서류 생성·위원별 통합본·결과 기입·결재상신 붙임) | `gwaeop-round-manage` skill |
 | Training note cleanup | `training-note-manager` agent |
 | Obsidian note **create**(템플릿 적용)·open·프로퍼티·앱 내 JS | `obsidian-operator` agent |
 | 기존 노트 본문 **소규모 수정**(수 줄·1~2파일) | 직접 Edit — 위임 금지 (§Delegation 비용 규칙) |
