@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- [done] Single harness test runner (`.claude/lib/run_tests.py`) wired into GitHub Actions; `99_Template/` tracked for the status-sync contract test (2026-10-24)
+- [done] Public history scrub: filter-repo rewrite of all refs removed real committee/staff names, extension number, org/project names and hwpx `Preview/` thumbnails; verified 0 name hits on all branches (2026-10-23, `main` 4094a21). Follow-ups (GitHub purge, peer reset, backup delete) stay in backlog.md
 - [done] Share NFC filename lookup across round_setup generate, verify and bundle (2026-10-24)
 - [done] PR #33 follow-ups: NFC round verify, shared hwpx scripts lookup, managed-only homepage link check, BOM/UTF-16 lint baselines + --output (2026-10-24)
 - [done] gwaeop-round-manage skill: round scripts/forms moved out of gwaeop-simui-review; forms pseudonymized (blank Preview/, `{{기관명}}` token via `_round.json` `institution`) (2026-10-19)
