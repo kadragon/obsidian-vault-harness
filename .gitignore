@@ -23,6 +23,11 @@
 .agents/.maintenance-stamp
 !docs/
 !docs/**
+!.github/
+!.github/**
+# Note templates are harness contract (status-sync test_contract.py reads them).
+!99_Template/
+!99_Template/**
 !.gitmodules
 !_Sources/
 !_Sources/한국교원대학교-규정집

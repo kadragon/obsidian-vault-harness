@@ -143,6 +143,24 @@ Scope: 10_Areas/ → 90_Archive/
 
 ## Shared Scripts — `.claude/lib/`
 
+### Harness test suite
+
+Run every `.claude/**/tests/test_*.py` before closing a harness change:
+
+```bash
+python3 .claude/lib/run_tests.py            # all 21 files
+python3 .claude/lib/run_tests.py .claude/skills/gwaeop-round-manage   # one asset
+```
+
+Each file runs in its own subprocess under `uv run --with-requirements .claude/lib/requirements-test.txt`,
+so third-party imports (`bs4`·`pypdf`·`openpyxl`·`xlrd`) resolve without touching the system
+Python. Do not run pytest-style files with bare `python3 <file>`: a file without `__main__` runs
+nothing and exits 0. The runner picks pytest for those. Exit 0 = all passed · 1 = a file failed ·
+2 = nothing checked (no `uv`, no match). A new test dependency goes in `requirements-test.txt`.
+CI (`.github/workflows/tests.yml`) runs the same command on push to `main` and on PRs. Notes are
+not published, so a test must pass with tracked files only — `99_Template/` is tracked for
+`status-sync/tests/test_contract.py`; a test that reads real notes belongs outside CI.
+
 ### Lint regression baseline
 
 Capture a full report before changing the vault, then compare after the change:
@@ -186,6 +204,7 @@ python3 .claude/lib/tests/test_vault_lint.py
 | `.claude/lib/validate_tag.py` | `validate-tags.sh` 훅 · `incident-analyst`·`improvement-planner`·`training-note-manager` 에이전트 · `inbox-process` 스킬 · `improvement-plan` 워크플로우 |
 | `.claude/lib/moc_gate.py` | `inbox-process` 스킬 · `docs/workflows.md` sweep 헬스체크 |
 | `.claude/lib/hwpx_text.py` | `gwaeop-simui-review` `extract_bundle.py` · `inbox-process` 스킬(0단계·reference 갈래) · `inbox-reference-worker` 에이전트 |
+| `.claude/lib/run_tests.py` | 하네스 변경 마무리 시 전체 회귀 검사(`dev:task-review` 등) |
 
 소비자가 하나뿐인 스크립트는 그 자산의 `scripts/`에 남긴다 — 스킬이면 `{skill}/scripts/`
 (`reorg_archive.py`, `ocr_pdf.py`), 워크플로우면 `workflows/{name}/scripts/`
