@@ -18,7 +18,7 @@
   - Affected paths: `.claude/skills/gwaeop-simui{,-review}/{tests,scripts,references,assets/forms}/`, `assets/fp-period-form.hwpx`, `.claude/skills/knue-report{,-draft}/references/knue-house-style.md`, `docs/harness-log.md`.
   - After: other clones (Syncthing peer) need `git fetch && git reset --hard origin/main`; GitHub `refs/pull/*` and cached commit views survive force push — file a GitHub Support purge request.
   - Done when: `git log --all -p --text` has 0 hits for the name list and every historical hwpx `Preview/PrvText.txt` is empty.
-- [ ] [security] Follow-ups to the history scrub: GitHub Support purge request for `refs/pull/1..34/head` and cached commit views; reset the Syncthing peer clone to `origin/main`; delete the pre-scrub mirror backup (`vault-backup.git` in the 2026-10-23 session scratchpad) once confirmed.
+- [ ] [security] Follow-ups to the history scrub: GitHub Support purge request for `refs/pull/1..34/head` and cached commit views (submitted 2026-10-24 — await GitHub's reply; done when old PR head SHAs, e.g. #34 `2be1b43c05aa`, no longer resolve via `gh api repos/kadragon/obsidian-vault-harness/commits/<sha>`); reset the Syncthing peer clone to `origin/main`; delete the pre-scrub mirror backup (`vault-backup.git` in the 2026-10-23 session scratchpad) once confirmed.
 
 ## 레거시 메타데이터 참고 (2026-07-31 실측)
 
