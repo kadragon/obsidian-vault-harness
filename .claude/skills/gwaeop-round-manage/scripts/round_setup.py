@@ -287,6 +287,25 @@ def render(form: str, v: dict[str, str], k: int) -> bytes:
     return out.getvalue()
 
 
+def nfc(s: str) -> str:
+    return unicodedata.normalize("NFC", s)
+
+
+def nfc_listing(d: Path) -> dict[str, list[Path]]:
+    # macOS·Syncthing은 한글 파일명을 NFD로 돌려준다 — 디스크 이름을 NFC로 맞춰 대조한다.
+    out: dict[str, list[Path]] = {}
+    if d.is_dir():
+        for f in sorted(d.iterdir()):
+            out.setdefault(nfc(f.name), []).append(f)
+    return out
+
+
+def find_nfc(p: Path) -> Path | None:
+    """On-disk spelling of p, whatever its Unicode normalization; None when absent."""
+    hits = nfc_listing(p.parent).get(nfc(p.name))
+    return hits[0] if hits else None
+
+
 def find_hwpx_scripts() -> Path:
     d = find_scripts_dir()
     if not d:
@@ -307,7 +326,8 @@ def cmd_generate(a) -> int:
     out_root = a.out or r.dir
     k = len(r.members) - 1
     docs = plan(r)
-    targets = [(d, out_root / d.project.id / d.filename) for d in docs]
+    # Overwrite an NFD-named file in place so --force never leaves an NFC twin beside it.
+    targets = [(d, find_nfc(t) or t) for d in docs for t in [out_root / d.project.id / d.filename]]
     existing = [t for _, t in targets if t.exists()]
     if existing and not a.force:
         sys.exit(f"이미 있는 파일 {len(existing)}건 (예: {existing[0].name}) — 덮어쓰려면 --force")
@@ -397,15 +417,8 @@ def cmd_verify(a) -> int:
     r = load_round(a.round_dir)
     root = a.out or r.dir
     docs = plan(r)
-    nfc = lambda s: unicodedata.normalize("NFC", s)
     expected = {(d.project.id, nfc(d.filename)) for d in docs}
-    # macOS·Syncthing은 한글 파일명을 NFD로 돌려준다 — 디스크 이름을 NFC로 맞춰 대조한다.
-    on_disk: dict[tuple[str, str], list[Path]] = {}
-    for p in r.projects:
-        pdir = root / p.id
-        if pdir.is_dir():
-            for f in sorted(pdir.iterdir()):
-                on_disk.setdefault((p.id, nfc(f.name)), []).append(f)
+    on_disk = {(p.id, name): files for p in r.projects for name, files in nfc_listing(root / p.id).items()}
     problems = []
     for d in docs:
         found = on_disk.get((d.project.id, nfc(d.filename)))
@@ -447,7 +460,7 @@ def cmd_bundle(a) -> int:
                 c = Path(td) / f"consent_{m.name}.hwpx"
                 c.write_bytes(render("consent", {"회차": str(r.number), "기관명": r.institution, "시작일": kdate(r.start), "성명_띄움": spaced(m.name)}, 0))
                 parts.append(c)
-            parts += [(a.src or r.dir) / d.project.id / d.filename for d in bundle_parts(r, m)]
+            parts += [find_nfc(p) or p for d in bundle_parts(r, m) for p in [(a.src or r.dir) / d.project.id / d.filename]]
             missing = [p for p in parts if not p.exists()]
             if missing:
                 sys.exit(f"{m.name}: 없는 파일 {missing[0]} — generate 먼저")
