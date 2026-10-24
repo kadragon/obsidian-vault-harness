@@ -56,6 +56,16 @@ class BaselineTests(unittest.TestCase):
                 self.assertEqual(r.returncode, 0, r.stderr)
                 self.assertEqual(json.loads(r.stdout)["baseline"]["existing"], 1)
 
+    def test_output_flag_writes_utf8_report_without_shell_redirect(self):
+        # A PowerShell 5.1 `>` re-decodes stdout with the console code page and garbles Hangul.
+        r = self.run_cli("--output", str(self.baseline))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout, "")
+        self.assertIn("없는 문서", self.baseline.read_text(encoding="utf-8"))
+        r = self.compare()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(json.loads(r.stdout)["baseline"]["existing"], 1)
+
     def test_new_and_duplicate_findings_fail(self):
         self.snapshot()
         self.note.write_text("[[없는 문서]]\n[[없는 문서]]\n[[새 문서]]\n", encoding="utf-8")

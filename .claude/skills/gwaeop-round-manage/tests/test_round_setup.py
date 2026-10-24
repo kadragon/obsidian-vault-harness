@@ -178,6 +178,21 @@ class GenerateVerifyTests(unittest.TestCase):
         rc, out = quiet(rs.main, ["verify", str(rd)])
         self.assertEqual(rc, 0, out)
 
+    def test_verify_reports_nfc_nfd_twin_as_extra(self):
+        rd = self.run_round(MEMBERS5)
+        f = rd / "2026-035" / "2026-035_1_서약서_이몽룡.hwpx"
+        twin = f.parent / unicodedata.normalize("NFD", f.name)
+        # APFS folds the two spellings into one file; simulate a Linux/NTFS listing instead.
+        real_iterdir = Path.iterdir
+        def iterdir(p):
+            items = list(real_iterdir(p))
+            return iter(items + [twin] if p.name == f.parent.name else items)
+        with mock.patch.object(Path, "iterdir", iterdir), mock.patch.object(rs, "doc_texts", return_value=[]), \
+                mock.patch.object(rs, "check_doc", return_value=[]):
+            rc, out = quiet(rs.main, ["verify", str(rd)])
+        self.assertEqual(rc, 1, out)
+        self.assertIn("EXTRA 2026-035/2026-035_1_서약서_이몽룡.hwpx", out)
+
     def test_blank_position_renders_empty(self):
         rd = self.run_round(MEMBERS5)
         xml = zipfile.ZipFile(rd / "2026-035" / "2026-035_1_서약서_성춘향.hwpx").read("Contents/section0.xml").decode()

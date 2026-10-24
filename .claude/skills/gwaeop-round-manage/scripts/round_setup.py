@@ -400,24 +400,26 @@ def cmd_verify(a) -> int:
     nfc = lambda s: unicodedata.normalize("NFC", s)
     expected = {(d.project.id, nfc(d.filename)) for d in docs}
     # macOS·Syncthing은 한글 파일명을 NFD로 돌려준다 — 디스크 이름을 NFC로 맞춰 대조한다.
-    on_disk = {}
+    on_disk: dict[tuple[str, str], list[Path]] = {}
     for p in r.projects:
         pdir = root / p.id
         if pdir.is_dir():
             for f in sorted(pdir.iterdir()):
-                on_disk[(p.id, nfc(f.name))] = f
+                on_disk.setdefault((p.id, nfc(f.name)), []).append(f)
     problems = []
     for d in docs:
-        f = on_disk.get((d.project.id, nfc(d.filename)))
-        if f is None:
+        found = on_disk.get((d.project.id, nfc(d.filename)))
+        if not found:
             problems.append(f"MISSING {d.project.id}/{d.filename}")
             continue
-        for e in check_doc(r, d, doc_texts(f)):
+        for e in check_doc(r, d, doc_texts(found[0])):
             problems.append(f"FAIL {d.project.id}/{d.filename}: {e}")
     pat = re.compile(r"^\d{4}-\d{3}_\d_.+\.hwpx$")
-    for (pid, name) in on_disk:
-        if pat.match(name) and (pid, name) not in expected:
-            problems.append(f"EXTRA {pid}/{name}")
+    for (pid, name), files in on_disk.items():
+        # NFC·NFD 쌍둥이(Linux·NTFS에선 별개 파일)는 기대 파일이어도 하나 빼고 EXTRA다.
+        extra = len(files) if (pid, name) not in expected else len(files) - 1
+        if pat.match(name):
+            problems.extend(f"EXTRA {pid}/{name}" for _ in range(extra))
     for line in problems:
         print(line)
     print(f"verify: {len(docs)}건 대조, 문제 {len(problems)}건")

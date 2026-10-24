@@ -17,6 +17,7 @@
   python3 .claude/lib/vault_lint.py --format markdown  # 보고용
   python3 .claude/lib/vault_lint.py --format json      # 기계 소비용
   python3 .claude/lib/vault_lint.py --strict           # 발견 시 exit 1 (자동화용)
+  python3 .claude/lib/vault_lint.py --format json --output base.json  # 파일로 UTF-8 저장 (PS 5.1 `>` 금지)
 """
 import argparse
 import codecs
@@ -313,6 +314,8 @@ def main():
     ap.add_argument("--format", choices=("text", "markdown", "json"), default="text")
     ap.add_argument("--strict", action="store_true", help="발견이 있으면 exit 1")
     ap.add_argument("--baseline", help="full --format json report; show only new findings")
+    ap.add_argument("--output", help="write the report to this file as UTF-8 instead of stdout "
+                                     "(PowerShell 5.1 `>` garbles Hangul)")
     a = ap.parse_args()
     checks = tuple(a.check) if a.check else CHECKS
     findings, total = run(a.vault, checks)
@@ -322,8 +325,12 @@ def main():
             findings, baseline = compare_baseline(findings, a.baseline, checks)
         except (OSError, ValueError, UnicodeError) as exc:
             ap.error(f"invalid baseline: {exc}")
-    sys.stdout.reconfigure(encoding="utf-8")
-    print(render(findings, total, a.format, checks, baseline))
+    report = render(findings, total, a.format, checks, baseline)
+    if a.output:
+        pathlib.Path(a.output).write_text(report + "\n", encoding="utf-8")
+    else:
+        sys.stdout.reconfigure(encoding="utf-8")
+        print(report)
     sys.exit(1 if (a.strict and findings) else 0)
 
 
