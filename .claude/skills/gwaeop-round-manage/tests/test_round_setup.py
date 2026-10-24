@@ -48,6 +48,11 @@ def write_round(d: Path, members=MEMBERS5, projects=PROJECTS, start="2026-10-08"
     return d
 
 
+def exact_exists(p: Path) -> bool:
+    # Linux/NTFS treat NFC and NFD spellings as different names; APFS folds them.
+    return p.parent.is_dir() and p.name in {f.name for f in p.parent.iterdir()}
+
+
 def quiet(fn, *a):
     with contextlib.redirect_stdout(io.StringIO()) as buf:
         rc = fn(*a)
@@ -193,6 +198,19 @@ class GenerateVerifyTests(unittest.TestCase):
         self.assertEqual(rc, 1, out)
         self.assertIn("EXTRA 2026-035/2026-035_1_서약서_이몽룡.hwpx", out)
 
+    def test_generate_sees_nfd_existing(self):
+        rd = self.run_round(MEMBERS5)
+        for g in rd.glob("*/*.hwpx"):
+            g.rename(g.parent / unicodedata.normalize("NFD", g.name))
+        f = rd / "2026-035" / "2026-035_1_서약서_이몽룡.hwpx"
+        nfd = f.parent / unicodedata.normalize("NFD", f.name)
+        with mock.patch.object(Path, "exists", exact_exists), self.assertRaises(SystemExit):
+            quiet(rs.main, ["generate", str(rd), "--no-validate"])
+        with mock.patch.object(Path, "exists", exact_exists):
+            rc, _ = quiet(rs.main, ["generate", str(rd), "--no-validate", "--force"])
+        self.assertEqual(rc, 0)
+        self.assertEqual([p.name for p in f.parent.iterdir() if rs.nfc(p.name) == f.name], [nfd.name])
+
     def test_blank_position_renders_empty(self):
         rd = self.run_round(MEMBERS5)
         xml = zipfile.ZipFile(rd / "2026-035" / "2026-035_1_서약서_성춘향.hwpx").read("Contents/section0.xml").decode()
@@ -277,6 +295,19 @@ class BundleArgTests(unittest.TestCase):
             # macOS tempdirs live under the /var -> /private/var symlink; compare resolved.
             self.assertEqual(Path(out).parent.resolve(), rd.resolve())
             self.assertTrue(parts and all(src in Path(p).parents for p in parts), parts)
+
+    def test_bundle_finds_nfd_parts(self):
+        with tempfile.TemporaryDirectory() as td:
+            rd = write_round(Path(td) / "r", members=MEMBERS5[:2])
+            self.assertEqual(quiet(rs.main, ["generate", str(rd), "--no-validate"])[0], 0)
+            for f in rd.glob("*/*.hwpx"):
+                f.rename(f.parent / unicodedata.normalize("NFD", f.name))
+            ok = subprocess.CompletedProcess([], 0, "", "")
+            with mock.patch.object(Path, "exists", exact_exists), mock.patch.object(rs, "run_py", return_value=ok) as run:
+                rc, _ = quiet(rs.main, ["bundle", str(rd), "--member", "홍길동"])
+            self.assertEqual(rc, 0)
+            parts = run.call_args.args[5:]
+            self.assertTrue(parts and all(Path(p).exists() for p in parts), parts)
 
 
 class HwpxScriptsTests(unittest.TestCase):

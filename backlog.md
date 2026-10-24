@@ -6,10 +6,6 @@
 
 - [ ] [verify] 새 평가자 계약의 실제 호출 1회 관찰 검증(spec Testing Decisions) — 에이전트 정의가 세션 시작 시 로드돼 같은 세션에서는 관찰 불가. 다음 inbox 처리에서 3-b 호출 시 표·`VERDICT`·`HOLD_DELETE` 반환 여부 확인 (source: task-next) — `.claude/agents/note-evaluator.md` *(deferred: live inbox run needed — agent definitions load at session start)*
 
-### PR #35 — [FIX] Resolve PR #33 follow-up debt in round, homepage and lint scripts (2026-10-24)
-
-- [ ] [debt] `bundle` (`p.exists()`) and `generate` (`t.exists()`) still look up exact NFC paths; on a non-normalizing FS with NFD files verify passes but bundle fails — share verify's NFC lookup (source: code-review conf 55) — `.claude/skills/gwaeop-round-manage/scripts/round_setup.py:451`
-
 ### Public history scrub — personal data in past commits (2026-10-19)
 
 - [x] [security] (2026-10-23 done — user ran filter-repo + force push via `!`; verified 0 name hits on all branches, all hwpx previews blank, HEAD tree unchanged; `main` 4094a21) Rewrite public repo history to remove real committee/staff names, extension number, real org/project names and hwpx `Preview/` thumbnails (current tree already pseudonymized). Needs explicit user permission (auto-mode blocked `git-filter-repo` install as Git Destructive).
