@@ -22,7 +22,6 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import difflib
-import glob
 import hashlib
 import html
 import io
@@ -33,6 +32,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import unicodedata
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,10 +40,10 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 FORMS = HERE.parent / "assets" / "forms"
 MERGE = HERE / "merge_sign_bundle.py"
-HWPX_GLOBS = [
-    os.path.expanduser("~/.claude/plugins/marketplaces/*/prod/skills/hwpx/scripts"),
-    os.path.expanduser("~/.claude/plugins/cache/*/prod/*/skills/hwpx/scripts"),
-]
+# prod:hwpx 경로 해석은 .claude/lib/hwpx_text.py와 공유한다 (Codex 캐시 계층 포함).
+sys.path.insert(0, str(HERE.parents[2] / "lib"))
+from hwpx_text import find_scripts_dir  # noqa: E402
+
 PLACEHOLDER_ID = "2147483648"
 
 DOC_PLEDGE = "서약서"
@@ -288,13 +288,10 @@ def render(form: str, v: dict[str, str], k: int) -> bytes:
 
 
 def find_hwpx_scripts() -> Path:
-    for pattern in HWPX_GLOBS:
-        # Natural sort so cache version 3.2.10 outranks 3.2.8.
-        hits = sorted(glob.glob(pattern),
-                      key=lambda p: [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", p)])
-        if hits:
-            return Path(hits[-1])
-    sys.exit("prod:hwpx 플러그인 scripts 폴더를 찾지 못함")
+    d = find_scripts_dir()
+    if not d:
+        sys.exit("prod:hwpx 플러그인 scripts 폴더를 찾지 못함")
+    return Path(d)
 
 
 def run_py(script: Path, *args) -> subprocess.CompletedProcess:
@@ -400,22 +397,29 @@ def cmd_verify(a) -> int:
     r = load_round(a.round_dir)
     root = a.out or r.dir
     docs = plan(r)
-    expected = {(d.project.id, d.filename) for d in docs}
-    problems = []
-    for d in docs:
-        f = root / d.project.id / d.filename
-        if not f.exists():
-            problems.append(f"MISSING {d.project.id}/{d.filename}")
-            continue
-        for e in check_doc(r, d, doc_texts(f)):
-            problems.append(f"FAIL {d.project.id}/{d.filename}: {e}")
-    pat = re.compile(r"^\d{4}-\d{3}_\d_.+\.hwpx$")
+    nfc = lambda s: unicodedata.normalize("NFC", s)
+    expected = {(d.project.id, nfc(d.filename)) for d in docs}
+    # macOS·Syncthing은 한글 파일명을 NFD로 돌려준다 — 디스크 이름을 NFC로 맞춰 대조한다.
+    on_disk: dict[tuple[str, str], list[Path]] = {}
     for p in r.projects:
         pdir = root / p.id
         if pdir.is_dir():
             for f in sorted(pdir.iterdir()):
-                if pat.match(f.name) and (p.id, f.name) not in expected:
-                    problems.append(f"EXTRA {p.id}/{f.name}")
+                on_disk.setdefault((p.id, nfc(f.name)), []).append(f)
+    problems = []
+    for d in docs:
+        found = on_disk.get((d.project.id, nfc(d.filename)))
+        if not found:
+            problems.append(f"MISSING {d.project.id}/{d.filename}")
+            continue
+        for e in check_doc(r, d, doc_texts(found[0])):
+            problems.append(f"FAIL {d.project.id}/{d.filename}: {e}")
+    pat = re.compile(r"^\d{4}-\d{3}_\d_.+\.hwpx$")
+    for (pid, name), files in on_disk.items():
+        # NFC·NFD 쌍둥이(Linux·NTFS에선 별개 파일)는 기대 파일이어도 하나 빼고 EXTRA다.
+        extra = len(files) if (pid, name) not in expected else len(files) - 1
+        if pat.match(name):
+            problems.extend(f"EXTRA {pid}/{name}" for _ in range(extra))
     for line in problems:
         print(line)
     print(f"verify: {len(docs)}건 대조, 문제 {len(problems)}건")

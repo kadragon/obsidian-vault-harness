@@ -7,6 +7,8 @@ import sys
 import unicodedata
 from urllib.parse import unquote, urlsplit
 
+from render_notes import BEGIN, END
+
 
 def verify(output, vault):
     sys.path.insert(0, str(vault / '.claude' / 'lib'))
@@ -23,14 +25,17 @@ def verify(output, vault):
             errors.append('Missing source note: ' + post['id'])
     for path in notes:
         text = path.read_text(encoding='utf-8')
-        if '<!-- homepage-collect:begin v1 -->' not in text:
+        if BEGIN not in text:
             continue  # Unmanaged user notes are outside this collector's contract.
         errors.extend(f'{path.name}: {error}' for error in note_rules.check(str(path.resolve()), text, skip=()))
-        for link in re.findall(r'\[\[([^\]]+)\]\]', text):
+        # Only links the collector wrote must resolve here; manual text around the markers
+        # may point anywhere in the vault.
+        managed = text.split(BEGIN, 1)[1].split(END, 1)[0]
+        for link in re.findall(r'\[\[([^\]]+)\]\]', managed):
             target = link.split('|', 1)[0].split('#', 1)[0]
             if len(names.get(unicodedata.normalize('NFC', target), [])) != 1:
                 errors.append(f'Unresolved/ambiguous note link in {path.name}: {target}')
-        for link in re.findall(r'(?<!\\)\]\(([^\n]+?)\)', text):
+        for link in re.findall(r'(?<!\\)\]\(([^\n]+?)\)', managed):
             if urlsplit(link).scheme or link.startswith('#'):
                 continue
             target = (path.parent / unquote(link)).resolve()

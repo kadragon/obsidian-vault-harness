@@ -6,22 +6,19 @@
 
 - [ ] [verify] 새 평가자 계약의 실제 호출 1회 관찰 검증(spec Testing Decisions) — 에이전트 정의가 세션 시작 시 로드돼 같은 세션에서는 관찰 불가. 다음 inbox 처리에서 3-b 호출 시 표·`VERDICT`·`HOLD_DELETE` 반환 여부 확인 (source: task-next) — `.claude/agents/note-evaluator.md` *(deferred: live inbox run needed — agent definitions load at session start)*
 
-### PR #33 — [HARNESS] rename vault skills to verb-suffixed names and add homepage-collect (2026-10-19)
+### PR #35 — [FIX] Resolve PR #33 follow-up debt in round, homepage and lint scripts (2026-10-24)
 
-- [ ] [debt] `verify` compares on-disk Korean filenames without NFC normalization — macOS NFD names report as EXTRA (source: codex) — `.claude/skills/gwaeop-round-manage/scripts/round_setup.py:407` (introduced here)
-- [ ] [debt] Manual links outside managed markers are resolved only against the collector output folder, so a valid hub link fails verification (source: codex) — `.claude/skills/homepage-collect/scripts/verify_notes.py:29` (introduced here)
-- [ ] [debt] `find_hwpx_scripts` duplicates `hwpx_text.find_text_py` and lacks the Codex cache tier (source: code-review conf 45, agy P3) — `.claude/skills/gwaeop-round-manage/scripts/round_setup.py:43` (introduced here)
-- [ ] [debt] Baseline read with `utf-8`, so a PowerShell 5.1 `>` redirect (BOM/UTF-16) is rejected as invalid; use `utf-8-sig` or an `--output` flag (source: code-review conf 40) — `.claude/lib/vault_lint.py:242` (introduced here)
-- [ ] [debt] Generated homepage snapshot notes are stamped `type: project / status: active`; only the weekly collector's duplicated marker filters them out (source: code-review conf 45) — `.claude/skills/homepage-collect/scripts/render_notes.py:101` (introduced here)
+- [ ] [debt] `bundle` (`p.exists()`) and `generate` (`t.exists()`) still look up exact NFC paths; on a non-normalizing FS with NFD files verify passes but bundle fails — share verify's NFC lookup (source: code-review conf 55) — `.claude/skills/gwaeop-round-manage/scripts/round_setup.py:451`
 
 ### Public history scrub — personal data in past commits (2026-10-19)
 
-- [ ] [security] Rewrite public repo history to remove real committee/staff names, extension number, real org/project names and hwpx `Preview/` thumbnails (current tree already pseudonymized). Needs explicit user permission (auto-mode blocked `git-filter-repo` install as Git Destructive).
+- [x] [security] (2026-10-23 done — user ran filter-repo + force push via `!`; verified 0 name hits on all branches, all hwpx previews blank, HEAD tree unchanged; `main` 4094a21) Rewrite public repo history to remove real committee/staff names, extension number, real org/project names and hwpx `Preview/` thumbnails (current tree already pseudonymized). Needs explicit user permission (auto-mode blocked `git-filter-repo` install as Git Destructive).
   - Steps: commit current tree → `python3 -m pip install git-filter-repo` → `git filter-repo --replace-text <rules> --blob-callback <blank Preview/PrvText.txt·PrvImage.png in PK blobs>` over all refs → re-add origin → `git push --force-with-lease` `main` and `harness/pdf-classify-and-simui`.
   - Replace rules: 7 committee names (incl. spaced forms) → 홍길동·박문수·이몽룡·성춘향·임꺽정·장길산·전우치; staff name + extension number → `홍길동`·`1234`; 2 orgs → 가상교육청·다라대학교; 3 sample project titles → `샘플 …`; harness-log `9차 {name} 통합본` → `9차 외부위원 통합본`.
   - Affected paths: `.claude/skills/gwaeop-simui{,-review}/{tests,scripts,references,assets/forms}/`, `assets/fp-period-form.hwpx`, `.claude/skills/knue-report{,-draft}/references/knue-house-style.md`, `docs/harness-log.md`.
   - After: other clones (Syncthing peer) need `git fetch && git reset --hard origin/main`; GitHub `refs/pull/*` and cached commit views survive force push — file a GitHub Support purge request.
   - Done when: `git log --all -p --text` has 0 hits for the name list and every historical hwpx `Preview/PrvText.txt` is empty.
+- [ ] [security] Follow-ups to the history scrub: GitHub Support purge request for `refs/pull/1..34/head` and cached commit views; reset the Syncthing peer clone to `origin/main`; delete the pre-scrub mirror backup (`vault-backup.git` in the 2026-10-23 session scratchpad) once confirmed.
 
 ## 레거시 메타데이터 참고 (2026-07-31 실측)
 

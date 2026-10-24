@@ -41,6 +41,12 @@ def find_text_py() -> str | None:
     return None
 
 
+def find_scripts_dir() -> str | None:
+    """The prod:hwpx ``scripts/`` folder holding ``text.py`` and its sibling tools."""
+    text_py = find_text_py()
+    return os.path.dirname(text_py) if text_py else None
+
+
 def extract_hwpx(src: str, dst: str, text_py: str | None) -> str:
     """Write markdown for ``src`` to ``dst``; return OK·EMPTY or a failure status."""
     if not text_py:

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- [done] PR #33 follow-ups: NFC round verify, shared hwpx scripts lookup, managed-only homepage link check, BOM/UTF-16 lint baselines + --output (2026-10-24)
 - [done] gwaeop-round-manage skill: round scripts/forms moved out of gwaeop-simui-review; forms pseudonymized (blank Preview/, `{{기관명}}` token via `_round.json` `institution`) (2026-10-19)
 - [done] Serialize homepage sync and exclude CRLF generated views from weekly reports (2026-10-15)
 - [done] Keep unfinished development eligible for weekly change reports (2026-10-10)

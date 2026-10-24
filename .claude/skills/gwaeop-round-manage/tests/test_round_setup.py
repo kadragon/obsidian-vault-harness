@@ -13,6 +13,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import unicodedata
 import unittest
 import zipfile
 from pathlib import Path
@@ -167,6 +168,31 @@ class GenerateVerifyTests(unittest.TestCase):
         self.assertIn("MISSING 2026-035/2026-035_2_과업내용 확정 위원별 심의 결과서_임꺽정.hwpx", out)
         self.assertIn("EXTRA 2026-035/2026-035_1_서약서_장길산.hwpx", out)
 
+    def test_verify_matches_nfd_filenames(self):
+        # macOS (and Syncthing from it) hands back Hangul names decomposed.
+        rd = self.run_round(MEMBERS5)
+        f = rd / "2026-035" / "2026-035_1_서약서_이몽룡.hwpx"
+        data = f.read_bytes()
+        f.unlink()
+        (f.parent / unicodedata.normalize("NFD", f.name)).write_bytes(data)
+        rc, out = quiet(rs.main, ["verify", str(rd)])
+        self.assertEqual(rc, 0, out)
+
+    def test_verify_reports_nfc_nfd_twin_as_extra(self):
+        rd = self.run_round(MEMBERS5)
+        f = rd / "2026-035" / "2026-035_1_서약서_이몽룡.hwpx"
+        twin = f.parent / unicodedata.normalize("NFD", f.name)
+        # APFS folds the two spellings into one file; simulate a Linux/NTFS listing instead.
+        real_iterdir = Path.iterdir
+        def iterdir(p):
+            items = list(real_iterdir(p))
+            return iter(items + [twin] if p.name == f.parent.name else items)
+        with mock.patch.object(Path, "iterdir", iterdir), mock.patch.object(rs, "doc_texts", return_value=[]), \
+                mock.patch.object(rs, "check_doc", return_value=[]):
+            rc, out = quiet(rs.main, ["verify", str(rd)])
+        self.assertEqual(rc, 1, out)
+        self.assertIn("EXTRA 2026-035/2026-035_1_서약서_이몽룡.hwpx", out)
+
     def test_blank_position_renders_empty(self):
         rd = self.run_round(MEMBERS5)
         xml = zipfile.ZipFile(rd / "2026-035" / "2026-035_1_서약서_성춘향.hwpx").read("Contents/section0.xml").decode()
@@ -248,8 +274,19 @@ class BundleArgTests(unittest.TestCase):
             self.assertEqual(rc, 0)
             _, _, out, _, n, *parts = run.call_args.args  # MERGE -o out --expect-pages n *parts
             self.assertEqual(n, len(parts))
-            self.assertEqual(Path(out).parent, rd)
+            # macOS tempdirs live under the /var -> /private/var symlink; compare resolved.
+            self.assertEqual(Path(out).parent.resolve(), rd.resolve())
             self.assertTrue(parts and all(src in Path(p).parents for p in parts), parts)
+
+
+class HwpxScriptsTests(unittest.TestCase):
+    def test_codex_cache_tier_is_found(self):
+        with tempfile.TemporaryDirectory() as td:
+            scripts = Path(td) / ".codex/plugins/cache/m/prod/1.0.0/skills/hwpx/scripts"
+            scripts.mkdir(parents=True)
+            (scripts / "text.py").write_text("")
+            with mock.patch.dict("os.environ", {"HOME": td, "USERPROFILE": td}):
+                self.assertEqual(rs.find_hwpx_scripts(), scripts)
 
 
 class DiffFinalTests(unittest.TestCase):

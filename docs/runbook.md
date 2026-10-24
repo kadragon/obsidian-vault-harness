@@ -148,9 +148,13 @@ Scope: 10_Areas/ → 90_Archive/
 Capture a full report before changing the vault, then compare after the change:
 
 ```bash
-python3 .claude/lib/vault_lint.py --format json > .git/vault-lint-baseline.json
+python3 .claude/lib/vault_lint.py --format json --output .git/vault-lint-baseline.json
 python3 .claude/lib/vault_lint.py --baseline .git/vault-lint-baseline.json --strict
 ```
+
+Use `--output`, not a shell `>`: Windows PowerShell 5.1 re-decodes redirected stdout
+with the console code page and saves Hangul paths garbled, so every finding would
+compare as new.
 
 Baseline mode reports only new findings. `--strict` exits 1 when new findings exist;
 existing findings remain debt. Without `--baseline`, strict mode still fails on any
