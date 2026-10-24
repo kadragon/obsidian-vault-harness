@@ -19,6 +19,7 @@
   python3 .claude/lib/vault_lint.py --strict           # 발견 시 exit 1 (자동화용)
 """
 import argparse
+import codecs
 import hashlib
 import json
 import os
@@ -239,7 +240,10 @@ def finding_key(finding):
 
 def compare_baseline(findings, baseline_path, checks):
     """Subtract full-report findings as a multiset, rejecting unsafe input."""
-    report = json.loads(pathlib.Path(baseline_path).read_text(encoding="utf-8"))
+    raw = pathlib.Path(baseline_path).read_bytes()
+    # PowerShell 5.1 `>` writes UTF-16 LE with BOM; `Out-File -Encoding utf8` adds a UTF-8 BOM.
+    utf16 = raw.startswith((codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE))
+    report = json.loads(raw.decode("utf-16" if utf16 else "utf-8-sig"))
     if not isinstance(report, dict) or report.get("schema_version") != 1:
         raise ValueError("expected a full vault lint JSON report (schema_version 1)")
     if "baseline" in report:

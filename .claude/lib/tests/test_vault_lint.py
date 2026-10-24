@@ -46,6 +46,16 @@ class BaselineTests(unittest.TestCase):
         self.assertEqual(report["findings"], [])
         self.assertEqual(report["baseline"]["existing"], 1)
 
+    def test_powershell_redirect_encodings_accepted(self):
+        # PowerShell 5.1 `>` writes UTF-16 LE with BOM; `Out-File -Encoding utf8` writes a UTF-8 BOM.
+        text = json.dumps(self.snapshot(), ensure_ascii=False)
+        for encoding in ("utf-8-sig", "utf-16"):
+            with self.subTest(encoding=encoding):
+                self.baseline.write_text(text, encoding=encoding)
+                r = self.compare()
+                self.assertEqual(r.returncode, 0, r.stderr)
+                self.assertEqual(json.loads(r.stdout)["baseline"]["existing"], 1)
+
     def test_new_and_duplicate_findings_fail(self):
         self.snapshot()
         self.note.write_text("[[없는 문서]]\n[[없는 문서]]\n[[새 문서]]\n", encoding="utf-8")

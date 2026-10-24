@@ -169,6 +169,28 @@ class RenderTests(unittest.TestCase):
         verify_notes.verify(self.output, Path(__file__).resolve().parents[4])
         self.assertEqual(renderer.render(self.output, self.config, self.data)['unchanged'], 17)
 
+    def test_verify_ignores_manual_links_outside_markers(self):
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+        import json
+        import verify_notes
+        post = self.data['posts'][0]
+        for rel in (post['attachments'][0]['path'], post['source_html']):
+            target = self.output / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(b'abc')
+        (self.output / '원본데이터').mkdir()
+        (self.output / '원본데이터/dataset.json').write_text(json.dumps(self.data))
+        renderer.render(self.output, self.config, self.data)
+        vault = Path(__file__).resolve().parents[4]
+        hub = self.output / '_사업 진행 종합.md'
+        managed = hub.read_text(encoding='utf-8')
+        # A hub note elsewhere in the vault and a file beside it are valid user links.
+        hub.write_text(managed + '\n## 메모\n[[_2026 홈페이지 고도화]] [회의록](../회의록.pdf)\n', encoding='utf-8')
+        verify_notes.verify(self.output, vault)
+        hub.write_text(managed.replace(renderer.END, '[[없는 노트]]\n' + renderer.END), encoding='utf-8')
+        with self.assertRaisesRegex(ValueError, '없는 노트'):
+            verify_notes.verify(self.output, vault)
+
     def test_weekly_collector_skips_generated_views_but_keeps_manual_project(self):
         import subprocess
         vault = self.output / 'vault'

@@ -24,8 +24,6 @@ Windows + 한글 + pywin32 필요. prod:hwpx 플러그인 스크립트를 사용
 from __future__ import annotations
 
 import argparse
-import glob
-import os
 import re
 import shutil
 import subprocess
@@ -33,20 +31,19 @@ import sys
 import tempfile
 from pathlib import Path
 
-HWPX_GLOBS = [
-    os.path.expanduser("~/.claude/plugins/marketplaces/*/prod/skills/hwpx/scripts"),
-    os.path.expanduser("~/.claude/plugins/cache/*/prod/*/skills/hwpx/scripts"),
-]
+# prod:hwpx 경로 해석은 .claude/lib/hwpx_text.py와 공유한다 (Codex 캐시 계층 포함).
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "lib"))
+from hwpx_text import find_scripts_dir  # noqa: E402
+
 PLACEHOLDER_ID = "2147483648"  # 한글이 여러 문단에 쓰는 자리표시 id — 중복 허용
 P_ID = re.compile(r'(<hp:p id=")(\d+)(")')
 
 
 def find_hwpx_scripts() -> Path:
-    for pattern in HWPX_GLOBS:
-        hits = sorted(glob.glob(pattern))
-        if hits:
-            return Path(hits[-1])
-    sys.exit("prod:hwpx 플러그인 scripts 폴더를 찾지 못함")
+    d = find_scripts_dir()
+    if not d:
+        sys.exit("prod:hwpx 플러그인 scripts 폴더를 찾지 못함")
+    return Path(d)
 
 
 def dedupe_para_ids(sections: list[str]) -> tuple[list[str], int]:
