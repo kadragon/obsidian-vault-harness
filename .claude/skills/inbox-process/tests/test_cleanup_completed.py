@@ -141,6 +141,31 @@ class CleanupTests(unittest.TestCase):
         item["note_sha256"] = self.digest(item["note"])
         self.assertTrue(self.run_cleanup(item)["ok"])
 
+    def test_text_absorbed_ignores_source_bom_and_crlf(self):
+        item = self.item("01_Inbox/action/job/a.txt", text=True)
+        self.write(item["source"], b"\xef\xbb\xbffull source\r\nsecond line\r\n")
+        item["source_sha256"] = self.digest(item["source"])
+        self.write(item["note"], "---\ntype: work\n---\nfull source\nsecond line\n")
+        item["note_sha256"] = self.digest(item["note"])
+        self.assertTrue(self.run_cleanup(item)["ok"])
+
+    def test_nfd_filename_on_disk_matches_nfc_manifest(self):
+        import unicodedata
+        nfd = unicodedata.normalize("NFD", "공문.pdf")
+        nfc = unicodedata.normalize("NFC", "공문.pdf")
+        probe = self.vault / "01_Inbox" / nfd
+        probe.write_text("x")
+        insensitive = (self.vault / "01_Inbox" / nfc).exists()
+        probe.unlink()
+        if not insensitive:
+            self.skipTest("filesystem is normalization-sensitive")
+        item = self.item(f"01_Inbox/action/job/{nfc}")
+        (self.vault / item["source"]).unlink()
+        self.write(f"01_Inbox/action/job/{nfd}", "full source\n")
+        result = self.run_cleanup(item)
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(result["deleted"], 1)
+
     def test_text_only_in_frontmatter_or_empty_source_is_not_absorbed(self):
         item = self.item("01_Inbox/action/job/a.md", text=True)
         self.write(item["note"], "---\nfull source\n---\nsummary\n")

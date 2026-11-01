@@ -10,6 +10,11 @@
 
 - [ ] [security] Follow-ups to the history scrub: GitHub Support purge request for `refs/pull/1..34/head` and cached commit views (submitted 2026-10-24 — await GitHub's reply; done when old PR head SHAs, e.g. #34 `2be1b43c05aa`, no longer resolve via `gh api repos/kadragon/obsidian-vault-harness/commits/<sha>`); reset the Syncthing peer clone to `origin/main`; delete the pre-scrub mirror backup (`vault-backup.git` in the 2026-10-23 session scratchpad) once confirmed.
 
+### PR #36 — [HARNESS] Move deterministic skill steps into tested scripts (2026-11-01)
+
+- [ ] [debt] OS·동기화 부산물(`.DS_Store`·`Thumbs.db`·`desktop.ini`·`~syncthing~*`)이 미등록 파일로 보존돼 하위 폴더가 `rmdir`되지 않고 매 실행 exit 1. 문서(`cleanup-manifest.md`)상 의도된 보존이나, 실사용에서 반복 잔존하면 부산물 무시 목록 도입 검토 (source: code-review, introduced here) — `.claude/skills/inbox-process/scripts/cleanup_completed.py:61`
+- [ ] [debt] `collect_active_notes.py`는 non-UTF-8 노트 1건에 전체 실행이 exit 1(문서상 의도된 fail-loud). 구 grep 버전은 건너뜀 — 실제로 CP949 노트가 발견되면 파일 단위 경고로 완화 검토 (source: code-review, introduced here) — `.claude/skills/weekly-report-compile/scripts/collect_active_notes.py:120`
+
 ## 레거시 메타데이터 참고 (2026-07-31 실측)
 
 > 참고 — 이 PR과 무관한 선행 백로그가 더 크다. 볼트 477건 전수 스캔 시 `status:` 누락 **220건**(2026-07-31 재측정 — improvement 백필로 57건 해소), incident `change_type` 누락 79건. 태그 보완과는 별도 범위이며 이번 작업에서는 수정하지 않았다.

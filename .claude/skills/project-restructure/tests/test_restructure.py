@@ -227,6 +227,12 @@ class VerifyTests(unittest.TestCase):
             # Declared path updates are required, rather than dropping paths from comparison.
             self.assertFalse(rs.verify(proj, before)["ok"])
 
+    def test_path_update_rewrites_link_stem_but_not_prose_word(self):
+        rows = [("계약.md", "1. 계약/계약.md")]
+        self.assertEqual(
+            rs.updated_lines(["- 계약 체결 완료, [[계약]] · [[계약|원문]] · 계약.md 참조"], rows),
+            ["- 계약 체결 완료, [[1. 계약/계약]] · [[1. 계약/계약|원문]] · 1. 계약/계약.md 참조"])
+
     def test_callout_tasks_remain_in_hub_and_duplicate_prose_is_counted(self):
         with tempfile.TemporaryDirectory() as tmp:
             proj = make_vault(Path(tmp))

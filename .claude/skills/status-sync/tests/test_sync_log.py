@@ -56,6 +56,19 @@ def test_existing_extension_entry_and_unresolved_plan(tmp_path):
     assert log.read_bytes() == before
 
 
+def test_dot_or_backslash_planned_path_matches_normalized_result(tmp_path):
+    log, note, report = setup(tmp_path)
+    rows = [
+        {"event": "planned", "paths": ["./10_Areas/Example.md", "10_Areas\\missing.md"]},
+        {"event": "closed", "path": "10_Areas/Example.md", "recorded_at": "2026-11-01T12:00:00"},
+        {"event": "failed", "path": "10_Areas/missing.md"},
+    ]
+    report.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+    result = run(tmp_path, report)
+    assert result.returncode == 0, result.stdout
+    assert json.loads(result.stdout)["pending"] == []
+
+
 def test_reopened_note_is_not_logged(tmp_path):
     log, note, report = setup(tmp_path)
     note.write_text('---\nstatus: open\n---\n', encoding="utf-8")

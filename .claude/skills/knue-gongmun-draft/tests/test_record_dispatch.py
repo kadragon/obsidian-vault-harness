@@ -86,7 +86,8 @@ def test_fenced_task_and_heading_examples_are_ignored(tmp_path):
     assert note.read_text().count("✅") == 1
 
 
-@pytest.mark.parametrize("mutation", ["duplicate_task", "missing_task", "missing_heading", "unclosed_fence"])
+@pytest.mark.parametrize("mutation", ["duplicate_task", "missing_task", "missing_heading", "unclosed_fence",
+                                      "callout_then_list"])
 def test_ambiguous_or_missing_targets_preserve_note(tmp_path, mutation):
     note, record = fixture(tmp_path)
     text = note.read_text()
@@ -96,6 +97,8 @@ def test_ambiguous_or_missing_targets_preserve_note(tmp_path, mutation):
         record["task_line"] = "> - [ ] 없는 업무"
     elif mutation == "missing_heading":
         text = text.replace("## 현황", "## 다른 제목")
+    elif mutation == "callout_then_list":
+        text = text.replace("> - 기존 현황\n", "> - 기존 현황\n- 2026-10-01 이전 기록\n")
     else:
         text += "```\n"
     note.write_text(text)

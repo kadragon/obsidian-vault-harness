@@ -12,6 +12,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 import copy_verified as copies
@@ -62,6 +63,11 @@ def inventory(vault: Path, scope: object) -> tuple[set[Path], set[Path]]:
     return files, folders
 
 
+def nfc(path: Path) -> str:
+    """Compare paths by NFC: macOS can store Korean names as NFD on disk."""
+    return unicodedata.normalize("NFC", str(path))
+
+
 def fingerprint(path: Path) -> tuple[int, int, int, int, int]:
     st = path.stat()
     return st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns
@@ -103,8 +109,9 @@ def verify(entry: dict, vault: Path) -> Path:
     if text_absorbed:
         if branch != "action" or source.suffix.lower() not in {".txt", ".md"}:
             raise CleanupError("text-absorbed requires an action .txt/.md source")
-        original = source.read_bytes().decode("utf-8")
-        body = note.read_bytes().decode("utf-8")
+        # Windows-origin sources may carry a BOM/CRLF that the written note drops.
+        original = source.read_bytes().decode("utf-8-sig").replace("\r\n", "\n")
+        body = note.read_bytes().decode("utf-8-sig").replace("\r\n", "\n")
         body = re.sub(r"\A---\r?\n.*?\r?\n---(?:\r?\n|$)", "", body, count=1, flags=re.S)
         if not original.strip() or original not in body:
             raise CleanupError("complete source text is not exactly present in note body")
@@ -126,15 +133,16 @@ def cleanup(manifest: dict, vault: Path, apply: bool = False) -> dict:
             or manifest.get("version") != 1 or not isinstance(manifest.get("files"), list)):
         raise CleanupError("manifest requires version=1 and a files list")
     actual, folders = inventory(vault, manifest.get("scope"))
+    by_key = {nfc(p): p for p in actual}
     entries, invalid = {}, []
     for entry in manifest["files"]:
         try:
             if not isinstance(entry, dict):
                 raise CleanupError("file entry must be an object")
             source = path_in_vault(vault, entry.get("source"), "source")
-            if source not in actual:
+            if nfc(source) not in by_key:
                 raise CleanupError("source is missing or outside selected scope")
-            entries.setdefault(source, []).append(entry)
+            entries.setdefault(by_key[nfc(source)], []).append(entry)
         except (CleanupError, copies.CopyError, OSError) as exc:
             invalid.append({"source": entry.get("source") if isinstance(entry, dict) else None,
                             "reason": str(exc)})
@@ -168,7 +176,7 @@ def cleanup(manifest: dict, vault: Path, apply: bool = False) -> dict:
                     remaining.update(current)
             except (CleanupError, copies.CopyError, OSError) as exc:
                 results.append({"source": value, "status": "preserved", "reason": str(exc)})
-        for new_file in sorted(remaining - actual):
+        for new_file in sorted(p for p in remaining if nfc(p) not in by_key):
             results.append({"source": new_file.relative_to(vault).as_posix(),
                             "status": "preserved", "reason": "unlisted file appeared during cleanup"})
         protected = {vault / "01_Inbox", *(vault / "01_Inbox" / name for name in ("action", "reference", "scraps"))}

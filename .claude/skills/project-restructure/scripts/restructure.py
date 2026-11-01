@@ -295,13 +295,19 @@ def updated_lines(lines: list[str], rows: list[tuple[str, str]]) -> list[str]:
     """Apply only manifest-declared path changes to the old comparison snapshot."""
     if not rows:
         return lines
-    mapping = dict(rows)
-    for old, new in rows:
-        if old.endswith(".md") and new.endswith(".md"):
-            mapping[old[:-3]] = new[:-3]
-    pattern = re.compile(r"(?<![\w-])(" + "|".join(
-        re.escape(x) for x in sorted(mapping, key=len, reverse=True)) + r")(?![\w.-])")
-    return [pattern.sub(lambda m: mapping[m.group(1)], line) for line in lines]
+    def alternation(keys):
+        return "|".join(re.escape(x) for x in sorted(keys, key=len, reverse=True))
+
+    full = dict(rows)
+    # Extension-less stems only count as wikilink targets ([[stem]], [[dir/stem|alias]]),
+    # so a prose word equal to a short stem is never rewritten.
+    stems = {old[:-3]: new[:-3] for old, new in rows if old.endswith(".md") and new.endswith(".md")}
+    passes = [(re.compile(r"(?<![\w-])(" + alternation(full) + r")(?![\w.-])"), full)]
+    if stems:
+        passes.append((re.compile(r"(?<=[\[/])(" + alternation(stems) + r")(?=[\]|#])"), stems))
+    for pattern, mapping in passes:
+        lines = [pattern.sub(lambda m, mp=mapping: mp[m.group(1)], line) for line in lines]
+    return lines
 
 
 def lost_lines(before: list[str], after: list[str], rows: list[tuple[str, str]]) -> Counter:

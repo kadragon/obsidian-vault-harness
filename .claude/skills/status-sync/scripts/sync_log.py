@@ -20,6 +20,16 @@ def key(day: str, path: str) -> tuple[str, str]:
     return day, unicodedata.normalize("NFC", path.replace("\\", "/").removesuffix(".md"))
 
 
+def report_path(vault: Path, value: str) -> str:
+    """apply.py writes planned paths as typed but results vault-relative; compare both alike."""
+    text = value.replace("\\", "/")
+    try:
+        text = (vault / text).resolve().relative_to(vault).as_posix()
+    except (OSError, ValueError):
+        pass
+    return unicodedata.normalize("NFC", text)
+
+
 def safe_note(vault: Path, value: str) -> Path:
     if not isinstance(value, str) or any(c in value for c in "\r\n[]|#"):
         raise ValueError("invalid note path")
@@ -52,14 +62,15 @@ def replay(report: Path, vault: Path, apply: bool = False) -> dict:
         existing = {key(m[1], m[2]) for m in re.finditer(
             r"^- (\d{4}-\d{2}-\d{2}) #closed \[\[([^\]|]+)(?:\|[^\]]*)?\]\]", text, re.M)}
         added, skipped, pending = [], [], []
-        resolved = {r.get("path") for r in rows if r.get("event") in {"closed", "failed"}}
+        resolved = {report_path(vault, r["path"]) for r in rows
+                    if r.get("event") in {"closed", "failed"} and isinstance(r.get("path"), str)}
         for row in rows:
             event = row.get("event")
             if event == "planned":
                 paths = row.get("paths")
                 if not isinstance(paths, list) or any(not isinstance(p, str) for p in paths):
                     raise ValueError("invalid planned paths")
-                pending.extend(p for p in paths if p not in resolved)
+                pending.extend(p for p in paths if report_path(vault, p) not in resolved)
                 continue
             if event == "failed":
                 continue

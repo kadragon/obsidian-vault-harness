@@ -129,6 +129,9 @@ def append_edit(text, rows, span, lines, newline):
         last = callouts[0]
         while last + 1 < end and re.match(r"^\s*>", rows[last + 1]["body"]):
             last += 1
+        if any(rows[i]["body"].strip() for i in range(last + 1, end)):
+            # Appending inside the callout would split the history out of order.
+            raise ValueError("Callout is followed by other content in target section; record manually")
         prefix = "> "
     else:
         last = end - 1
