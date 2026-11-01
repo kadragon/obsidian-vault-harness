@@ -66,6 +66,28 @@ class CleanupTests(unittest.TestCase):
         self.assertTrue((self.vault / "01_Inbox/action").exists())
         self.assertFalse((self.vault / ".trash").exists())
 
+    def test_os_byproducts_are_not_unlisted_and_go_with_empty_folder(self):
+        item = self.item()
+        for name in ("job/.DS_Store", "job/sub/Thumbs.db", "job/desktop.ini"):
+            self.write(f"01_Inbox/action/{name}", "meta")
+        preview = self.run_cleanup(item, False)
+        self.assertTrue(preview["ok"], preview)
+        self.assertTrue((self.vault / "01_Inbox/action/job/.DS_Store").exists())
+        result = self.run_cleanup(item)
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(len(result["removed_byproducts"]), 3)
+        self.assertFalse((self.vault / "01_Inbox/action/job").exists())
+
+    def test_byproduct_stays_when_folder_keeps_other_files(self):
+        item = self.item()
+        meta = self.write("01_Inbox/action/job/.DS_Store", "meta")
+        unknown = self.write("01_Inbox/action/job/unknown.hwp", "unknown")
+        result = self.run_cleanup(item)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["preserved"], 1)
+        self.assertEqual(result["removed_byproducts"], [])
+        self.assertTrue(meta.exists() and unknown.exists())
+
     def test_unlisted_and_held_files_remain_with_partial_success(self):
         first = self.item()
         held = dict(first, source="01_Inbox/action/job/held.pdf", hold=True)

@@ -12,7 +12,6 @@
 
 ### PR #36 — [HARNESS] Move deterministic skill steps into tested scripts (2026-11-01)
 
-- [ ] [debt] OS·동기화 부산물(`.DS_Store`·`Thumbs.db`·`desktop.ini`·`~syncthing~*`)이 미등록 파일로 보존돼 하위 폴더가 `rmdir`되지 않고 매 실행 exit 1. 문서(`cleanup-manifest.md`)상 의도된 보존이나, 실사용에서 반복 잔존하면 부산물 무시 목록 도입 검토 (source: code-review, introduced here) — `.claude/skills/inbox-process/scripts/cleanup_completed.py:61`
 - [ ] [debt] `collect_active_notes.py`는 non-UTF-8 노트 1건에 전체 실행이 exit 1(문서상 의도된 fail-loud). 구 grep 버전은 건너뜀 — 실제로 CP949 노트가 발견되면 파일 단위 경고로 완화 검토 (source: code-review, introduced here) — `.claude/skills/weekly-report-compile/scripts/collect_active_notes.py:120`
 
 ## 레거시 메타데이터 참고 (2026-07-31 실측)

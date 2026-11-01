@@ -3,6 +3,8 @@
 
 Default is dry-run. --apply unlinks verified files (not a trash move), never
 recursively deletes a directory, and preserves every unlisted or blocked file.
+OS byproducts (.DS_Store, Thumbs.db, desktop.ini) are not counted as unlisted
+and are removed only with a folder that has nothing else left.
 Exit 0: all scoped files verified/deleted; 1: some preserved; 2: invalid input.
 """
 from __future__ import annotations
@@ -59,8 +61,17 @@ def inventory(vault: Path, scope: object) -> tuple[set[Path], set[Path]]:
                 if p.is_symlink():
                     files.add(p)
                     dirs.remove(name)
-            files.update(current / name for name in names)
+            files.update(current / name for name in names if not is_byproduct(current / name))
     return files, folders
+
+
+# OS metadata files nobody lists in a manifest. Syncthing temp files are not here:
+# they mean a transfer is still in progress, so the folder must stay.
+BYPRODUCTS = {".ds_store", "thumbs.db", "desktop.ini"}
+
+
+def is_byproduct(path: Path) -> bool:
+    return (path.name.lower() in BYPRODUCTS and not path.is_symlink() and path.is_file())
 
 
 def nfc(path: Path) -> str:
@@ -163,7 +174,7 @@ def cleanup(manifest: dict, vault: Path, apply: bool = False) -> dict:
         except (CleanupError, copies.CopyError, OSError, UnicodeError) as exc:
             result.update(status="preserved", reason=str(exc))
         results.append(result)
-    removed = []
+    removed, removed_byproducts = [], []
     if apply:
         # Files created during the batch are never covered by an earlier inventory.
         # Keep and report them, including new subfolders under the selected roots.
@@ -185,7 +196,16 @@ def cleanup(manifest: dict, vault: Path, apply: bool = False) -> dict:
                 continue
             try:
                 path_in_vault(vault, str(folder), "empty folder")
-                if folder.is_dir() and not any(folder.iterdir()):
+                if not folder.is_dir():
+                    continue
+                contents = list(folder.iterdir())
+                # Only byproducts left: they go with the folder; anything else keeps it.
+                if contents and all(is_byproduct(p) for p in contents):
+                    for p in contents:
+                        p.unlink()
+                        removed_byproducts.append(p.relative_to(vault).as_posix())
+                    contents = []
+                if not contents:
                     folder.rmdir()
                     removed.append(folder.relative_to(vault).as_posix())
             except (copies.CopyError, CleanupError, OSError) as exc:
@@ -197,6 +217,7 @@ def cleanup(manifest: dict, vault: Path, apply: bool = False) -> dict:
             "deleted": sum(r["status"] == "deleted" for r in results),
             "ready": sum(r["status"] == "ready" for r in results),
             "preserved": preserved, "removed_empty_folders": removed,
+            "removed_byproducts": removed_byproducts,
             "ok": not preserved and not invalid}
 
 

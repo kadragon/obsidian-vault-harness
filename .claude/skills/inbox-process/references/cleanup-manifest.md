@@ -66,6 +66,6 @@ python3 .claude/skills/inbox-process/scripts/cleanup_completed.py "<scratch>/cle
 - exit 1: 미등록·중복 등록·보류·검증 실패·삭제 실패가 있음. `results`에서 `deleted`와 `preserved`를 분리해 보고한다. 범위 밖·누락 경로 등 등록 오류는 `manifest_errors`에 별도로 나오며 해당 항목은 삭제하지 않는다.
 - exit 2: manifest 또는 scope가 잘못됨. 파일 삭제를 시작하지 않는다.
 
-scope의 실제 파일과 목록을 대조하며 미등록 파일은 숨김·OS 부산물도 보존한다. Inbox 밖 경로·심볼릭 링크·같은 실제 파일을 사본으로 제시한 경우도 거부한다. 폴더는 개별 파일 삭제 후 비어 있는 경우에만 `rmdir`한다. `01_Inbox/`와 `action/`·`reference/`·`scraps/` 영역 루트는 남긴다.
+scope의 실제 파일과 목록을 대조하며 미등록 파일은 숨김 파일도 보존한다. 단 OS 부산물(`.DS_Store`·`Thumbs.db`·`desktop.ini`, 심볼릭 링크 제외)은 미등록으로 세지 않고, 하위 폴더에 부산물만 남으면 부산물을 지운 뒤 `rmdir`한다(`removed_byproducts`로 보고). `~syncthing~*`·`.syncthing.*.tmp`는 전송 중 신호라 미등록으로 보존한다. Inbox 밖 경로·심볼릭 링크·같은 실제 파일을 사본으로 제시한 경우도 거부한다. 폴더는 개별 파일 삭제 후 비어 있는 경우에만 `rmdir`한다. `01_Inbox/`와 `action/`·`reference/`·`scraps/` 영역 루트는 남긴다.
 
 적용 직전에 원본·노트 해시, 사본, reference 링크를 다시 검사한다. 검사 중 변경도 보류한다. 다중 파일 트랜잭션은 아니므로 같은 대상에 다른 편집·동기화 작업을 병행하지 않는다. 중단 후에는 남은 파일을 다시 스캔해 manifest를 갱신하되 처리 당시 해시를 임의로 교체하지 않는다.
