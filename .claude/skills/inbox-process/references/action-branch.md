@@ -124,14 +124,20 @@ python3 .claude/skills/inbox-process/scripts/new_work_path.py \
 
 ## 6. 삭제 권고 (워커는 삭제하지 않음)
 
-성공한 원본을 **파일 단위로** `## 삭제 권고 (action)`에 보고하고, 항목마다 `(durable: <5단계 copy가 반환한 relative_destination>)`를 붙인다. 오케스트레이터는 이 쌍으로 사본 동일성을 재확인한다(SKILL.md 5단계-4). 하위 폴더 단위면 안의 파일을 하나씩 적는다. 단독 `.txt`·`.md` 원본을 첨부 없이 `--flat` 노트로 만들었으면 복사 대신 원문을 노트 본문에 전부 옮기고 `(durable: text-absorbed)`로 적는다 — 일부만 요약했으면 권고하지 않는다. 제외: 노트 생성 실패 건, 열린 질문이 남은 건(중복 의심 포함), 인라인 텍스트, **첨부 복사에 실패한 파일이 있는 단위 전체**.
+성공한 원본을 **파일 단위로** `## 삭제 권고 (action)`에 보고하고, 파일별 `source`(Inbox 원본)·`note`(최종 업무 노트)·`durable`(5단계 copy의 실제 relative_destination)·`branch: action`·`source_sha256`와 완료 여부·보류 사유를 반환한다(`cleanup-manifest.md`). 메인은 최종 품질·노트 해시를 확정하고 `cleanup_completed.py --apply`로 검증된 완료건을 실제 삭제한다(SKILL.md 5단계-4). 하위 폴더 단위면 안의 파일을 하나씩 적는다. 단독 `.txt`·`.md` 원본을 첨부 없이 `--flat` 노트로 만들었으면 복사 대신 원문을 노트 본문에 전부 옮기고 `(durable: text-absorbed)`로 적는다 — 일부만 요약했으면 권고하지 않는다. 제외: 노트 생성 실패 건, 열린 질문이 남은 건(중복 의심 포함), 인라인 텍스트, **첨부 복사에 실패한 파일이 있는 단위 전체**.
 
 ```
 ## 처리 완료 (action)
 - 📄 강의평가 결과 조회 관련 → 10_Areas/수업성적/202604_강의평가 결과 조회 관련/
 
 ## 삭제 권고 (action)
-- /.../01_Inbox/action/강의평가 결과 조회 관련.pdf  (durable: 10_Areas/수업성적/202604_강의평가 결과 조회 관련/강의평가 결과 조회 관련.pdf)
+- source: /.../01_Inbox/action/강의평가 결과 조회 관련.pdf
+  note: 10_Areas/수업성적/202604_강의평가 결과 조회 관련/_202604_강의평가 결과 조회 관련.md
+  durable: 10_Areas/수업성적/202604_강의평가 결과 조회 관련/강의평가 결과 조회 관련.pdf
+  branch: action
+  source_sha256: {처리한 원문 해시}
+  completed: true
+  hold: false
 ```
 
 `/tmp/extracted_*.pdf`는 워커가 정리해도 되고 오케스트레이터가 일괄 정리한다.

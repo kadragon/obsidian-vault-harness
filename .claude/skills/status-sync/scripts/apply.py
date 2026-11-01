@@ -2,7 +2,7 @@
 """Mutate status-sync targets without making the orchestrator Read note bodies.
 
 Subcommands:
-  close <path>...            Frontmatter `status: open` → `closed`, bump `date modified`.
+  close <path>... [--report FILE]  Close notes; retain a JSONL recovery report.
   add-todo <path> <todo>     Insert `- [ ] <todo> ➕ YYYY-MM-DD` at the end of the
                              `## 할 일` section. Add `--due YYYY-MM-DD` only when a
                              deadline is explicitly known.
@@ -10,6 +10,9 @@ Subcommands:
 All paths are vault-relative. Exits non-zero if any target could not be updated.
 """
 from __future__ import annotations
+import argparse
+import json
+import os
 import re
 import sys
 from datetime import date, datetime
@@ -98,19 +101,58 @@ def add_todo(path: Path, todo: str, due: str | None = None) -> tuple[bool, str]:
 
 
 def cmd_close(args: list[str]) -> int:
-    if not args:
-        print("usage: apply.py close <path>...", file=sys.stderr)
-        return 2
+    parser = argparse.ArgumentParser(prog="apply.py close")
+    parser.add_argument("paths", nargs="+")
+    parser.add_argument("--report", type=Path, help="new JSONL file for Wiki-log recovery")
+    options = parser.parse_args(args)
+    report = None
+    if options.report:
+        try:
+            options.report.parent.mkdir(parents=True, exist_ok=True)
+            # Never overwrite an earlier recovery report or an existing note.
+            report = options.report.open("x", encoding="utf-8")
+            _record(report, {"event": "planned", "paths": options.paths})
+        except OSError as exc:
+            if report:
+                report.close()
+            print(f"ERR report {options.report}: {exc}; no notes changed", file=sys.stderr)
+            return 1
     failures = 0
-    for rel in args:
-        p = _resolve(rel)
-        if p is None:
-            failures += 1
-            continue
-        ok, msg = close_note(p)
-        print(f"{'OK ' if ok else 'ERR'} close {rel}  — {msg}")
-        failures += 0 if ok else 1
+    try:
+        for rel in options.paths:
+            p = _resolve(rel)
+            if p is None:
+                ok, msg = False, "missing or outside vault"
+            else:
+                try:
+                    ok, msg = close_note(p)
+                except OSError as exc:
+                    ok, msg = False, str(exc)
+                print(f"{'OK ' if ok else 'ERR'} close {rel}  — {msg}")
+            failures += 0 if ok else 1
+            if report:
+                try:
+                    _record(report, {
+                        "event": "closed" if ok else "failed",
+                        "path": p.relative_to(VAULT).as_posix() if p else rel,
+                        "message": msg,
+                    })
+                except OSError as exc:
+                    print(f"ERR report write: {exc}; stop and reconcile planned paths with notes", file=sys.stderr)
+                    return 1
+    finally:
+        if report:
+            report.close()
+            print(f"REPORT {options.report}")
     return 1 if failures else 0
+
+
+def _record(report, entry: dict) -> None:
+    """Persist each result before processing the next note."""
+    entry["recorded_at"] = datetime.now().isoformat(timespec="seconds")
+    report.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    report.flush()
+    os.fsync(report.fileno())
 
 
 def cmd_add_todo(args: list[str]) -> int:

@@ -192,6 +192,94 @@ class RefsTests(unittest.TestCase):
 
 
 class VerifyTests(unittest.TestCase):
+    def test_same_count_task_replacement_or_state_change_fails(self):
+        for replacement in ("- [x] 계약 📅 2026-10-14", "- [ ] 다른 업무"):
+            with self.subTest(replacement=replacement), tempfile.TemporaryDirectory() as tmp:
+                proj = make_vault(Path(tmp))
+                before = rs.verify(proj)
+                (proj / "_P.md").write_text(
+                    HUB.replace("- [ ] 계약 📅 2026-10-14", replacement), encoding="utf-8")
+                after = rs.verify(proj, before)
+                self.assertFalse(after["ok"])
+                self.assertIn("hub tasks lost or changed", " ".join(after["failures"]))
+
+    def test_body_loss_fails_even_with_unchanged_note_and_task_counts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proj = make_vault(Path(tmp))
+            (proj / "note.md").write_text("# n\n승인 조건을 충족해야 한다.\n", encoding="utf-8")
+            before = rs.verify(proj)
+            (proj / "note.md").write_text("# n\n", encoding="utf-8")
+            after = rs.verify(proj, before)
+            self.assertFalse(after["ok"])
+            self.assertIn("승인 조건을 충족해야 한다.", after["lost_body_lines"])
+
+    def test_stage_split_and_declared_path_updates_preserve_content(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proj = make_vault(Path(tmp))
+            (proj / "_P.md").write_text(HUB + "> - 승인 조건을 확인함\n", encoding="utf-8")
+            before = rs.verify(proj)
+            manifest = write_manifest(Path(tmp) / "m.tsv", [("참고문서", "99. 참고")])
+            rs.move(proj, manifest, apply=True)
+            (proj / "_P.md").write_text(HUB.replace("참고문서/r.pdf", "99. 참고/r.pdf"), encoding="utf-8")
+            (proj / "99. 참고" / "_stage.md").write_text(
+                "---\ntype: project\nstatus: closed\n---\n# Stage\n- 승인 조건을 확인함\n", encoding="utf-8")
+            self.assertTrue(rs.verify(proj, before, manifest)["ok"])
+            # Declared path updates are required, rather than dropping paths from comparison.
+            self.assertFalse(rs.verify(proj, before)["ok"])
+
+    def test_callout_tasks_remain_in_hub_and_duplicate_prose_is_counted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proj = make_vault(Path(tmp))
+            (proj / "_P.md").write_text(HUB + "> - [ ] 회신 확인\n", encoding="utf-8")
+            (proj / "note.md").write_text("# n\n동일 문장\n동일 문장\n", encoding="utf-8")
+            before = rs.verify(proj)
+            self.assertEqual(before["hub_checkboxes_open"], 2)
+            (proj / "_P.md").write_text(HUB, encoding="utf-8")
+            (proj / "note.md").write_text("# n\n동일 문장\n- [ ] 회신 확인\n", encoding="utf-8")
+            after = rs.verify(proj, before)
+            self.assertFalse(after["ok"])
+            self.assertEqual(after["lost_hub_tasks"], ["- [ ] 회신 확인"])
+            self.assertEqual(after["lost_body_lines"], ["동일 문장"])
+
+    def test_unchanged_relative_reference_in_moved_note_still_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proj = make_vault(Path(tmp))
+            (proj / "note.md").write_text("# n\n- `과업심의/a.hwpx`\n", encoding="utf-8")
+            before = rs.verify(proj)
+            manifest = write_manifest(Path(tmp) / "m.tsv", [
+                ("과업심의", "3. 과업심의/과업심의"), ("note.md", "3. 과업심의/note.md")])
+            rs.move(proj, manifest, apply=True)
+            (proj / "_P.md").write_text(
+                HUB.replace("과업심의/a.hwpx", "3. 과업심의/과업심의/a.hwpx"), encoding="utf-8")
+            self.assertTrue(rs.verify(proj, before, manifest)["ok"])
+
+    def test_old_baseline_without_preservation_snapshot_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proj = make_vault(Path(tmp))
+            before = rs.verify(proj)
+            del before["body_lines"]
+            self.assertFalse(rs.verify(proj, before)["ok"])
+
+    def test_code_data_and_fence_length_are_preserved(self):
+        original = "# n\n````text\n```\n> output\n  indented\n# code heading\n````\n"
+        for changed in (original.replace("> output", "output"),
+                        original.replace("  indented", "indented"),
+                        original.replace("# code heading\n", "")):
+            with self.subTest(changed=changed), tempfile.TemporaryDirectory() as tmp:
+                proj = make_vault(Path(tmp))
+                note = proj / "note.md"
+                note.write_text(original, encoding="utf-8")
+                before = rs.verify(proj)
+                note.write_text(changed, encoding="utf-8")
+                self.assertFalse(rs.verify(proj, before)["ok"])
+
+    def test_code_callout_wrapper_may_change_but_code_prefix_may_not(self):
+        plain = "```text\n> output\n  indented\n```\n"
+        quoted = "> ```text\n> > output\n>   indented\n> ```\n"
+        self.assertEqual(rs.content_lines(plain), rs.content_lines(quoted))
+        self.assertNotEqual(rs.content_lines(quoted),
+                            rs.content_lines(quoted.replace("> > output", "> output")))
+
     def test_nested_bracket_name_resolves_and_path_link_breaks_after_move(self):
         with tempfile.TemporaryDirectory() as tmp:
             proj = make_vault(Path(tmp))

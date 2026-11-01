@@ -5,7 +5,7 @@ Subcommands (PROJECT = the project folder under 12_Projects/):
   scan   PROJECT                 hub size, checkboxes, root files, duplicate files
   move   PROJECT MANIFEST [--apply]  preflight + move per TSV manifest (from<TAB>to)
   refs   PROJECT MANIFEST        references that point at moved (old) paths
-  verify PROJECT [--baseline F]  wikilink resolution, hub checkboxes, attachment set
+  verify PROJECT [--baseline F] [--manifest M]  links, text/tasks, attachment set
 
 All output is JSON on stdout. Paths in output are POSIX, NFC, relative to
 the project (scan/move/verify) or to the vault root (refs file field).
@@ -25,7 +25,7 @@ from pathlib import Path
 
 SKIP_DIRS = {".git", ".obsidian", ".trash", "node_modules", "__pycache__"}
 TEXT_SUFFIXES = {".md", ".gs", ".js", ".py", ".txt", ".canvas"}
-CHECKBOX = re.compile(r"^\s*- \[([ xX])\] ")
+CHECKBOX = re.compile(r"^\s*(?:>\s*)*- \[([ xX])\] ")
 WIKILINK = re.compile(r"!?\[\[(.+?)\]\](?!\])")
 CODE = re.compile(r"```.*?```|`[^`\n]*`", re.DOTALL)  # `[[ ... ]]` in code is not a link
 
@@ -250,31 +250,115 @@ def resolves(target: str, keys: set[str], names: dict[str, int], scope: str = ""
     return t in keys or any(k.endswith("/" + t) and k.startswith(scope) for k in keys)
 
 
-def verify(project: Path, baseline: dict | None = None) -> dict:
+def content_lines(text: str) -> list[str]:
+    """Preserve body wording across files, allowing headings and callout layout to change.
+
+    Frontmatter, headings and empty layout markers are not body content. Code
+    contents remain in the comparison; only their fence delimiters are omitted.
+    """
+    text = re.sub(r"\A---\s*\n.*?\n---(?:\n|$)", "", nfc(text), count=1, flags=re.S)
+    lines = []
+    fence = None
+    fence_prefix = ""
+    for raw in text.splitlines():
+        if fence is not None:
+            # Remove only the enclosing layout prefix from the opening fence.
+            # A '>' or indentation inside code is data, not callout formatting.
+            code = raw[len(fence_prefix):] if raw.startswith(fence_prefix) else raw
+            if re.fullmatch(re.escape(fence[0]) + "{" + str(len(fence)) + r",}\s*", code):
+                fence = None
+            else:
+                lines.append("\0code:" + code)
+            continue
+        opening = re.match(r"^(\s*(?:>\s*)*)(`{3,}|~{3,})", raw)
+        if opening:
+            fence_prefix, fence = opening.groups()
+            continue
+        line = re.sub(r"^\s*(?:>\s*)+", "", raw).strip()
+        if not line:
+            continue
+        if (re.match(r"^#{1,6}\s", line)
+                or re.fullmatch(r"\[![^]]+\][+-]?(?:\s.*)?", line)
+                or re.fullmatch(r"[-*_]{3,}", line)):
+            continue
+        lines.append(line)
+    return lines
+
+
+def hub_tasks(text: str) -> list[str]:
+    """Keep task wording and checked state, independent of indentation/callouts."""
+    return [re.sub(r"^- \[X\]", "- [x]", line)
+            for line in content_lines(text) if CHECKBOX.match(line)]
+
+
+def updated_lines(lines: list[str], rows: list[tuple[str, str]]) -> list[str]:
+    """Apply only manifest-declared path changes to the old comparison snapshot."""
+    if not rows:
+        return lines
+    mapping = dict(rows)
+    for old, new in rows:
+        if old.endswith(".md") and new.endswith(".md"):
+            mapping[old[:-3]] = new[:-3]
+    pattern = re.compile(r"(?<![\w-])(" + "|".join(
+        re.escape(x) for x in sorted(mapping, key=len, reverse=True)) + r")(?![\w.-])")
+    return [pattern.sub(lambda m: mapping[m.group(1)], line) for line in lines]
+
+
+def lost_lines(before: list[str], after: list[str], rows: list[tuple[str, str]]) -> Counter:
+    """Match unchanged lines first, then approved path updates without reusing a line."""
+    old, current = Counter(before), Counter(after)
+    exact = old & current
+    unmatched = old - exact
+    remaining = current - exact
+    return Counter(updated_lines(list(unmatched.elements()), rows)) - remaining
+
+
+def verify(project: Path, baseline: dict | None = None,
+           manifest: Path | None = None) -> dict:
     project = project.resolve()
     vault = vault_root(project)
     keys, names = build_index(vault)
     missing = []
+    body = []
     for p in walk_files(project):
         if p.suffix.lower() != ".md":
             continue
-        text = CODE.sub(lambda c: "\n" * c.group().count("\n"), nfc(p.read_text(encoding="utf-8")))
+        raw = p.read_text(encoding="utf-8")
+        body.extend(content_lines(raw))
+        text = CODE.sub(lambda c: "\n" * c.group().count("\n"), nfc(raw))
         for i, line in enumerate(text.splitlines(), 1):
             for m in WIKILINK.finditer(line):
                 target = re.split(r"[|#]", m.group(1), maxsplit=1)[0]
                 if target and not resolves(target, keys, names, rel(project, vault) + "/"):
                     missing.append({"note": rel(p, project), "line": i, "target": nfc(target.strip())})
     hub = hub_path(project)
-    hub_open, hub_done = checkbox_counts(hub.read_text(encoding="utf-8")) if hub.exists() else (0, 0)
+    hub_text = hub.read_text(encoding="utf-8") if hub.exists() else ""
+    hub_open, hub_done = checkbox_counts(hub_text)
     attachments = sorted(md5(p) for p in walk_files(project) if p.suffix.lower() != ".md")
     md_count = sum(1 for p in walk_files(project) if p.suffix.lower() == ".md")
-    out = {"missing_links": missing, "hub_checkboxes": hub_open + hub_done,
+    out = {"preservation_version": 1, "body_lines": sorted(body),
+           "hub_tasks": sorted(hub_tasks(hub_text)),
+           "missing_links": missing, "hub_checkboxes": hub_open + hub_done,
            "hub_checkboxes_open": hub_open, "md_count": md_count,
            "attachment_hashes": attachments, "failures": []}
 
     if baseline is None:
         new_missing = missing
     else:
+        if (baseline.get("preservation_version") != 1
+                or not isinstance(baseline.get("body_lines"), list)
+                or not isinstance(baseline.get("hub_tasks"), list)):
+            out["failures"].append("baseline lacks text/task snapshot; capture it before editing")
+        else:
+            rows = read_manifest(manifest) if manifest else []
+            lost_body = lost_lines(baseline["body_lines"], body, rows)
+            lost_tasks = lost_lines(baseline["hub_tasks"], out["hub_tasks"], rows)
+            if lost_body:
+                out["failures"].append(f"body lines lost or changed: {sum(lost_body.values())}")
+                out["lost_body_lines"] = list(lost_body.elements())
+            if lost_tasks:
+                out["failures"].append(f"hub tasks lost or changed: {sum(lost_tasks.values())}")
+                out["lost_hub_tasks"] = list(lost_tasks.elements())
         # count per target, not per (note, target): a moved note changes its path,
         # but one more break to an already-broken target must still count
         before = Counter(m["target"] for m in baseline.get("missing_links", []))
@@ -304,6 +388,7 @@ def main(argv: list[str] | None = None) -> int:
     m.add_argument("--apply", action="store_true")
     r = sub.add_parser("refs"); r.add_argument("project"); r.add_argument("manifest")
     v = sub.add_parser("verify"); v.add_argument("project"); v.add_argument("--baseline")
+    v.add_argument("--manifest", help="TSV of approved path changes for text/task comparison")
     for p in (s, m, r, v):
         p.add_argument("--out", help="also write the JSON to this file (UTF-8, no BOM)")
     a = ap.parse_args(argv)
@@ -318,7 +403,7 @@ def main(argv: list[str] | None = None) -> int:
         out, code = refs(project, Path(a.manifest)), 0
     else:
         base = json.loads(Path(a.baseline).read_text(encoding="utf-8-sig")) if a.baseline else None
-        out = verify(project, base)
+        out = verify(project, base, Path(a.manifest) if a.manifest else None)
         code = 0 if out["ok"] else 1
     text = json.dumps(out, ensure_ascii=False, indent=2)
     if a.out:

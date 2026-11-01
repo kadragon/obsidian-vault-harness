@@ -403,8 +403,8 @@ def purge_to_trash(target: Path, vault: Path, apply: bool) -> dict:
 
     Vault notes are git-ignored, so `rm -rf` is unrecoverable. This moves
     instead, preserving the relative path so the user can restore or empty
-    .trash after verifying. Refuses anything outside the vault, the vault root
-    itself, or paths already under .trash.
+    .trash after verifying. Only descendants of the real 90_Archive directory
+    may be purged; resolving paths prevents symlink escapes to active notes.
     """
     vault = vault.resolve()
     target = target.resolve()
@@ -414,6 +414,9 @@ def purge_to_trash(target: Path, vault: Path, apply: bool) -> dict:
         return {"status": "error: target outside vault", "target": str(target)}
     if rel == Path(".") or rel.parts[:1] == (".trash",):
         return {"status": "error: refusing vault root or .trash", "target": str(target)}
+    archive = vault / "90_Archive"
+    if archive.resolve() != archive or target == archive or not target.is_relative_to(archive):
+        return {"status": "error: target must be inside 90_Archive", "target": str(target)}
     if not target.exists():
         return {"status": "error: target missing", "target": str(target)}
     dst = vault / ".trash" / datetime.now().strftime("%Y%m%d-%H%M%S") / rel
@@ -549,6 +552,7 @@ def main() -> int:
         row = purge_to_trash(args.target.resolve(), args.vault_root.resolve(),
                              args.apply)
         _emit([row], args.json)
+        return 1 if row["status"].startswith("error:") else 0
     return 0
 
 

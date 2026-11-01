@@ -16,3 +16,5 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: Run harness tests
         run: python3 .claude/lib/run_tests.py
+      - name: Check skill documentation
+        run: python3 .claude/hooks/check-skill-doc.py --sweep .

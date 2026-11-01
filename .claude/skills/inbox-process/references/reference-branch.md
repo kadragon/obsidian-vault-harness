@@ -40,10 +40,10 @@
 
 ### 1a. durable copy 확보 (원본 삭제의 전제)
 
-바이너리·문서 파일(`.pdf`·`.hwpx`·이미지 등) 입력이면 source note를 쓰기 전에 원본을 durable 위치로 복사한다.
+원본 파일이 있으면 source note를 쓰기 전에 durable 위치로 바이트 그대로 복사한다.
 
 - **인라인 텍스트**: 원본 파일이 없으므로 건너뛴다.
-- **텍스트 파일(`.md`·`.txt`, `scraps/` 웹 클립 포함)**: durable copy를 만들지 않는다 — `_Sources/_Assets/`에 `.md` 사본을 두면 `vault_lint.py`가 노트로 린트하고 qmd가 이중 색인해 `vault-clean` dedupe가 source note와 중복으로 잡는다. 대신 **원문 전체를 source note 본문에 흡수**하고(출처 URL·제목 포함), 6단계에서 `verify-link` 대신 `text-absorbed`로 보고한다.
+- **텍스트 파일(`.md`·`.txt`, `scraps/` 웹 클립 포함)**도 영속 사본을 만든다. `.md` 원본은 `copy --name "{원본파일명}.txt"`로 `.md.txt` 사본을 만들어 노트 린트·Markdown 중복 색인 대상에서 제외한다. 바이트는 바꾸지 않고, 반환된 실제 `wikilink`를 source note에 넣는다. `.txt`는 원래 확장자를 유지한다.
 
 ```bash
 python3 .claude/skills/inbox-process/scripts/copy_verified.py copy \
@@ -128,7 +128,7 @@ python3 .claude/skills/inbox-process/scripts/copy_verified.py copy \
 
 ### 6. 삭제 권고 (워커는 삭제하지 않음)
 
-1~5단계가 모두 성공적으로 끝난 파일은 **삭제 게이트를 통과한 건만** `## 삭제 권고 (reference)` 목록으로 보고한다. 항목마다 `(source: <source note 경로>, durable: <durable copy 경로>)`를 함께 적는다 — 오케스트레이터가 재확인에 그대로 쓴다. **워커는 직접 삭제하지 않는다** — 오케스트레이터가 일괄 삭제한다 (SKILL.md 5단계-4).
+1~5단계가 모두 성공적으로 끝난 파일은 **삭제 게이트를 통과한 건만** `## 삭제 권고 (reference)` 목록으로 보고한다. 파일별 `source`(Inbox 원본)·`note`(최종 source note)·`durable`(실제 사본)·`branch: reference`·`source_sha256`와 완료 여부·보류 사유를 반환한다(`cleanup-manifest.md`). 오케스트레이터가 최종 품질·노트 해시를 확정해 그대로 쓴다. **워커는 직접 삭제하지 않는다** — 오케스트레이터가 일괄 삭제한다 (SKILL.md 5단계-4).
 
 ```bash
 python3 .claude/skills/inbox-process/scripts/copy_verified.py verify-link \
@@ -142,7 +142,7 @@ exit 0 = durable copy 존재 + 원본과 SHA-256 동일 + 노트 본문에 그 w
 - ingest가 부분 실패이거나 열린 질문이 남아 있는 건
 - `verify-link`가 exit 1이거나 아예 돌리지 않은 건 → `UNVERIFIED: <원인>`으로 보고한다. 추정으로 통과시키지 않는다
 
-텍스트 파일은 durable copy가 없으므로 게이트 대신 **원문이 source note 본문에 전부 들어갔는지** 확인하고 `text-absorbed`로 표시해 권고한다. 일부만 요약했으면 권고하지 않는다.
+텍스트 파일도 사본과 `verify-link`를 통과해야 한다. reference 갈래는 `text-absorbed`를 쓰지 않는다. 워커는 원본을 삭제하지 않고, 메인이 `cleanup_completed.py --apply`로 완료건을 실제 삭제한다.
 
 보존 사유가 있으면 보고의 열린 질문 항목으로 반환한다 (워커가 사용자 지시를 기다리지 않음).
 
