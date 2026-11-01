@@ -52,7 +52,7 @@ python3 ... apply-reorg 90_Archive/areas/{area} --apply --json
 
 # 4) 개별 오래된 폴더를 90_Archive로 이동 (dry-run)
 python3 .claude/skills/vault-clean/scripts/reorg_archive.py \
-  apply-archive 10_Areas/{area}/202304_... 90_Archive --apply
+  apply-archive 10_Areas/{area}/202304_... 90_Archive
 
 # 5) 무첨부 래퍼 폴더 스윕 (탐지 전용 — 이동 없음)
 python3 .claude/skills/vault-clean/scripts/reorg_archive.py \
@@ -67,6 +67,7 @@ python3 .claude/skills/vault-clean/scripts/reorg_archive.py \
 2. DRY RUN으로 먼저 결과를 보여주고, 실제 실행은 별도 단계.
 3. `90_Archive` 내 파일만 삭제한다 (`10_Areas`, `14_Changes` 등은 삭제 대상 아님).
    **삭제는 `rm -rf`가 아니라 `reorg_archive.py purge`로 `<볼트>/.trash/`에 이동**한다 (노트는 git-ignore라 hard delete 복구 불가). 사용자가 `.trash`를 확인 후 직접 비운다.
+   스크립트도 실제 경로가 `90_Archive/` 내부인지 검사하며, 아카이브 루트 자체와 심볼릭 링크로 벗어나는 경로는 거부한다.
 4. 빈 폴더는 작업 완료 후 자동 정리.
 5. 작업용 임시 Python 스크립트는 작업 종료 후 삭제한다.
 

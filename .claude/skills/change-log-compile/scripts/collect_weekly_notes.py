@@ -268,7 +268,11 @@ def main() -> int:
     args = p.parse_args()
 
     ref = date.fromisoformat(args.week) if args.week else None
-    start, end = prev_week_range(ref)
+    if ref is None:
+        start, end = prev_week_range()
+    else:
+        start = ref - timedelta(days=ref.weekday())
+        end = start + timedelta(days=6)
     vault = Path(args.vault).resolve()
 
     notes_10, excluded_10 = collect_10areas(vault, start, end)

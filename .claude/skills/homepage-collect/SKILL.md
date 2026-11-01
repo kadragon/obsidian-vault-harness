@@ -20,7 +20,7 @@ Default output: `12_Projects/2026/통합 홈페이지/10. 사업 진행 정보/`
 
 An offline integrity check is available with `collect.py --vault <vault> --verify`.
 Offline rerender: `render_notes.py --output <output> --config <skill>/references/sites.json`.
-When changing implementation, run both test files in `tests/` and independently check the live schema. New note generation, including script execution, is routed to `obsidian-operator`; the bulk renderer implements the verified project template and deterministic gates. Existing small in-scope note edits may be direct.
+When changing implementation, run `python3 .claude/lib/run_tests.py .claude/skills/homepage-collect/tests` and independently check the live schema for collector changes. New note generation, including script execution, is routed to `obsidian-operator`; the bulk renderer implements the verified project template and deterministic gates. Existing small in-scope note edits may be direct.
 
 ## Sources and behavior
 

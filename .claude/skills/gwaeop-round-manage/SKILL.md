@@ -28,8 +28,8 @@ grep -n '^##' "10_Areas/과업심의/과업심의_프로세스.md"
 | 위원 변경, 위원장 제척, 번호 없는 공문 | Step 8 | — |
 | 생성 서류 검증, 발주부서 최종본 대조 | Step 9 | `round_setup.py verify` / `diff-final` |
 | 승인 체크·검토의견·종합 서명란 이름·종합 산정서 | Step 10 | `prod:hwpx` `table.py` |
-| 위원 회신 PDF 분리 | Step 11 | `pypdf` |
-| 결과 보고(내부결재)·결과 안내 붙임, `결재상신/` | Step 12 | `pypdf` |
+| 위원 회신 PDF 분리 | Step 11 | `pdf_pages.py` (확정 구간표) |
+| 결과 보고(내부결재)·결과 안내 붙임, `결재상신/` | Step 12 | `pdf_pages.py` (확정 구간표) |
 
 회차 고유 정보(사업 목록·위원 구성·심의일·진행 기록)는 회차 폴더의 `{연월}_제{N}차과업심의_사업목록.md`에 있다. 직전 회차 사업목록 노트도 선례로 함께 본다.
 
@@ -46,8 +46,10 @@ python3 $RS diff-final "{최종본 폴더}" "{번호}/심의자료"          # �
 - 설정 파일 `_round.json` 형식과 키별 판단 기준: `references/round-config.md`. 셋팅 첫 단계에서 이 파일을 회차 폴더 루트에 만든다.
 - 이미 있는 파일은 덮어쓰지 않는다. 값을 고친 뒤 다시 만들 때만 `--force`.
 - `bundle`의 일부 위원 재생성은 `--member {이름}`. 위원 1명을 수동으로 묶을 때는 `scripts/merge_sign_bundle.py --help`.
-- `bundle`·`merge_sign_bundle.py`·`diff-final`은 Windows + 한글 + pywin32가 필요하다. 없으면 `python3 -m pip install pywin32`.
+- 한글 COM이 필요한 `bundle`·`merge_sign_bundle.py`와 HWP 변환은 Windows + 한글 + pywin32를 먼저 확인한다. Windows에서 pywin32만 없을 때 실행에 쓰는 Python으로 설치한다. macOS·Linux에서는 설치를 시도하지 않고 해당 단계만 보류해 Windows 실행 필요를 보고한다. `diff-final`의 HWPX 대조 등 COM 없이 가능한 단계는 계속한다.
 - 서식 원본은 `assets/forms/*.hwpx`(`{{토큰}}` 치환형, 출처는 `assets/forms/README.md`). 서식을 바꾸면 `tests/test_round_setup.py`를 돌린다.
+- PDF 분리·병합은 해당 Step과 원본을 읽어 페이지 구간·출력 파일명을 먼저 확정한다. `references/pdf-pages.md` 형식으로 구간표를 쓰고 그 문서의 `uv run` 명령으로 `pdf_pages.py`를 사전검사한다. 페이지 순서·제외·재사용을 확인한 뒤에만 `--apply`로 생성한다. 임시 분리 스크립트를 새로 만들지 않는다.
+- PDF 실행 결과의 `created`·`failed`·`not_written`과 쪽수를 확인한다. 부분 실패 시 원본·기존 출력을 보존하고, 검증된 파일과 미검증 파일을 구분해 보고한다. 테스트는 `python3 .claude/lib/run_tests.py .claude/skills/gwaeop-round-manage/tests`로 실행한다.
 
 ## 3. 대필하지 않는 값
 

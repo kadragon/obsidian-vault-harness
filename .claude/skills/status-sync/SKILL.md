@@ -71,8 +71,9 @@ Golden Principle #1의 예외) 적용 전 반드시 사용자 승인을 받는�
    `- [ ]` 체크박스를 쓰면 에이전트가 스스로 체크해 승인을 건너뛸 위험이 있다.
 
 4. **적용**(사용자 승인 후에만, 모두 `scripts/apply.py` — 메인 에이전트는 본문을 Read하지 않는다):
-   - **닫기**: `apply.py close <path> ...` — 프론트매터 `status: closed`,
-     `date modified` 갱신. 폴더 구분 없이 동작.
+   - **닫기**: `apply.py close <path> ... --report .claude/.cache/status-sync/close-<고유시각>.jsonl` —
+     프론트매터 `status: closed`, `date modified` 갱신. 보고서는 실행마다 새 경로를 쓰며 기존 파일은 덮어쓰지 않는다.
+     첫 줄에 처리 예정 목록, 이후 각 줄에 `closed`·`failed` 결과와 `recorded_at`을 저장한다.
    - **체크박스 추가**: `apply.py add-todo <path> "<TODO 문구>"` — 할 일 섹션
      끝에 `- [ ] <TODO> ➕ YYYY-MM-DD` (추가일은 오늘, 마감일은 생략)을
      삽입. 명시된 마감일이 있을 때만 `--due YYYY-MM-DD`를 붙여 `📅`를 추가한다.
@@ -80,12 +81,17 @@ Golden Principle #1의 예외) 적용 전 반드시 사용자 승인을 받는�
 
 ## Wiki 피드백 (적용 후)
 
-`apply.py close` 적용이 완료된 후, 종결된 노트 목록을 `_Wiki/contracts.md` Wiki Feedback Payload 규칙에 따라 **오케스트레이터가 직접 Edit으로** 반영한다. obsidian-operator 위임 금지 — `_Wiki/log.md`에 한 줄씩 append하는 결정론적 작업에 풀에이전트 왕복은 낭비다 (AGENTS.md §Delegation).
+오케스트레이터가 다음 명령으로 `_Wiki/contracts.md` 형식의 종결 기록을 반영한다. 승인된 종결 작업의 마무리이므로 별도 재승인이나 에이전트 위임은 하지 않는다.
 
-- **log.md append** (종결 건 일괄): 각 노트에 대해 `- {오늘날짜} #closed [[{노트 경로}]] — {도메인} 종결`
-- **범위 제한**: log.md 만 갱신한다. MOC 갱신은 status-sync 범위 밖이며, 각 노트를 처음 생성한 에이전트 워크플로우(incident-analyze·improvement-plan)의 Step 5(Wiki 피드백)가 담당한다.
-- **도메인 식별**: `apply.py`가 반환하는 닫힌 노트 경로에서 frontmatter `tags` 또는 파일명으로 추정. 식별 불가 시 "unknown"으로 기록.
-- **실패 허용**: log.md 갱신 실패 시 status-sync 적용 자체를 롤백하지 않는다. 미갱신 사실만 보고한다.
+```bash
+python3 .claude/skills/status-sync/scripts/sync_log.py "<close 보고서.jsonl>" --vault . --apply
+```
+
+- `--apply` 생략은 미리보기다. `event: closed` 중 현재 종결 상태인 노트만 기록하며 같은 날짜·경로는 확장자 유무와 무관하게 중복 방지한다. 일부 종결 실패로 exit 1이어도 성공 보고서는 이 명령에 전달한다.
+- 도메인은 `#업무/` 태그에서 가져오고 없으면 `unknown`이다. `_Wiki/log.md` 외 노트·MOC는 수정하지 않는다.
+- 로그 쓰기 실패 시 보고서를 보존하고 같은 명령을 다시 실행한다. 잠금 파일이 남았으면 실행 중 프로세스가 없는지 확인한 뒤 제거한다.
+- `pending`(결과 없는 예정 항목·다시 열린 노트)은 자동 기록하지 않으며 exit 1로 보고한다. 실제 종결 여부를 확인하고, 단순히 `close`를 재실행해 과거 종결일을 바꾸지 않는다.
+- 로그 반영을 확인하기 전에는 보고서를 지우지 않는다.
 
 ## 참고
 

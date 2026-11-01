@@ -40,7 +40,7 @@ triage의 `classify_pdf.py` 호출은 분류 판단용이다. 본문 추출·노
 - {폴더 또는 파일 절대경로1} → area: 수업성적 / 유사 노트 후보: [[...]], [[...]] / 태그 힌트: #업무/수업성적
 - {폴더 또는 파일 절대경로2} → area: ?? (사용자 확인 필요)
 
-완료 후 각 단위별 생성 노트 경로 + 삭제 권고 목록을 보고. 원본 삭제는 하지 말 것.
+완료 후 각 단위별 생성 노트 경로와 파일별 source/note/durable/branch/source_sha256·완료 여부·보류 사유를 보고(cleanup-manifest.md). 원본 삭제는 하지 말 것.
 ```
 
 ## 인라인 텍스트 Action 워커 호출 프롬프트
@@ -77,7 +77,7 @@ area: {판단된 area 또는 ?? (사용자 확인 필요)}
 
 _Wiki 기존 페이지 본문 갱신 범위: yes | no  (근거: 사용자 요청 원문 인용 — 예 "위키에 반영해줘". 명시가 없으면 no)
 
-완료 후 source/wiki/active note 링크 목록 + log 엔트리 + 삭제 권고를 보고. 원본 삭제는 하지 말 것.
+완료 후 source/wiki/active note 링크 목록 + log 엔트리 + 파일별 source/note/durable/branch/source_sha256·완료 여부·보류 사유를 보고(cleanup-manifest.md). 원본 삭제는 하지 말 것.
 ```
 
 ## 인라인 텍스트 Reference 워커 호출 프롬프트
@@ -109,14 +109,16 @@ _Wiki 기존 페이지 본문 갱신 범위: yes | no  (근거: 사용자 요청
 - reference: 3건 (reference/ 2 + scraps/ 1) → _Sources 3건, _Wiki 2페이지 갱신
 - 루트 보류 1건: file_c.hwp (분류 확정 필요)
 
-## 삭제된 원본 파일
+## 삭제된 원본 파일 (cleanup_completed.py --apply 결과)
 - 01_Inbox/action/공문A.pdf
 - 01_Inbox/reference/파일B.pdf
 - 01_Inbox/scraps/2026-06-19-naver-d2.md
 
-## 미검증 (UNVERIFIED) — 원본 보존
+## 미검증·미등록·보류 — 원본 보존
 - 01_Inbox/reference/파일C.pdf — verify-link 실패: final wikilink missing from note
 
 ## 열린 질문
 - {에이전트가 보고한 열린 질문 병합}
 ```
+
+완료된 파일은 `cleanup-manifest.md`에 따라 메인이 `--apply`까지 수행한 뒤 보고한다. `ready`는 삭제 완료가 아니므로 삭제 목록에 넣지 않는다. 부분 성공이면 삭제 건수·보존 건수·보존 사유를 함께 적는다.

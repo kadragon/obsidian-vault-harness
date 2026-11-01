@@ -31,7 +31,7 @@ python3 .claude/skills/project-restructure/scripts/restructure.py verify "12_Pro
 ```
 
 - `scan` 결과: 허브 줄 수·체크박스 수, 루트 파일, 폴더별 파일 수, 해시 중복 묶음.
-- `before.json`은 7단계 검증의 기준선이다. 이미 끊긴 링크도 여기에 기록된다.
+- `before.json`은 7단계 검증의 기준선이다. 본문 줄·허브 체크박스 내용과 상태·이미 끊긴 링크가 기록된다. 편집 전에 생성하고, 실패를 없애려고 편집 후 다시 만들지 않는다.
 - 허브와 하위 노트를 Read로 읽는다. 허브가 길어진 원인(하위 로그·대체된 결정·근거 경로)을 찾는다.
 
 ### 2. 단계 정하기
@@ -91,10 +91,12 @@ python3 .claude/skills/project-restructure/scripts/restructure.py refs "{프로�
 ### 7. 검증
 
 ```bash
-python3 .claude/skills/project-restructure/scripts/restructure.py verify "{프로젝트 경로}" --baseline "{scratch}/before.json"
+python3 .claude/skills/project-restructure/scripts/restructure.py verify "{프로젝트 경로}" --baseline "{scratch}/before.json" --manifest "{scratch}/manifest.tsv"
 ```
 
-- `ok: true`여야 한다. 실패 조건: 새로 끊긴 wikilink, 허브 체크박스 수 감소, 첨부 파일 해시 손실, md 수 감소.
+- `ok: true`여야 한다. 실패 조건: 새로 끊긴 wikilink, 허브 체크박스 내용·상태 손실, 본문 줄 손실·변경, 첨부 파일 해시 손실, md 수 감소.
+- 본문은 프로젝트 전체에서 중복 줄 개수까지 대조하므로 단계 노트로 옮겨도 보존된다. 경로 변경은 승인한 manifest를 기준선에 적용해 비교한다. 들여쓰기·callout 접두어·제목·frontmatter·빈 줄은 본문 비교 대상이 아니므로 제목의 정보와 속성 보존은 따로 확인한다.
+- 본문·체크박스 스냅샷이 없는 구 기준선은 실패한다. 편집 전 원본에서 새 기준선을 확보하기 전에는 완료로 보고하지 않는다.
 - 기준선에 있던 끊긴 링크는 실패로 치지 않는다. 보고에 "원래부터 끊김"으로 적는다.
 - 실패하면 원인을 고치고 다시 검증한다. 원인을 모르면 undo manifest로 이동을 되돌린다.
 

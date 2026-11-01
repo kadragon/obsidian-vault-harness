@@ -12,6 +12,8 @@ NOTE: SKILL.md Step 2 수집 제외 기준 중 기술 용어 제거 규칙은
 from __future__ import annotations
 
 import importlib.util
+import json
+import subprocess
 import sys
 from datetime import date
 from pathlib import Path
@@ -29,6 +31,34 @@ def _load(name: str, path: Path):
 
 
 cw = _load("cw_collect", SCRIPTS / "collect_weekly_notes.py")
+
+
+def test_cli_explicit_week_collects_that_week(tmp_path):
+    area = tmp_path / "10_Areas" / "수업성적"
+    area.mkdir(parents=True)
+    for name, completed in (("requested", "2026-10-28"), ("previous", "2026-10-21")):
+        (area / f"{name}.md").write_text(
+            f"---\ntype: work\n---\n# {name}\n- [x] Done ✅ {completed}\n",
+            encoding="utf-8",
+        )
+    result = subprocess.run(
+        [sys.executable, str(SCRIPTS / "collect_weekly_notes.py"),
+         "--week", "2026-10-28", "--vault", str(tmp_path)],
+        capture_output=True, text=True, check=True,
+    )
+    data = json.loads(result.stdout)
+    assert (data["week_start"], data["week_end"]) == ("2026-10-26", "2026-11-01")
+    assert [n["title"] for n in data["notes"]] == ["requested"]
+
+
+def test_cli_default_week_is_previous_full_week(tmp_path):
+    result = subprocess.run(
+        [sys.executable, str(SCRIPTS / "collect_weekly_notes.py"), "--vault", str(tmp_path)],
+        capture_output=True, text=True, check=True,
+    )
+    data = json.loads(result.stdout)
+    start, end = cw.prev_week_range()
+    assert (data["week_start"], data["week_end"]) == (start.isoformat(), end.isoformat())
 
 
 def test_parse_date_value_valid_and_invalid():

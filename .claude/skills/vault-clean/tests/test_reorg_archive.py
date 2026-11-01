@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -22,6 +23,82 @@ def _load(name: str, path: Path):
 
 
 reorg_archive = _load("reorg_archive", SCRIPTS / "reorg_archive.py")
+
+
+class PurgeBoundaryTest(unittest.TestCase):
+    def test_cli_rejection_is_nonzero_and_keeps_active_note(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            vault = Path(tmp)
+            note = vault / "10_Areas" / "active.md"
+            note.parent.mkdir()
+            note.write_text("preserved", encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(SCRIPTS / "reorg_archive.py"), "purge", str(note),
+                 str(vault), "--apply", "--json"],
+                capture_output=True, text=True)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn("target must be inside 90_Archive", result.stdout)
+            self.assertTrue(note.exists())
+
+    def test_archive_note_moves_to_recoverable_trash(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            vault = Path(tmp)
+            note = vault / "90_Archive" / "areas" / "old.md"
+            note.parent.mkdir(parents=True)
+            note.write_text("preserved", encoding="utf-8")
+            preview = reorg_archive.purge_to_trash(note, vault, False)
+            self.assertEqual(preview["status"], "planned")
+            self.assertTrue(note.exists())
+            result = reorg_archive.purge_to_trash(note, vault, True)
+            self.assertEqual(result["status"], "trashed")
+            self.assertFalse(note.exists())
+            self.assertEqual(Path(result["trash"]).read_text(encoding="utf-8"), "preserved")
+
+    def test_active_areas_and_archive_root_are_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            vault = Path(tmp)
+            for folder in ("10_Areas", "14_Changes", "90_Archive"):
+                target = vault / folder
+                target.mkdir()
+                note = target / "note.md"
+                note.write_text("preserved", encoding="utf-8")
+                for apply in (False, True):
+                    result = reorg_archive.purge_to_trash(target if folder == "90_Archive" else note, vault, apply)
+                    self.assertTrue(result["status"].startswith("error:"))
+                    self.assertTrue(note.exists())
+
+    def test_symlink_from_archive_to_active_note_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            vault = Path(tmp)
+            active = vault / "10_Areas" / "active.md"
+            active.parent.mkdir()
+            active.write_text("preserved", encoding="utf-8")
+            archive = vault / "90_Archive"
+            archive.mkdir()
+            link = archive / "link.md"
+            try:
+                link.symlink_to(active)
+            except (OSError, NotImplementedError) as exc:
+                self.skipTest(f"symlinks unavailable: {exc}")
+            result = reorg_archive.purge_to_trash(link, vault, True)
+            self.assertTrue(result["status"].startswith("error:"))
+            self.assertTrue(link.is_symlink())
+            self.assertEqual(active.read_text(encoding="utf-8"), "preserved")
+
+    def test_symlinked_archive_root_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            vault = Path(tmp)
+            active = vault / "10_Areas"
+            active.mkdir()
+            note = active / "active.md"
+            note.write_text("preserved", encoding="utf-8")
+            try:
+                (vault / "90_Archive").symlink_to(active, target_is_directory=True)
+            except (OSError, NotImplementedError) as exc:
+                self.skipTest(f"symlinks unavailable: {exc}")
+            result = reorg_archive.purge_to_trash(vault / "90_Archive" / "active.md", vault, True)
+            self.assertTrue(result["status"].startswith("error:"))
+            self.assertTrue(note.exists())
 
 
 class ClosedLogFallbackTest(unittest.TestCase):

@@ -25,6 +25,7 @@ description: |
 - 범위가 없으면 한 번 스캔해 건수와 루트 분류 후보를 제시하고 범위를 한 번 묻는다. 답을 받은 뒤 목록을 고정한다.
 - 인라인 텍스트 또는 내용이 분명한 단일 `.txt`·`.md`는 메인이 해당 action/reference 절차를 그대로 수행할 수 있다. 파일 탐색·첨부 복사·원본 삭제 단계만 해당 입력에 맞게 건너뛴다.
 - 여러 건·하위 폴더·OCR/스캔·`.hwpx`/`.hwp` 해석·분류가 모호한 건은 워커에 보낸다. 워커는 사용자에게 묻거나 다른 에이전트를 호출하지 않는다.
+- 여기서 처리 목록과 실행 주체(메인 또는 워커)를 확정하고 이후 단계에서 유지한다. 메인 실행도 해당 갈래의 references 절차와 5단계 게이트를 따른다.
 
 ## 디렉터리 구조
 
@@ -42,7 +43,7 @@ description: |
 
 - `.txt` 파일을 만들지 않는다.
 - 텍스트를 바로 action/reference로 분류한다 (`references/dispatch-guide.md` §분류 힌트).
-- 1~4단계를 건너뛰고 **§Grill 게이트 → 워커 디스패치**로 간다. 호출 프롬프트는 `dispatch-guide.md` §인라인 텍스트.
+- 파일 스캔·이동은 건너뛰고 §Grill 게이트를 거친 뒤, 위에서 확정한 실행 주체가 해당 갈래를 처리한다. 워커 실행일 때만 `dispatch-guide.md` §인라인 텍스트 프롬프트를 쓴다.
 - 삭제할 원본이 없다.
 
 ## Grill 게이트 (모호성 해소)
@@ -68,7 +69,7 @@ description: |
 
 `01_Inbox/`가 없으면 "01_Inbox 폴더가 없습니다. 생성할까요?" 묻고 종료.
 
-Glob으로 네 영역을 스캔: 루트(파일만), `action/`(바로 아래 폴더·단독 파일 각각이 업무 단위, 빈 폴더 무시), `reference/`, `scraps/`. 모두 비면 "01_Inbox가 비어 있습니다" 알리고 종료. 아니면 영역별 개수를 요약하고 선택을 기다린다:
+확정된 범위만 Glob으로 스캔한다. 범위가 없으면 네 영역을 스캔한다: 루트(파일만), `action/`(바로 아래 폴더·단독 파일 각각이 업무 단위, 빈 폴더 무시), `reference/`, `scraps/`. 대상이 비면 알리고 종료한다. 범위가 확정됐으면 건수만 보고하고 진행하며, 미확정일 때만 아래처럼 선택을 묻는다:
 
 ```
 01_Inbox 스캔 결과:
@@ -81,7 +82,7 @@ Glob으로 네 영역을 스캔: 루트(파일만), `action/`(바로 아래 폴�
 
 ## 2단계: 루트 Triage (루트 파일이 있을 때만)
 
-루트 파일을 짧게 읽어 action/reference를 제안한다 (읽기 규칙·분류 힌트: `dispatch-guide.md`). 사용자 확인 후 하위폴더로 `mv`. 모호한 건은 루트에 보류.
+대상 루트 파일을 짧게 읽어 action/reference로 분류한다 (읽기 규칙·분류 힌트: `dispatch-guide.md`). 확정된 처리 범위 안에서 분류가 명확하면 하위폴더로 `mv`하고, 분류가 모호한 건만 사용자에게 확인할 때까지 루트에 보류한다.
 
 ## 3단계: Action 갈래 디스패치
 
@@ -100,13 +101,13 @@ Glob으로 네 영역을 스캔: 루트(파일만), `action/`(바로 아래 폴�
    워커에 넘기는 선례는 **최대 1건**, 용도는 사실(근거법령·담당자·네이밍·반복 주기)뿐. 구조 권위는 `99_Template/` + `docs/eval-criteria.md`다 — 프롬프트 문구는 `dispatch-guide.md` §선례 전달 규칙.
 4. triage에서 내용을 읽은 건에 한해 §Grill 게이트 1차 (결정 항목이 있을 때만)
 
-이후 `inbox-action-worker`를 Agent 도구로 호출한다. 프롬프트 구조는 `dispatch-guide.md`, 워커 절차는 `references/action-branch.md`(프롬프트에 경로를 넣어 워커가 읽게 한다).
+메인 실행이면 `references/action-branch.md`를 읽고 직접 처리한다. 워커 실행이면 `inbox-action-worker`를 호출한다. 프롬프트 구조는 `dispatch-guide.md`이며, `references/action-branch.md` 경로를 넣어 워커가 읽게 한다.
 
 ## 4단계: Reference 갈래 디스패치
 
-`reference/`·`scraps/`에 파일이 있으면(하나만 있어도) 두 디렉터리를 하나의 목록으로 합쳐 `inbox-reference-worker`를 호출한다. 프롬프트 구조는 `dispatch-guide.md`, 워커 절차는 `references/reference-branch.md`.
+`reference/`·`scraps/` 중 확정된 범위의 파일만 하나의 목록으로 합친다. 메인 실행이면 `references/reference-branch.md`를 읽고 직접 처리하고, 워커 실행이면 `dispatch-guide.md` 프롬프트로 `inbox-reference-worker`를 호출한다.
 
-**병렬 실행**: 3·4단계 모두 대상이 있으면 두 Agent 호출을 한 메시지에 담아 병렬로 보낸다.
+**병렬 실행**: 3·4단계 모두 워커 실행 대상이면 두 Agent 호출을 한 메시지에 담아 병렬로 보낸다.
 
 ## 5단계: Grill 2차 → 태그 확정 → 품질 게이트 → 일괄 삭제 → 보고
 
@@ -144,26 +145,19 @@ Glob으로 네 영역을 스캔: 루트(파일만), `action/`(바로 아래 폴�
    해당 없으면 호출하지 않는다. 호출은 **기본 모드(원본 대조 사실검증)** 다 — `full-quality`를 넣지 않는다. 구조·태그·MOC는 3-a에서 끝났으므로 평가자에게 넘기지 않고, 평가자도 훅을 재실행하지 않는다. 프롬프트에는 노트 경로(이번 작업에서 새로 만든 노트임을 명시), 원본 경로(`01_Inbox/` 파일)와 워커가 남긴 추출본 경로(있으면), 검증 대상 필드(공문번호·시행/접수일·기한·담당자·회차)를 넣는다.
 
    반환은 노트별 `필드 | 원본 값 | 노트 값 | 결과` 표와 `VERDICT`·`HOLD_DELETE` 줄이다. `FAIL`은 평가자가 고친 `FIXES`를 확인하고, 수정 후에도 `FAIL`이 남으면 직접 원본 값으로 고친다. `HOLD_DELETE: yes`인 노트의 원본은 4단계에서 삭제하지 않는다 — 단 `UNVERIFIED` 행 없이 `FAIL`만 원인이었고 메인이 그 행을 원본 값과 다시 대조해 일치시켰으면 보류를 해제한다.
-4. **일괄 삭제**: 갈래마다 조건이 다르다. 사용자 승인을 기다리지 않는다.
+4. **완료 원본 자동 삭제**: `references/cleanup-manifest.md` 계약으로 이번 처리 범위와 파일별 완료·품질·보류 상태, 원본·최종 노트 해시를 manifest에 기록한다. 워커 반환을 검증하고 품질 게이트가 끝난 시점의 해시를 사용한다.
 
-   - **reference 갈래** — 워커의 `## 삭제 권고 (reference)`는 **삭제 직전 건별로 게이트를 재확인**한다. 워커 보고를 그대로 믿지 않는 이유는 보고와 삭제 사이에 노트가 더 편집되기 때문이다.
+   ```bash
+   python3 .claude/skills/inbox-process/scripts/cleanup_completed.py "<scratch>/cleanup.json" --vault .
+   python3 .claude/skills/inbox-process/scripts/cleanup_completed.py "<scratch>/cleanup.json" --vault . --apply
+   ```
 
-     ```bash
-     python3 .claude/skills/inbox-process/scripts/copy_verified.py verify-link \
-       "<원본 절대경로>" "<source note 경로>" "<durable copy 경로>" --vault .
-     ```
+   처리 요청에는 검증된 완료 원본 정리가 포함된다. dry-run 보고로 끝내거나 재승인을 묻지 않고, 검증된 완료건은 `--apply`까지 실행한다. 실제 파일 삭제(`unlink`)이며 휴지통 이동이 아니다. 개별 항목 오류·부분 보류(exit 1)가 있어도 성공건을 적용하고 보류건만 남긴다. manifest 최상위 형식·scope 오류(exit 2)는 수정 전 적용하지 않는다.
 
-     exit 0인 건만 삭제한다 (durable copy 존재 + SHA-256 일치 + 노트에 그 wikilink 실재). 세 인자는 워커의 삭제 권고 항목이 `(source: ..., durable: ...)`로 함께 준다 — 파일명으로 추정하지 않는다.
-
-   - **action 갈래** — 워커의 `## 삭제 권고 (action)`도 삭제 직전 파일별로 **사본 동일성**을 재확인한다. 노트 링크 검사(`verify-link`)만 면제한다: action 노트는 source note가 아니고 첨부 링크가 `[[첨부.pdf]]` 형식이라(`action-branch.md`) 링크 검사가 구조적으로 통과할 수 없다. 첨부 복사가 조용히 실패한 채 원본이 지워지는 것은 막아야 하므로 존재·SHA-256 검사는 그대로 요구한다.
-
-     ```bash
-     python3 .claude/skills/inbox-process/scripts/copy_verified.py verify        "<원본 절대경로>" "<durable 경로>" --vault .
-     ```
-
-     exit 0인 파일만 삭제한다. 두 인자는 권고 항목의 `(durable: ...)`가 준다 — 파일명으로 추정하지 않는다. `(durable: text-absorbed)` 건은 `verify` 대신 원문이 노트 본문에 전부 들어갔는지 확인한다. 하위 폴더 단위는 폴더의 **실제 파일 목록**을 직접 나열해 모든 파일이 `(durable: ...)` 항목을 갖고 `verify`를 통과했을 때만 폴더째 삭제한다. OS·동기화 부산물(`Thumbs.db`, `desktop.ini`, `.DS_Store`, `~syncthing~*`, `.syncthing.*.tmp`)은 완전성 판정에서 빼고 폴더와 함께 지운다. 그 밖에 목록에 없는 파일(예: 0단계 변환 전 `.hwp`)이나 실패한 파일이 하나라도 있으면 폴더째 삭제하지 않고 통과한 파일만 지운다.
-
-   공통 제외: 부분 실패·열린 질문 잔존 건, 사용자가 보존 의사를 명시한 건, `note-evaluator`가 `HOLD_DELETE: yes`를 낸 건(3-b 해제분 제외), 3-a 경고가 해소되지 않은 건, reference 갈래의 `verify-link` 실패·미실행 건(워커의 `## 미검증` 포함), action 갈래의 `verify` 실패·`durable:` 누락 건. 제외분은 최종 보고에 `UNVERIFIED: <원인>`으로 남기고 원본을 보존한다. auto-mode가 삭제를 차단하면 재시도하지 말고 대상 전체를 `AskUserQuestion` 하나로 묶어 승인 후 진행한다.
+   - reference: 사본 SHA-256 일치와 최종 source note의 정확한 wikilink를 삭제 직전에 재확인한다.
+   - action: 최종 업무 노트의 존재·범위, 사본 SHA-256 일치를 확인한다. `text-absorbed`는 `.txt`·`.md` UTF-8 원문 전체가 노트 본문에 정확히 포함된 경우만 허용한다. 요약·의미상 반영만으로 삭제하지 않는다.
+   - 원본·노트 해시 변경, 미완료·품질 미통과·보류·미등록 파일은 보존한다. OS 부산물도 미등록이면 남긴다. `rmtree`·폴더째 삭제·별도 `rm`은 사용하지 않는다. 스크립트가 검증된 파일을 개별 삭제하고 빈 하위 폴더만 정리한다.
+   - 승인 검토 시스템이 삭제를 차단하면 우회하지 않고 차단 사유와 미삭제 목록을 보고한다. 기존 사용자 권한을 근거로 반복 승인 요청하지 않는다.
 
 5. **최종 보고** (`dispatch-guide.md` §최종 보고 형식). 임시 파일 정리: `rm -f /tmp/extracted_*.pdf`.
 
@@ -186,3 +180,4 @@ Glob으로 네 영역을 스캔: 루트(파일만), `action/`(바로 아래 폴�
 - `references/action-branch.md` — action 워커 절차 (워커가 읽음)
 - `references/reference-branch.md` — reference 워커 절차 (워커가 읽음)
 - `references/pdf-reading.md` — PDF 분류·읽기·OCR 절차 (두 워커 공통)
+- `references/cleanup-manifest.md` — 완료 원본 자동 삭제 manifest·실행·보류 계약
