@@ -100,6 +100,25 @@ Run: vault-clean skill
 Scope: 10_Areas/ → 90_Archive/
 ```
 
+### Query the 통합학사 Oracle DB from the vault
+
+The vault has no DB tool of its own. Use the patis repo's query script — do not search
+`workspace_knue/*/tools/db/` for it again (three past sessions spent up to 57 tool calls
+rediscovering it).
+
+```bash
+cd /c/Dev/workspace_knue/patis && ./tools/db/db-query.sh --csv --out auto "SELECT ..."
+./tools/db/db-query.sh --count "SELECT ..."      # row count only
+./tools/db/db-query.sh --peek 5 "SELECT ..."     # first N rows
+./tools/db/db-query.sh --source OBJ_NAME --outline   # view/procedure source (cached)
+./tools/db/db-query.sh --help                    # all options
+```
+
+- `--out auto` keeps large results out of context: stdout shows only the dump path and a preview.
+- The script also executes DDL/DML (`@file.sql`). Run only SELECTs yourself; DDL, DML,
+  or production-only checks (execution plans) go to the user via the `db-to-dbeaver` skill.
+- Credentials live in `tools/db/db-env.sh` — never print them.
+
 ## Skills Reference
 
 | Skill | Trigger phrase | Entry point |
