@@ -20,7 +20,7 @@ def fixture(tmp_path, text=None):
         "---\nstatus: open\n---\n# Note\n\n## 할 일\n\n"
         "> [!todo]+ 할 일\n> - [ ] 공문 발송\n\n## 현황\n\n"
         "> [!info]+ 현황\n> - 기존 현황\n\n## 처리 결과\n\n유지할 원문\n"
-    ), encoding="utf-8")
+    ), encoding="utf-8", newline="")  # keep LF on Windows; CRLF notes are tested explicitly
     record = {"event_id": "dispatch-20261101-001", "note": "10_Areas/sample.md",
               "dispatched_on": "2026-10-31", "recorded_on": "2026-11-01",
               "summary": "학사관리과에 공문 발송(정보전산원-123) — 결과 안내",
