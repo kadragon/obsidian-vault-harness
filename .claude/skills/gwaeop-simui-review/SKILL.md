@@ -198,6 +198,7 @@ python3 .claude/skills/gwaeop-simui-review/scripts/render_pdf.py "<scratch>/repo
 ```
 
 4) **PyMuPDF로 PNG 렌더해 Read로 레이아웃 확인**, `{{` 자리표시자 잔존 검색, `output-format.md` §3-5 자기검수 9항.
+5) **(요청 시) 원본 사본에 점검 위치 메모** — 간사가 원문에서 볼 지점(지적 A·B, 검증 `UNVERIFIED`·`PLAUSIBLE`)을 심의자료 hwpx 사본에 한글 메모로 찍는다. `annotate_memo.py` → `verify_hancom.ps1` 순서, 절차는 `references/memo-annotate.md`.
 
 ---
 
@@ -238,7 +239,7 @@ python3 .claude/skills/gwaeop-simui-review/scripts/render_pdf.py "<scratch>/repo
 
 ## 참고자료
 
-- `references/` — `checklist.md`(축 0 + 5축) · `legal-basis.md`(법·시행령·지침·별표 1·대학 운영지침 조문) · `daega-baseline.md`(대가산정 기준값·역산) · `recurring-defects.md`(반복 결함: 탐지 키워드 + 근거 조문) · `nipa-compliance.md`(법령준수 18개 항목 명시 요소) · `verify-prompt.md`(Step 5-2 반박 검증 프롬프트)
+- `references/` — `checklist.md`(축 0 + 5축) · `legal-basis.md`(법·시행령·지침·별표 1·대학 운영지침 조문) · `daega-baseline.md`(대가산정 기준값·역산) · `recurring-defects.md`(반복 결함: 탐지 키워드 + 근거 조문) · `nipa-compliance.md`(법령준수 18개 항목 명시 요소) · `verify-prompt.md`(Step 5-2 반박 검증 프롬프트) · `memo-annotate.md`(5-4 ⑤ 원본 메모 — `annotate_memo.py`·`verify_hancom.ps1`)
 - `references/output-format.md` — **§0 지적 문장 4요소 규격** · 산출물 골격(노트·검토의견본·보완요청본) · 회신 기한(불이익 고지 금지) · **한글 문체 규칙** · 상대 문서 표기 검수
 - `assets/report.html` — 전달본 A4 템플릿 (자리표시자 채워 쓰고 Chrome headless로 렌더)
 - `scripts/lint_findings.py` — 지적 4요소(근거·당위·실제·요청)·근거 등급 기계 검사
