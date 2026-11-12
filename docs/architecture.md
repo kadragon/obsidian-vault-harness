@@ -17,7 +17,7 @@
 
 ## Folder Map
 
-```
+```text
 ObsidianVault/
 ├── _Wiki/                 # Vault-wide LLM wiki layer (index·log·entities·topics·syntheses·lint)
 ├── 01_Inbox/              # Unprocessed documents — process via inbox-process skill

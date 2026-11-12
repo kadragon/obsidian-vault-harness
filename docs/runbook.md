@@ -23,7 +23,7 @@ Syncthing으로 다중 기기 동기화. OS별 경로:
 
 ### Process Inbox
 
-```
+```text
 Run: inbox-process skill
 Input: 01_Inbox/ (action/ or reference/ subfolders)
 Output: 10_Areas/{area}/ note or _Sources/ entry
@@ -31,7 +31,7 @@ Output: 10_Areas/{area}/ note or _Sources/ entry
 
 ### Handle Incident
 
-```
+```text
 Run: incident-analyst agent  (reads .claude/agents/workflows/incident-analyze/WORKFLOW.md)
 Input: PARAMETER_INFO, ERR_INFO, stack trace
 Output: 14_Changes/incident/{year}/ note
@@ -39,7 +39,7 @@ Output: 14_Changes/incident/{year}/ note
 
 ### Create Improvement Plan
 
-```
+```text
 Run: improvement-planner agent  (reads .claude/agents/workflows/improvement-plan/WORKFLOW.md)
 Input: change description, related SQL/procedure
 Output: 14_Changes/improvement/{year}/ note
@@ -47,7 +47,7 @@ Output: 14_Changes/improvement/{year}/ note
 
 ### Review a 과업심의 Request
 
-```
+```text
 Run: gwaeop-simui-review skill
 Input: 심의자료 폴더 (01_Inbox/action/ 또는 10_Areas/과업심의/{회차}/{번호}/심의자료/)
 Output: 지적사항 + 판정(안) → 10_Areas/과업심의/{회차}/..._심의의견.md (+ 요청 시 PDF)
@@ -56,7 +56,7 @@ Note: 회차 폴더 셋팅·서식 생성은 이 스킬이 아니라 gwaeop-roun
 
 ### Run a 과업심의 Round
 
-```
+```text
 Run: gwaeop-round-manage skill
 Input: 10_Areas/과업심의/{연월}_제{N}차과업심의/ (+ _round.json)
 Output: 서약서·결과서·산정서, 위원별 전자서명 통합본, 결과 기입, 결재상신 붙임
@@ -65,21 +65,21 @@ Note: 절차 원본은 10_Areas/과업심의/과업심의_프로세스.md — �
 
 ### Weekly Report
 
-```
+```text
 Run: weekly-report-compile skill
 Output: 주간업무회의 자료 draft
 ```
 
 ### System Change Log
 
-```
+```text
 Run: change-log-compile skill
 Output: 주간 기능 개선 내역 보고서
 ```
 
 ### Sync Note Statuses
 
-```
+```text
 Run: status-sync skill
 Scope: 10_Areas/ and 14_Changes/
 Effect: open notes with all tasks done → status: closed
@@ -87,7 +87,7 @@ Effect: open notes with all tasks done → status: closed
 
 ### Clean Syncthing Conflicts
 
-```
+```text
 Run: syncthing-conflict-resolve skill
 Scope: entire vault
 Effect: identical conflict files purged; differing ones reviewed
@@ -95,7 +95,7 @@ Effect: identical conflict files purged; differing ones reviewed
 
 ### Archive Stale Notes
 
-```
+```text
 Run: vault-clean skill
 Scope: 10_Areas/ → 90_Archive/
 ```

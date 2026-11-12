@@ -17,7 +17,7 @@
 - **With attachments → folder per note**: folder name `YYYYMM_{summary}` (full title, not shortened). The note inside uses the same slug with a `_` prefix: `_YYYYMM_{summary}.md`.
 - No fixed length cap on `{summary}` — match the source document's title. Long, fully descriptive Korean titles are the vault norm (generator: `inbox-process` 스킬 `new_work_path.py`).
 
-```
+```text
 10_Areas/수업성적/
   202606_강의평가 삭제 요청.md                ← no attachments → single file
   202605_수업시간표 삭제 요청/                 ← has attachments → folder (full title)
