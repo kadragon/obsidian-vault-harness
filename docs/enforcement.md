@@ -18,6 +18,7 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | 스킬 문서 장황함·환경 종속 (규칙+근거 서사 혼재, 머신 사실 하드코딩) | `check-skill-doc.py` PostToolUse hook + `--sweep` 전수 스캔 (mechanical, warning-only) | Shell-enforced (2026-09-05) |
 | 하네스 파일의 맨 `python` 호출 (검사 무력화) | `check-bare-python.py` PostToolUse hook + `--sweep` 전수 스캔 (mechanical) | Shell-enforced (2026-08-02) |
 | 프로젝트 허브 노트 비대 (`12_Projects/…/{폴더}/_{폴더}.md` > 120줄) | `check-project-hub-length.py` PostToolUse `Write\|Edit` hook → `project-restructure` 스킬 제안 (mechanical, warning-only) | Shell-enforced (2026-09-28) |
+| 마크다운 문법 (표 깨짐·끝 공백·코드블록 언어 등) | `check-markdownlint.py` PostToolUse `Write\|Edit` hook → `npx markdownlint-cli2` 단건, 규칙은 `.markdownlint-cli2.jsonc` Obsidian 화이트리스트 (mechanical, warning-only; npx 부재 시 무음 통과). 전수: `npx markdownlint-cli2 "**/*.md"`. `--fix`는 MD009·MD047·MD058만 실효 — MD011·MD037·MD038은 오탐·오수정으로 제외 | Shell-enforced (2026-11-12) |
 | 머신 간 커밋 이력 갈라짐 (Syncthing이 `.git/` 제외) | `git-sync-check.py` SessionStart hook (mechanical) | Shell-enforced (2026-09-15) |
 
 ## 원격 동기화 훅 — `git-sync-check.py` (2026-09-15)

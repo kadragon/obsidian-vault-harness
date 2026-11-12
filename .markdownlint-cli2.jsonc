@@ -1,0 +1,40 @@
+// Obsidian-aware markdownlint config. Whitelist only rules that flag
+// real rendering bugs or noise-free hygiene; everything else is off because
+// Obsidian syntax (#tags at line start, tab-indented lists, [[wikilinks]],
+// footnote-style [n] refs, template-repeated headings) makes it a false positive.
+// Trial run 2026-11-12: default config = 26,437 hits on 1,136 notes.
+{
+  "config": {
+    "default": false,
+    "MD001": true, // heading level skip
+    "MD009": { "br_spaces": 2 }, // trailing spaces (2 allowed as hard break)
+    "MD019": true, // multiple spaces after #
+    "MD023": true, // indented heading (not rendered)
+    "MD039": true, // spaces inside link text
+    "MD040": true, // fenced code without language
+    "MD042": true, // empty link
+    "MD047": true, // file must end with newline
+    "MD056": true, // table column count (text glued under a table)
+    "MD058": true // table must be surrounded by blank lines
+    // Off after trial: MD003 hit only the `> [!x]+ title` / `> -` placeholder
+    // from 99_Template; MD028 hit only intentionally separated adjacent callouts;
+    // MD011 hit only footnote-style "(text)[1]" and --fix rewrote it into a link;
+    // MD037/MD038 hit `26년-style year marks, `_` in filenames, SQL `/*+ */` hints
+    // and deliberately quoted whitespace (1 real hit out of 29).
+  },
+  "ignores": [
+    "90_Archive/**",
+    // git submodule synced from an external repo; local fixes get overwritten.
+    // Listed twice: NFC and NFD (macOS stores these names as NFD; globs compare bytes).
+    "_Sources/한국교원대학교-규정집/**",
+    "_Sources/한국교원대학교-규정집/**",
+    ".trash/**",
+    ".stversions/**",
+    ".obsidian/**",
+    ".claude/**",
+    ".pytest_cache/**",
+    ".agents/**",
+    "node_modules/**",
+    "**/*.sync-conflict-*"
+  ]
+}

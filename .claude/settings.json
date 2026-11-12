@@ -51,6 +51,12 @@
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-project-hub-length.py\"",
             "statusMessage": "프로젝트 허브 길이 검사 중..."
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-markdownlint.py\"",
+            "timeout": 30,
+            "statusMessage": "마크다운 lint 검사 중..."
           }
         ]
       },

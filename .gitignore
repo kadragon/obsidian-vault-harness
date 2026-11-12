@@ -8,6 +8,7 @@
 !tasks.md
 !backlog.md
 !CHANGELOG.md
+!.markdownlint-cli2.jsonc
 !.claude/
 !.claude/**
 .claude/change-log-report.txt

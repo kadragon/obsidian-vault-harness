@@ -84,7 +84,10 @@ def collect(root):
         rel = "" if rel == "." else rel + "/"
         # `.trash/`는 Obsidian 휴지통이라 해석 인덱스에서도 뺀다 — 삭제된 사본이 남아
         # 살아 있는 노트와 이름이 겹치면 ambiguous 오탐이 된다.
-        if any(s in "/" + rel for s in ("/.git/", "/.obsidian/", "/__pycache__/", "/.trash/")):
+        # `.stversions/`(Syncthing 옛 버전)도 같은 이유 — 미제외 시 발견의 96%가 이 사본이었다
+        # (실측 2026-11-12: 2,663건 중 2,569건).
+        if any(s in "/" + rel for s in ("/.git/", "/.obsidian/", "/__pycache__/", "/.trash/",
+                                         "/.stversions/")):
             dirs[:] = []
             continue
         for x in files:

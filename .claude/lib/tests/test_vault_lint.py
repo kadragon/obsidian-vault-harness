@@ -37,6 +37,15 @@ class BaselineTests(unittest.TestCase):
     def compare(self, *args, **kwargs):
         return self.run_cli("--baseline", str(self.baseline), "--strict", *args, **kwargs)
 
+    def test_syncthing_versions_and_trash_are_not_scanned(self):
+        # Old versions under .stversions/ once made up 96% of findings (2026-11-12).
+        for d in (".stversions/sub", ".trash"):
+            (self.root / d).mkdir(parents=True)
+            (self.root / d / "옛사본~20260825-110257.md").write_text("[[없는 문서2]]\n", encoding="utf-8")
+        report = json.loads(self.run_cli().stdout)
+        self.assertEqual(report["notes"], 1)
+        self.assertEqual([f["path"] for f in report["findings"]], ["일반.md"])
+
     def test_existing_findings_and_line_shifts_pass(self):
         self.snapshot()
         self.note.write_text("\n\n[[없는 문서]]\n", encoding="utf-8")

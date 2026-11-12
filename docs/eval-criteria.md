@@ -89,7 +89,7 @@ Operational note feeds back into `_Wiki/` when domain threshold reached.
 | Score | Description |
 |-------|-------------|
 | 5 | Domain has <20 notes — no MOC required, note complete |
-| 5 | Domain has 20+ notes — MOC exists and this note is linked | ← both map to 5: threshold not triggered in first case |
+| 5 | Domain has 20+ notes — MOC exists and this note is linked (both map to 5: threshold not triggered in first case) |
 | 2 | Domain has 20+ notes — MOC exists but note not registered |
 | 1 | Domain has 20+ notes — MOC missing entirely |
 
