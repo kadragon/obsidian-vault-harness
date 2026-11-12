@@ -5,6 +5,8 @@ Scans:
   - 10_Areas/{INCLUDED_AREAS}/   — work notes (area notes)
   - 14_Changes/improvement/       — technical improvements
   - 14_Changes/incident/          — incidents
+  - 12_Projects/*/{PROJECT_CHANGE_DIRS}/ — `type: change` notes kept with their project
+                                    (e.g. 보안감사후속 theme folders)
 
 Criteria: notes whose `✅ YYYY-MM-DD` completion dates or `date created` frontmatter falls in the target week.
 Excluded: in-week notes with frontmatter `weekly_exclude: true` (`excluded` count + `excluded_paths`).
@@ -48,6 +50,9 @@ INCLUDED_AREAS = [
     "전임교원공채",
     "졸업",
 ]
+
+# Project folders (under 12_Projects/{year}/) whose `type: change` notes are also collected
+PROJECT_CHANGE_DIRS = ["보안감사후속"]
 
 # How area names map to the top-level output category
 CATEGORY_MAP: dict[str, str] = {
@@ -257,6 +262,52 @@ def collect_14changes(vault: Path, start: date, end: date) -> tuple[list[dict], 
     return results, excluded
 
 
+def is_change_note(text: str) -> bool:
+    """True when frontmatter declares `type: change` (project hubs/records are `type: project`)."""
+    frontmatter = re.match(r"\A---[ \t]*\r?\n(.*?)^---[ \t]*\r?$", text, re.MULTILINE | re.DOTALL)
+    return bool(frontmatter and re.search(r"^type:\s*change\s*$", frontmatter.group(1), re.MULTILINE))
+
+
+def collect_project_changes(vault: Path, start: date, end: date) -> tuple[list[dict], list[str]]:
+    """Change notes kept inside project folders (PROJECT_CHANGE_DIRS) instead of 14_Changes/.
+
+    Only `type: change` notes count: hubs and `0. 감사·조치 기록/` notes are `type: project`
+    and hold moved schedule history whose ✅ dates would otherwise flood the report.
+    """
+    results = []
+    excluded = []
+    projects_root = vault / "12_Projects"
+    if not projects_root.exists():
+        return results, excluded
+    for year_dir in sorted(p for p in projects_root.iterdir() if p.is_dir()):
+        for name in PROJECT_CHANGE_DIRS:
+            base = year_dir / name  # APFS lookup is normalization-insensitive (NFC literal OK)
+            if not base.is_dir():
+                continue
+            for md in base.rglob("*.md"):
+                text = md.read_text(encoding="utf-8", errors="ignore")
+                if not is_change_note(text):
+                    continue
+                matched = matched_date_in_range(text, start, end)
+                if matched and is_excluded(text):
+                    excluded.append(str(md))
+                    continue
+                if matched:
+                    area = infer_area_from_tag(text)
+                    results.append(
+                        {
+                            "path": str(md),
+                            "area": area or name,
+                            "category": CATEGORY_MAP.get(area or "", "기타"),
+                            "source": f"12_Projects/{name}",
+                            "title": extract_title(text, md),
+                            "matched_date": matched,
+                            "tag": first_tag(text),
+                        }
+                    )
+    return results, excluded
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument(
@@ -277,8 +328,10 @@ def main() -> int:
 
     notes_10, excluded_10 = collect_10areas(vault, start, end)
     notes_14, excluded_14 = collect_14changes(vault, start, end)
-    notes = notes_10 + notes_14
+    notes_pj, excluded_pj = collect_project_changes(vault, start, end)
+    notes = notes_10 + notes_14 + notes_pj
     notes.sort(key=lambda n: (n["category"], n["area"], n["matched_date"]))
+    excluded_all = excluded_10 + excluded_14 + excluded_pj
 
     print(
         json.dumps(
@@ -286,8 +339,8 @@ def main() -> int:
                 "week_start": start.isoformat(),
                 "week_end": end.isoformat(),
                 "count": len(notes),
-                "excluded": len(excluded_10) + len(excluded_14),
-                "excluded_paths": excluded_10 + excluded_14,
+                "excluded": len(excluded_all),
+                "excluded_paths": excluded_all,
                 "notes": notes,
             },
             ensure_ascii=False,

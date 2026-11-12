@@ -168,6 +168,62 @@ def test_collect_14changes_skips_flagged(tmp_path):
     assert got == [] and len(excluded) == 1
 
 
+def test_collect_project_changes_reads_only_change_notes(tmp_path):
+    base = tmp_path / "12_Projects" / "2026" / "보안감사후속" / "PATIS 보안 감사 후속 조치"
+    theme = base / "1. T5 파일 처리 경로 confinement"
+    record = base / "0. 감사·조치 기록"
+    theme.mkdir(parents=True)
+    record.mkdir(parents=True)
+    (theme / "fix.md").write_text(
+        "---\ntype: change\nchange_type: improvement\nstatus: open\n---\n"
+        "# 경로 가드\n- [x] 코드 조치 ✅ 2026-09-30\n#업무/개발공통/보안\n",
+        encoding="utf-8",
+    )
+    # Hubs and record notes are type: project and carry moved history — never collected.
+    (record / "_PATIS 감사·조치 기록.md").write_text(
+        "---\ntype: project\nstatus: active\n---\n# 기록\n- [x] 옛 일정 ✅ 2026-09-30\n",
+        encoding="utf-8",
+    )
+    (base / "_PATIS 보안 감사 후속 조치.md").write_text(
+        "---\ntype: project\nstatus: active\n---\n# 허브\n- [x] 일정 ✅ 2026-09-30\n",
+        encoding="utf-8",
+    )
+    got, excluded = cw.collect_project_changes(tmp_path, date(2026, 9, 28), date(2026, 10, 4))
+    assert [n["title"] for n in got] == ["경로 가드"]
+    assert got[0]["area"] == "개발공통" and got[0]["category"] == "공통"
+    assert got[0]["source"] == "12_Projects/보안감사후속"
+    assert excluded == []
+
+
+def test_collect_project_changes_respects_week_and_flag(tmp_path):
+    theme = tmp_path / "12_Projects" / "2026" / "보안감사후속" / "sugang 보안 감사 후속 조치" / "1. D 수강신청 로직"
+    theme.mkdir(parents=True)
+    (theme / "old.md").write_text(
+        "---\ntype: change\n---\n# 지난주 밖\n- [x] 반영 ✅ 2026-09-01\n#업무/수강신청\n", encoding="utf-8"
+    )
+    (theme / "skip.md").write_text(
+        "---\ntype: change\nweekly_exclude: true\n---\n# 제외\n- [x] 반영 ✅ 2026-09-30\n#업무/수강신청\n",
+        encoding="utf-8",
+    )
+    got, excluded = cw.collect_project_changes(tmp_path, date(2026, 9, 28), date(2026, 10, 4))
+    assert got == [] and len(excluded) == 1
+
+
+def test_cli_includes_project_change_notes(tmp_path):
+    theme = tmp_path / "12_Projects" / "2026" / "보안감사후속" / "webservice 보안 감사 후속 조치" / "3. A 인증"
+    theme.mkdir(parents=True)
+    (theme / "a.md").write_text(
+        "---\ntype: change\n---\n# 로그인 제한\n- [x] 조치 ✅ 2026-10-28\n#업무/개발공통/보안\n", encoding="utf-8"
+    )
+    out = subprocess.run(
+        [sys.executable, str(SCRIPTS / "collect_weekly_notes.py"),
+         "--week", "2026-10-28", "--vault", str(tmp_path)],
+        capture_output=True, text=True, encoding="utf-8", check=True,
+    )
+    data = json.loads(out.stdout)
+    assert [n["title"] for n in data["notes"]] == ["로그인 제한"]
+
+
 def test_body_flag_does_not_exclude_note():
     text = '---\ntype: work\n---\n# Flag documentation\nweekly_exclude: true\n'
     assert cw.is_excluded(text) is False
