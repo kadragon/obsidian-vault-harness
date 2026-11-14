@@ -8,7 +8,7 @@
 
 ### Public history scrub — personal data in past commits (2026-10-19)
 
-- [ ] [security] Follow-ups to the history scrub: GitHub Support purge request for `refs/pull/1..34/head` and cached commit views (submitted 2026-10-24 — await GitHub's reply; done when old PR head SHAs, e.g. #34 `2be1b43c05aa`, no longer resolve via `gh api repos/kadragon/obsidian-vault-harness/commits/<sha>`); reset the Syncthing peer clone to `origin/main`; delete the pre-scrub mirror backup (`vault-backup.git` in the 2026-10-23 session scratchpad) once confirmed. *(deferred: GitHub Support purge pending — PR #1/#20/#34 head SHAs still resolve as of 2026-11-14)*
+- [ ] [security] Follow-ups to the history scrub: GitHub Support purge request for `refs/pull/1..34/head` and cached commit views (tickets #5003430 'Clear Cached Views' + duplicate #5003406, both 2026-11-14 — 'remove commit references' for PRs #1-#34, PRs kept; the 2026-10-24 submission never landed — await GitHub's update; done when old PR head SHAs, e.g. #34 `2be1b43c05aa`, no longer resolve via `gh api repos/kadragon/obsidian-vault-harness/commits/<sha>`); reset the Syncthing peer clone to `origin/main`; delete the pre-scrub mirror backup (`vault-backup.git` in the 2026-10-23 session scratchpad) once confirmed (not found under /private/tmp/claude-501 on 2026-11-14 — likely already gone with the session temp dir). *(deferred: GitHub Support purge pending — ticket #5003430; PR #1/#20/#34 head SHAs still resolve as of 2026-11-14)*
 
 ## 레거시 메타데이터 참고 (2026-07-31 실측)
 
