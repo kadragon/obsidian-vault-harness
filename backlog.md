@@ -8,11 +8,7 @@
 
 ### Public history scrub — personal data in past commits (2026-10-19)
 
-- [ ] [security] Follow-ups to the history scrub: GitHub Support purge request for `refs/pull/1..34/head` and cached commit views (submitted 2026-10-24 — await GitHub's reply; done when old PR head SHAs, e.g. #34 `2be1b43c05aa`, no longer resolve via `gh api repos/kadragon/obsidian-vault-harness/commits/<sha>`); reset the Syncthing peer clone to `origin/main`; delete the pre-scrub mirror backup (`vault-backup.git` in the 2026-10-23 session scratchpad) once confirmed.
-
-### PR #36 — [HARNESS] Move deterministic skill steps into tested scripts (2026-11-01)
-
-- [ ] [debt] `collect_active_notes.py`는 non-UTF-8 노트 1건에 전체 실행이 exit 1(문서상 의도된 fail-loud). 구 grep 버전은 건너뜀 — 실제로 CP949 노트가 발견되면 파일 단위 경고로 완화 검토 (source: code-review, introduced here) — `.claude/skills/weekly-report-compile/scripts/collect_active_notes.py:120`
+- [ ] [security] Follow-ups to the history scrub: GitHub Support purge request for `refs/pull/1..34/head` and cached commit views (submitted 2026-10-24 — await GitHub's reply; done when old PR head SHAs, e.g. #34 `2be1b43c05aa`, no longer resolve via `gh api repos/kadragon/obsidian-vault-harness/commits/<sha>`); reset the Syncthing peer clone to `origin/main`; delete the pre-scrub mirror backup (`vault-backup.git` in the 2026-10-23 session scratchpad) once confirmed. *(deferred: GitHub Support purge pending — PR #1/#20/#34 head SHAs still resolve as of 2026-11-14)*
 
 ## 레거시 메타데이터 참고 (2026-07-31 실측)
 
