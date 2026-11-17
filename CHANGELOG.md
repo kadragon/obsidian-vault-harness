@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- [done] inbox-process defaults to full scope without asking; appended request text processed as inline items (2026-11-17)
 - [done] collect_active_notes encoding debt closed: 0 non-UTF-8 notes in 617 scanned, fail-loud kept (2026-11-14)
 - [done] Single harness test runner (`.claude/lib/run_tests.py`) wired into GitHub Actions; `99_Template/` tracked for the status-sync contract test (2026-10-24)
 - [done] Public history scrub: filter-repo rewrite of all refs removed real committee/staff names, extension number, org/project names and hwpx `Preview/` thumbnails; verified 0 name hits on all branches (2026-10-23, `main` 4094a21). Follow-ups (GitHub purge, peer reset, backup delete) stay in backlog.md
