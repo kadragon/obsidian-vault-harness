@@ -264,17 +264,11 @@ python3 .claude/lib/tests/test_vault_lint.py
 **Cause:** Area mismatch or depth rule violation.  
 **Fix:** Do not modify existing note (Golden Principle #1). Create correct note via skill; ask user to archive misplaced one manually.
 
-### vault-navigator returns path that does not exist
-
-**Symptom:** `vault-navigator` result에 포함된 파일 경로로 `Read`하면 "File does not exist" 오류.  
-**Cause:** QMD 인덱스가 경로를 정규화함 — 공백과 언더스코어를 하이픈으로 변환. 반환 경로는 QMD 내부 경로이며 실제 OS 경로와 다를 수 있음.  
-**Fix:** `vault-navigator` 경로를 `Read`하기 전에 `Glob`으로 실제 경로를 먼저 확인. 예: 디렉터리 패턴 `10_Areas/강사료퇴직금/**/*.md`로 후보 확인 후 정확한 경로로 `Read`.
-
 ### Grep tool returns no results for files under Korean-named folders
 
 **Symptom:** `Grep` (ripgrep-backed) returns "No files found" even when a file with matching content demonstrably exists (confirmed via `Read`/`Glob`) under a Korean-named nested path, e.g. `14_Changes/incident/2024/상반기/*.md`.
 **Cause:** Suspected Unicode normalization mismatch (NFC/NFD) on Korean directory/file names in this Syncthing-synced vault — same root class of issue as the conflict-file NFC normalization handled by `syncthing-conflict-resolve`.
-**Fix:** Fall back to PowerShell: `Get-ChildItem -Path "<dir>" -Filter *.md -Recurse | Select-String -Pattern "<term>" -List | Select-Object -ExpandProperty Path`. Do NOT use a `**` glob string with `Select-String -Path` directly — PowerShell 5.1 does not expand `**`; use `Get-ChildItem -Recurse` instead. Prefer `qmd search`/`vsearch` as the first search layer (per `_Wiki/workflow.md`) since it is unaffected by this issue; reserve Grep/PowerShell fallback for exact-string confirmation.
+**Fix:** Fall back to PowerShell: `Get-ChildItem -Path "<dir>" -Filter *.md -Recurse | Select-String -Pattern "<term>" -List | Select-Object -ExpandProperty Path`. Do NOT use a `**` glob string with `Select-String -Path` directly — PowerShell 5.1 does not expand `**`; use `Get-ChildItem -Recurse` instead.
 
 ### python invocation fails on Windows (hwpx skill scripts etc.)
 

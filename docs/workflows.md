@@ -57,7 +57,7 @@ After attending education/training.
 Find similar incidents, past improvements, related notes.
 
 1. Delegate to `vault-navigator` agent — provide: keywords, work domain.
-2. Agent returns matches via Glob/Grep/QMD semantic search.
+2. Agent returns matches via Glob/`rg --no-ignore`.
 
 ---
 

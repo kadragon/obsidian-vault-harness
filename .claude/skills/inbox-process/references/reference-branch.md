@@ -36,7 +36,7 @@
 - `01_Inbox/reference/` 또는 `01_Inbox/scraps/`에서 대상 파일을 찾는다.
 - 단, 인라인 텍스트 입력이면 파일 탐색을 건너뛰고 제공된 텍스트와 맥락 힌트를 소스로 삼는다.
 - 파일 형식과 제목, 관련 업무 맥락을 파악한다.
-- 필요하면 `qmd`, `rg`, 기존 wiki 페이지로 관련 노트를 찾는다.
+- 필요하면 `rg --no-ignore`, 기존 wiki 페이지로 관련 노트를 찾는다.
 
 ### 1a. durable copy 확보 (원본 삭제의 전제)
 
@@ -150,7 +150,7 @@ exit 0 = durable copy 존재 + 원본과 SHA-256 동일 + 노트 본문에 그 w
 
 - `.pdf`: `references/pdf-reading.md` 절차 (분류 → PyMuPDF → 필요 시 OCR). 원본이 아니라 `read_path`를 읽고, `error`·OCR 실패 건은 건너뛰고 보고한다.
 - `.txt`, `.md`: Read 도구로 읽는다.
-- `.hwpx`: `python3 .claude/lib/hwpx_text.py "<파일>" --out "$(python3 -c 'import tempfile;print(tempfile.gettempdir())')/hwpx_<파일명>.md"`로 추출한 뒤 추출본을 Read한다(추출본은 볼트 밖 임시 경로에 둔다 — 볼트 안에 쓰면 qmd·vault_lint가 노트로 취급한다). exit 3(`UNVERIFIED`: 도구 부재·추출 실패)일 때만 아래 맥락 기반 판단으로 내려가고, 그 사유를 보고에 남긴다.
+- `.hwpx`: `python3 .claude/lib/hwpx_text.py "<파일>" --out "$(python3 -c 'import tempfile;print(tempfile.gettempdir())')/hwpx_<파일명>.md"`로 추출한 뒤 추출본을 Read한다(추출본은 볼트 밖 임시 경로에 둔다 — 볼트 안에 쓰면 vault_lint가 노트로 취급한다). exit 3(`UNVERIFIED`: 도구 부재·추출 실패)일 때만 아래 맥락 기반 판단으로 내려가고, 그 사유를 보고에 남긴다.
 - `.hwp`(0단계 변환 실패분 — 헬퍼는 `NEEDS_HWPX`로 거부), `.xlsx`, `.docx`: 내용 직접 파싱 불가. 파일명·사용자 설명·주변 맥락으로 판단. 불확실하면 보고의 열린 질문으로 "핵심 내용 확인 필요"를 반환한다 (워커가 사용자에게 직접 묻지 않음).
 
 ## 기본 산출물

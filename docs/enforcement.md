@@ -116,13 +116,9 @@ python3 .claude/lib/vault_lint.py --strict           # 발견 시 exit 1
 
 Output: `hookSpecificOutput.additionalContext` JSON — same format as `check-todo-due-date.py`, so warnings appear in Claude's tool-result context. Warning-only (does not block). Zero token cost (this hook; hookify semantic layer has advisory token cost when triggered — see below).
 
-### Active: `qmd-update.sh` (mechanical — machine-local)
+### Retired: `qmd-update.sh` — 2026-11-17
 
-`.claude/hooks/qmd-update.sh`, registered in `settings.local.json` as `PostToolUse` on `Write|Edit`. Refreshes the QMD semantic index after every note write:
-
-- Runs `qmd update` then `qmd embed` (requires `qmd` binary — present on dev machine only)
-- Silent on success; errors are non-blocking
-- Machine-local only: `qmd` CLI is not portable, so this hook stays in `settings.local.json`
+qmd removed from the harness: 5 calls in 63 sessions (2026-10-19~11-17), and the hook had silently not refreshed the index for 26 days (`flock` absent in Git Bash, output discarded). Vault search is `rg --no-ignore` → `_Wiki/index.md`/MOC.
 
 ### Retired: `hookify.tag-validator.local.md` (agent delegation) — 2026-07-24
 

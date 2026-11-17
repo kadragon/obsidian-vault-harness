@@ -80,7 +80,6 @@
     "frontend-design@claude-plugins-official": false,
     "code-simplifier@claude-plugins-official": false,
     "humanize-korean@im-not-ai": false,
-    "typescript-lsp@claude-plugins-official": false,
-    "qmd@qmd": true
+    "typescript-lsp@claude-plugins-official": false
   }
 }

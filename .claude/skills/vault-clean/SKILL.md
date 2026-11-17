@@ -1,8 +1,8 @@
 ---
 name: vault-clean
 description: |
-  볼트 정리 4개 모드 — 문서 가치 점검(review) · 폴더 구조 통일+중복 제거(reorganize) · 오래된 업무노트 90_Archive 이관(archive) · 시맨틱 중복·deadlink 점검(dedupe).
-  트리거: '아카이브 정리', '문서 점검', '가치 없는 문서', '중복 정리', '시맨틱 중복', '비슷한 노트', 'deadlink', '폴더 구조 통일', '오래된 노트 정리', '볼트 청소', 'cleanup'.
+  볼트 정리 4개 모드 — 문서 가치 점검(review) · 폴더 구조 통일+중복 제거(reorganize) · 오래된 업무노트 90_Archive 이관(archive) · 중복 후보·deadlink 점검(dedupe).
+  트리거: '아카이브 정리', '문서 점검', '가치 없는 문서', '중복 정리', '비슷한 노트', 'deadlink', '폴더 구조 통일', '오래된 노트 정리', '볼트 청소', 'cleanup'.
   완료 업무의 status 플립은 status-sync, .sync-conflict 파일은 syncthing-conflict-resolve.
 ---
 
@@ -19,7 +19,7 @@ Obsidian 볼트의 아카이브(`90_Archive/`)와 업무영역(`10_Areas/`)을 �
 | **review** | 문서 가치 점검 → 삭제 후보 목록 제시 | 점검, 가치, 삭제 후보, 리뷰 | `references/mode-review.md` |
 | **reorganize** | 폴더 구조 통일 + 중복 제거 | 구조 정리, 중복, 폴더 통일, reorganize | `references/mode-reorganize.md` |
 | **archive** | 오래된 업무노트 아카이빙 | 오래된, 아카이브로, 이동 | `references/mode-archive.md` |
-| **dedupe** | 시맨틱 중복 탐지 + wiki deadlink 점검 | 중복 노트, 비슷한 노트, 의미 중복, deadlink | `references/mode-dedupe.md` |
+| **dedupe** | 중복 후보 탐지 + wiki deadlink 점검 | 중복 노트, 비슷한 노트, deadlink | `references/mode-dedupe.md` |
 | **(전체)** | 위 4개를 순서대로 모두 실행 | 전체 정리, 대청소, full cleanup | 네 references 순차 |
 
 사용자가 모드를 명시하지 않으면 어떤 모드를 원하는지 먼저 물어본다.
@@ -91,5 +91,5 @@ python3 .claude/skills/vault-clean/scripts/reorg_archive.py \
 - **`references/mode-review.md`** — 문서 가치 점검, 에이전트 배포, 삭제 승인 절차
 - **`references/mode-reorganize.md`** — 구조 분석, 중복 탐지, 재구조화, 태그 보존
 - **`references/mode-archive.md`** — 1년 경과 대상 식별, 이동 실행
-- **`references/mode-dedupe.md`** — 시맨틱 중복 탐지, wiki deadlink 점검
+- **`references/mode-dedupe.md`** — 중복 후보 탐지, wiki deadlink 점검
 - **`scripts/reorg_archive.py`** — 결정론적 스캔·이동 헬퍼

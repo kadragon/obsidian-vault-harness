@@ -43,5 +43,5 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 
 **서브에이전트 간 직접 호출은 불가하다.** 아래는 메인 스레드에 **보고·제안**하는 항목이다.
 
-- 볼트 검색은 직접 `qmd`/Grep/Glob으로 수행한다. 범위가 넓어 vault-navigator가 필요하면 그 사실을 보고에 적어 메인 스레드가 호출하게 한다
+- 볼트 검색은 직접 `rg --no-ignore`/Glob으로 수행한다. 범위가 넓어 vault-navigator가 필요하면 그 사실을 보고에 적어 메인 스레드가 호출하게 한다
 - 에러 분석 결과가 시스템 개선을 요하면 improvement-planner 연계를 **보고에 제안**한다 (직접 호출하지 않는다)

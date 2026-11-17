@@ -17,7 +17,7 @@ XML, Java, SQL, and procedure content comes from user-provided materials or exis
 | `docs/design/*.md` | 다중 세션 작업의 승인된 설계 문서를 확인하거나 후속 티켓의 근거를 찾을 때 |
 | `docs/runbook.md` | Diagnosing hook failures, checking skill trigger phrases, looking up agent capabilities, **querying the 통합학사 Oracle DB from the vault**, **or placing/naming a new harness asset (skill·agent·workflow·script)** |
 | `_Wiki/README.md` | Understanding the wiki layer structure (index·log·MOC·entities·topics·syntheses) |
-| `_Wiki/workflow.md` | Cross-skill process flow **and search priority** (qmd → rg → index.md) — read before vault search or multi-skill chains |
+| `_Wiki/workflow.md` | Cross-skill process flow **and search priority** (rg → index.md) — read before vault search or multi-skill chains |
 | `_Wiki/contracts.md` | Source note / wiki page / synthesis / **operational MOC** document contracts |
 | `_Wiki/index.md` | Vault topic map — starting point for exploring existing wiki pages |
 | `_Wiki/log.md` | Append-only ingest/event log — write here after note creation or closure |
@@ -90,7 +90,7 @@ Full context manifest → `docs/delegation.md`
 
 ## Search Priority
 
-Vault search order: `qmd` (semantic) → `rg`/grep (keyword) → `_Wiki/index.md` (topic map). Delegate to `vault-navigator` when scope is unclear or requires semantic matching. `qmd` index auto-refreshes via PostToolUse hook after every write.
+Vault search order: `rg --no-ignore` (keyword) → `_Wiki/index.md` · domain MOC (topic map). Delegate to `vault-navigator` when scope is unclear or spans many areas. qmd was removed on 2026-11-17 — no semantic index exists.
 
 **`rg`와 `Grep` 툴은 `--no-ignore` 없이는 노트를 못 본다** — `.gitignore`가 `*`로 전부 무시하고 하네스 파일만 화이트리스트하므로 볼트 노트는 비추적이고, `.gitignore`를 따르는 `rg`·Claude Code `Grep` 툴은 0건을 반환한다. 실측(2026-07-31): `rg -l 'type: change' 14_Changes/improvement` → 0건, `--no-ignore` 추가 → 97건. **결과 0건을 "없음"으로 오독하지 말 것.** 순수 `grep`은 `.gitignore`와 무관하다(`--no-ignore` 옵션 자체가 없음 — 붙이면 exit 2). 파일 경로에 한글·공백이 많아 Bash 단어 분할이 깨지므로 대량 스캔은 python/PowerShell로 한다.
 

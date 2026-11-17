@@ -26,9 +26,9 @@
 `_Wiki/syntheses/`·`14_Changes/improvement/`·`90_Archive/`에서 관련 과거 사례와 기존 분석을 검색한다.
 
 검색 방법:
-1. `qmd vsearch "{개선 주제 설명}" -n 5` — `_Wiki/syntheses/`에 이미 정리된 유사 분석이 있는지 먼저 확인
-2. `qmd search "{프로시저명 또는 키워드}" -n 10` — 관련 개선 사례 탐색
-3. Grep으로 프로시저명/메뉴코드 정확 매칭 확인
+1. `_Wiki/index.md`·`_Wiki/syntheses/`에 이미 정리된 유사 분석이 있는지 먼저 확인
+2. `rg --no-ignore -l "{프로시저명 또는 키워드}" 14_Changes` — 관련 개선 사례 탐색
+3. 프로시저명/메뉴코드 정확 매칭 확인
 
 syntheses 에 기존 분석이 있으면 이후 단계에서 해당 내용을 우선 활용한다.
 
@@ -69,7 +69,7 @@ python3 .claude/agents/workflows/improvement-plan/scripts/new_improvement_path.p
 1. **log.md append**: `- {오늘날짜} #improvement [[{노트 경로}]] — {도메인} 생성`
 2. **MOC 확인**: `_Wiki/topics/{도메인}-운영-MOC.md` 존재 여부 점검
    - 존재 → **양방향**: MOC `## 반복 인시던트 패턴`의 해당 유형에 wikilink **1줄** append (`## 미완료 업무 목록`은 2026-08-03 폐지 — 진행 현황은 라이브 쿼리가 담당) + 이 노트 `## 관련 문서`에 `- 운영 MOC: [[{도메인}-운영-MOC]]` 역링크 추가 (contracts.md MOC 갱신 조건)
-   - 없음 → 동일 도메인 개선 수 `qmd search "{도메인} improvement" --json -n 20`으로 카운트 → 3건+ 이면 "운영 MOC 생성을 권장합니다" 보고
+   - 없음 → 동일 도메인 개선 수 `rg --no-ignore -l "{도메인}" 14_Changes/improvement`로 카운트 → 3건+ 이면 "운영 MOC 생성을 권장합니다" 보고
 
 ### Step 5: 업무 태그 지정
 

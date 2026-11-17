@@ -70,7 +70,7 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 
 - 위 스킬 참조 파일은 처음에 한 번 통째로 Read한다. 조각으로 다시 읽지 않는다.
 - 웹 클립은 `scraps/` 파일 본문이 원문이다. 본문이 비었을 때만 WebFetch를 1회 시도한다. 실패하면 `## 열린 질문`에 적고 그 파일을 `UNVERIFIED`로 보고한다. 다른 방식의 스크래핑은 시도하지 않는다.
-- wiki 반영 대상 탐색은 파일당 `qmd search`·`rg --no-ignore`를 합쳐 3회까지 돌리고, `_Wiki/index.md`를 먼저 본다. 못 찾으면 새 페이지 후보로 `## 열린 질문`에 남긴다.
+- wiki 반영 대상 탐색은 파일당 `rg --no-ignore`로 3회까지 돌리고, `_Wiki/index.md`를 먼저 본다. 못 찾으면 새 페이지 후보로 `## 열린 질문`에 남긴다.
 - 같은 명령이 2회 실패하면(인코딩·타임아웃 등) 그 경로를 멈추고 사유를 보고한다.
 - 모든 파일의 source note를 만든 뒤에는 새 탐색을 시작하지 않고 출력 프로토콜대로 바로 반환한다.
 

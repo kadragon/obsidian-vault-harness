@@ -45,4 +45,4 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 **서브에이전트 간 직접 호출은 불가하다.** 아래는 메인 스레드에 **보고·제안**하는 항목이다.
 
 - incident-analyst의 분석 결과를 입력으로 받아 개선 노트를 작성할 수 있다 (입력은 호출 프롬프트로 전달받음)
-- 과거 개선 사례 검색이 필요하면 직접 `qmd`/Grep으로 조사한다. 범위가 넓어 vault-navigator가 필요하면 그 사실을 보고에 적어 메인 스레드가 호출하게 한다
+- 과거 개선 사례 검색이 필요하면 직접 `rg --no-ignore`/Glob으로 조사한다. 범위가 넓어 vault-navigator가 필요하면 그 사실을 보고에 적어 메인 스레드가 호출하게 한다

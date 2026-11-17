@@ -11,7 +11,7 @@ Analyze 통합학사시스템 errors and produce a structured incident note.
 
 에러 로그에서 도메인(프로시저명·메뉴코드)을 먼저 추출한 뒤:
 
-1. `qmd search "{도메인}-운영-MOC" -n 3` — 기존 운영 MOC 존재 여부 확인
+1. `ls "_Wiki/topics/{도메인}-운영-MOC.md"` — 기존 운영 MOC 존재 여부 확인
 2. MOC가 있으면 `## 반복 인시던트 패턴` 섹션을 참조하여 이미 알려진 유형인지 확인
 3. 기존 패턴과 일치하면 이후 분석 단계에서 해당 패턴 우선 참조
 
@@ -36,11 +36,10 @@ Analyze 통합학사시스템 errors and produce a structured incident note.
 
 다음 순서로 검색한다 (`**` glob으로 상반기/하반기 하위 폴더 포함):
 
-1. **QMD 검색**: `qmd search "{프로시저명} {에러타입}" -n 10` — 관련 노트 빠르게 탐색
-2. **프로시저명으로 정확 매칭**: `14_Changes/incident/` 하위에서 동일 프로시저명 Grep
-3. **메뉴 코드로 정확 매칭**: 7자리 메뉴 코드로 Grep
-4. **시맨틱 유사 검색**: `qmd vsearch "{에러 상황 설명}" -n 5` — 유사 증상 인시던트 발견
-5. **Archive 확장**: `90_Archive/` 하위에서 동일 업무 영역 Grep
+1. **프로시저명으로 정확 매칭**: `14_Changes/incident/` 하위에서 동일 프로시저명 `rg --no-ignore`
+2. **메뉴 코드로 정확 매칭**: 7자리 메뉴 코드로 `rg --no-ignore`
+3. **에러 타입 검색**: Exception 클래스명·ORA 코드로 `rg --no-ignore`
+4. **Archive 확장**: `90_Archive/` 하위에서 동일 업무 영역 Grep
 
 검색 결과가 있으면 과거 해결 방안을 참조하여 진단에 활용한다.
 
@@ -100,7 +99,7 @@ python3 .claude/agents/workflows/incident-analyze/scripts/new_incident_path.py {
 1. **log.md append**: `- {오늘날짜} #incident [[{노트 경로}]] — {도메인} 생성`
 2. **MOC 확인**: `_Wiki/topics/{도메인}-운영-MOC.md` 존재 여부 점검
    - 존재 → **양방향**: MOC `## 반복 인시던트 패턴`에 wikilink append + 이 노트 `## 관련 문서`에 `- 운영 MOC: [[{도메인}-운영-MOC]]` 역링크 추가 (contracts.md MOC 갱신 조건)
-   - 없음 → 동일 도메인 인시던트 수 `qmd search "{도메인} incident" --json -n 20`으로 카운트 → 3건+ 이면 "운영 MOC 생성을 권장합니다" 보고
+   - 없음 → 동일 도메인 인시던트 수 `rg --no-ignore -l "{도메인}" 14_Changes/incident`로 카운트 → 3건+ 이면 "운영 MOC 생성을 권장합니다" 보고
 
 ### Step 6: 보고
 

@@ -4,7 +4,6 @@
       "Skill(codex:rescue)",
       "Bash(ls:*)",
       "Bash(chmod +x:*)",
-      "Bash(qmd search *)",
       "Bash(python3 .claude/lib/validate_tag.py -)",
       "Bash(python3 *)",
       "Bash(obsidian help *)",
@@ -15,18 +14,5 @@
   },
   "enabledMcpjsonServers": [
     "korean-law"
-  ],
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/qmd-update.sh\""
-          }
-        ]
-      }
-    ]
-  }
+  ]
 }

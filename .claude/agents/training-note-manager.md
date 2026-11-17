@@ -46,5 +46,5 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 
 **서브에이전트 간 직접 호출은 불가하다.** 아래는 메인 스레드에 **보고·제안**하는 항목이다.
 
-- 기존 교육 노트 검색은 직접 `qmd`/Grep/Glob으로 수행한다. 범위가 넓으면 vault-navigator 필요를 보고에 적는다
+- 기존 교육 노트 검색은 직접 `rg --no-ignore`/Glob으로 수행한다. 범위가 넓으면 vault-navigator 필요를 보고에 적는다
 - 노트 생성은 `99_Template/` 템플릿을 직접 Read해 적용한다. Obsidian 앱 상태 조작(열기·프로퍼티·앱 내 JS)이 필요하면 그 사실을 보고해 메인 스레드가 obsidian-operator를 호출하게 한다
