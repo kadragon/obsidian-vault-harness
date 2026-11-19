@@ -24,8 +24,8 @@ Convert 공문·요청 into 업무사안 notes, and reference materials into `_S
 When a 통합학사시스템 error occurs.
 
 1. Delegate error log to `incident-analyst` agent — provide: PARAMETER_INFO, ERR_INFO, stack trace.
-2. After diagnosis, use `obsidian-operator` agent to create incident note.
-   - Template: `99_Template/_인시던트.md` · Path: `14_Changes/incident/{year}/`
+2. When the task calls for an incident note, `incident-analyst` writes it and returns its path to the main thread for verification.
+   - Template: `99_Template/_인시던트.md` · Path: `14_Changes/incident/{year}/{상반기|하반기}/`
 3. Tags: validate with `.claude/lib/validate_tag.py --json` first; escalate only context-dependent cases to `tag-validator` (AGENTS.md 위임 비용 규칙 #2).
 4. After resolution, update note `status: closed` (on user request).
 
