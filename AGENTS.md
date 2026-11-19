@@ -51,7 +51,7 @@ Never perform these directly without the designated agent/skill:
 | 과업심의 요청 검토 (위원 관점 지적·판정) | `gwaeop-simui-review` skill |
 | 과업심의 회차 운영 (셋팅·서류 생성·위원별 통합본·결과 기입·결재상신 붙임) | `gwaeop-round-manage` skill |
 | Training note cleanup | `training-note-manager` agent |
-| Obsidian note **create**(템플릿 적용)·open·프로퍼티·앱 내 JS | `obsidian-operator` agent |
+| 독립적인 템플릿 노트 생성·열기·프로퍼티·앱 내 JS (전문 워커가 맡은 노트는 해당 워커가 완성) | `obsidian-operator` agent |
 | 기존 노트 본문 **소규모 수정**(수 줄·1~2파일) | 직접 Edit — 위임 금지 (§Delegation 비용 규칙) |
 | Vault cleanup (Archive) | `vault-clean` skill |
 | 길어진 `12_Projects/` 허브 노트 단계별 분리·프로젝트 폴더 정리 | `project-restructure` skill |

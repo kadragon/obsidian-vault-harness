@@ -123,15 +123,8 @@ description: |
    - `valid: false` + `normalized == original` (미등록 area 등), 또는 문맥 의존 건(팀 직함, 신규 area 신설) → `issues`와 함께 `tag-validator`(validate 모드)로 에스컬레이션.
 3. **품질 게이트 — 기계 검사 먼저, `note-evaluator`는 조건부** (action 갈래만):
 
-   **3-a. 기계 검사 (항상)**. 훅은 워커의 Write에 이미 발동했다. 확실치 않으면 **절대경로로** 재실행한다(상대경로면 무음 종료):
+   **3-a. 기계 검사 (항상)**. 메인은 최종 노트의 템플릿·태그 검사 결과를 확인한다. Codex에서 작업했거나 훅 실행 결과가 없으면 `docs/eval-criteria.md`의 **Verify a saved note** 절차로 직접 검사한다. 같은 절차의 MOC 검사는 배치당 한 번 실행한다. 경고를 수정한 뒤 해당 검사를 다시 실행하고 다음 항목을 직접 확인한다.
 
-   ```bash
-   printf '{"tool_input":{"file_path":"<노트 절대경로>"}}' | python3 .claude/hooks/check-template.py
-   printf '{"tool_input":{"file_path":"<노트 절대경로>"}}' | bash .claude/hooks/validate-tags.sh
-   python3 .claude/lib/moc_gate.py . --json   # 기준 5 임계 검출
-   ```
-
-   앞 둘이 무출력 = `eval-criteria.md` 기준 1·3·4 + 기준 2 형식 통과. 경고는 직접 Edit으로 수정한다. 훅 무음이 통과가 아닌 잔여분 2개는 직접 확인한다:
    - **태그 area 배정이 내용과 맞는지** — 훅은 `#업무/` 존재만 본다. `#부서/`는 선택 필드다: 부재를 지적하거나 억지로 채우지 않고, 원본에 담당 부서가 명시돼 있을 때만 넣는다.
    - **기준 5 MOC 순방향 등록** — `moc_gate.py`가 임계 도달을 보고했으면 원본 삭제 전에 끝낸다. MOC가 있으면 노트→MOC 링크와 MOC→노트 등록을 grep으로 확인해 채우고 `_Wiki/index.md`·`_Wiki/log.md`까지 등록. MOC가 없으면 `docs/workflows.md` → `moc` 워크플로를 수행한다(`vault-navigator` 사전 조사 → `obsidian-operator` 생성 → index·log 등록). 확인만 하고 넘어가지 않는다.
 

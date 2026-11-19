@@ -114,7 +114,25 @@ Below threshold → findings become fixes in same session before note is committ
 | 4 Wikilink Style | `check-template.py` Check 1 | — |
 | 5 Wiki Feedback Loop | `moc_gate.py` (임계 도달 도메인 검출) | MOC **순방향 등록** 여부 — 노트가 MOC를 링크했는지는 grep |
 
-두 훅은 `Write|Edit` PostToolUse로 자동 발동하므로, **노트를 쓴 직후 훅 경고가 없었다면 기준 1·3·4와 기준 2의 형식·`#업무/` 존재분은 이미 통과**다. **단 기준 3은 `10_Areas/`+`type: work` 노트에 한해서다** — incident·improvement·training 노트의 섹션 구조는 훅이 보지 않으므로 훅 무음이 통과가 아니고, **메인 스레드가** 해당 `99_Template/` 템플릿과 직접 대조한다(이 종류는 이모지 별칭 오탐 이력이 없다). 기본 모드 평가자는 구조를 보지 않는다. 이 상태에서 `note-evaluator`를 부르면 훅이 한 계산을 LLM으로 재실행하는 것이고, 실측 비용은 노트 1건당 약 100k 토큰이다. **단 위 표의 "못 잡는 잔여분" 열은 훅이 무음이어도 통과가 아니다** — 형식 검증기는 값이 아예 없는 경우에 무음이 되는 것이 기본 성질이므로, 훅 무음을 전면 통과로 읽지 말 것.
+### Verify a saved note
+
+Reuse template and tag hook results when Claude reports both checks for the final write. In Codex, or whenever either result is unavailable, run the missing check from the vault root against the saved Markdown file. Replace the example path with the actual note path.
+
+```bash
+note='10_Areas/영역/노트.md'
+payload=$(python3 -c 'import json, pathlib, sys
+p = pathlib.Path(sys.argv[1]).resolve(strict=True)
+if not p.is_file() or p.suffix != ".md" or pathlib.Path.cwd() not in p.parents:
+    sys.exit("Expected a Markdown file in this vault")
+print(json.dumps({"tool_input": {"file_path": str(p)}}, ensure_ascii=False))' "$note") && {
+  printf '%s' "$payload" | python3 .claude/hooks/check-template.py &&
+  printf '%s' "$payload" | bash .claude/hooks/validate-tags.sh
+}
+```
+
+Read the output, including stderr. A finding appears in `hookSpecificOutput.additionalContext` even when the command exits zero. Resolve findings and repeat the affected check. An execution error or skipped check gives no passing result. Silence from an applicable check covers only the rules in the table above. Compare incident, improvement and training sections with their templates directly.
+
+For the domain MOC check, run `python3 .claude/lib/moc_gate.py . --json` once per batch and inspect the affected domain. Check the recurring-incident-type threshold and forward links separately.
 
 **따라서 `note-evaluator`의 고유 가치는 기계가 못 하는 것 하나뿐이다: 노트 본문 사실이 원본 문서와 일치하는지** (공문 번호·기한·담당자·회차 등). 회차성 반복 공문에서 선례를 베끼다 stale 값이 섞이는 위험이 실재하므로 이 검증은 버리지 않되, **조건부로만** 부른다 — 호출 조건은 `inbox-process/SKILL.md` 5단계.
 

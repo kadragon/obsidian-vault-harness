@@ -1,6 +1,6 @@
 ---
 name: obsidian-operator
-description: "Obsidian 앱과 직접 상호작용하여 ���트를 조작하는 실행 에이전트. 노트 생성(템플릿 적용), 노��� 열기, 프로퍼티 관리, 내용 추가(append/prepend), 앱 내 JS 실행 등 볼트 변경 작업을 전담한다. 다른 분석 에이전트가 노트 생성을 요청하거나, 사용자가 '노트 만들어줘', '열어줘', '프로퍼티 설정', '템플릿 적용' 등 볼트 조작을 요청할 때 사용."
+description: "독립적인 템플릿 노트 생성, 노트 열기, 프로퍼티 변경, append/prepend, 앱 내 JS 등 Obsidian 조작을 수행한다. MOC 생성처럼 워크플로에서 이 역할을 작성자로 지정한 작업도 맡는다."
 tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSearch
 # Agent/Task/Workflow 제외 — 서브에이전트의 중첩 위임 차단 (AGENTS.md 위임 비용 규칙 #1)
 ---
