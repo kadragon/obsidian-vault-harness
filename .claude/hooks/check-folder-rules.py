@@ -85,11 +85,7 @@ if "/10_Areas/" in fp_norm:
             except OSError:
                 pass
 
-# Rule 4: 14_Changes/{incident,improvement}/ — single filename rule (2026-11-21)
-#   '{YYYY-MM-DD} {system} {screen_id} {요약}.md' (screen_id 선택). 규칙 본문은
-#   .claude/lib/change_naming.py 하나뿐이다 — 여기서 정규식을 재구현하지 않는다.
-#   경로는 incident-analyze·improvement-plan 워크플로우의 new_*_path.py가 생성한다.
-#   이전 규칙('통합학사시스템 오류 처리 {날짜}_{순번}')은 357건 일괄 개명으로 폐기.
+# Rule 4: 14_Changes/{incident,improvement}/ filename rule (lib/change_naming.py)
 if re.search(r"/14_Changes/(incident|improvement)/", fp_norm):
     sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "lib"))
     try:

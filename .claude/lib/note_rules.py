@@ -12,7 +12,7 @@ import re
 import pathlib
 import unicodedata
 
-import change_naming  # 같은 lib 디렉터리 — 훅·vault_lint 모두 lib를 sys.path에 넣고 이 모듈을 부른다
+import change_naming
 
 # 훅(쓰기 시점) 제외 경로: 하네스·메타·비노트 경로
 HOOK_SKIP = ("/99_Template/", "/docs/", "/.claude/", "/90_Archive/",
@@ -73,7 +73,7 @@ def _fm_scalar(fm, key):
     m = re.search(rf'^{re.escape(key)}:[ \t]*(.*?)[ \t]*$', fm, re.MULTILINE)
     if not m:
         return None
-    return m.group(1).split(' #')[0].strip().strip('"\'')
+    return re.split(r"(?:^|[ \t])#", m.group(1), maxsplit=1)[0].strip().strip('"\'')
 
 
 def change_field_problems(fp_norm, fm):
@@ -208,7 +208,6 @@ def check(file_path, text, skip=HOOK_SKIP):
                         f"{ct} frontmatter에 'change_type: {ct}' 없음 "
                         f"(99_Template/_{'인시던트' if ct == 'incident' else '개선'}.md 사용)")
 
-            # Check 6: 14_Changes 이름 메타데이터 — 근거는 change_field_problems docstring
             if re.search(r"/14_Changes/(incident|improvement)/", fp_norm) and note_type != "index":
                 violations.extend(change_field_problems(fp_norm, fm))
         else:

@@ -232,8 +232,8 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
     - **같은 결정으로 `99_Template/_교육.md`의 `- #업무/`도 제거했다**(2026-08-02, PR #21 리뷰 후속). 검사만 빼고 템플릿을 두면 "템플릿은 요구하는데 아무것도 강제하지 않는" 상태가 남고, 문서는 그 부재를 "평가자 판단"으로 넘기지만 `note-evaluator`는 `inbox-process` 5단계-3-b 조건에서만 호출돼 교육 노트는 그 경로를 거의 타지 않았다 — **실질 무게이트**. 템플릿을 관행에 정렬해 요구 자체를 없앴으므로 교육 노트의 `#업무/` 부재는 이제 **위반이 아니다**(별도 게이트 불필요). **교훈: 검사를 강등하면 그 기준을 요구하던 템플릿·문서도 같이 내려야 한다 — 안 그러면 "요구는 남고 집행만 사라진" 무게이트가 생긴다.**
   - **심의 서식도 제외한다** (2026-08-02): Check 2b와 같은 근거·같은 `is_simui_form` 키. 실측상 status 누락 10건과 `#업무/` 미보유 10건이 동일 집합이었다.
   - **"존재"가 아니라 "구체 태그"를 요구한다:** 원시 substring 검사(`#업무/`)는 템플릿 플레이스홀더 `#업무/{영역}/{하위영역}/{메뉴명}`과 인라인 코드 안의 예시 태그도 통과시켰다. `validate-tags.sh`는 중괄호 태그(`grep -v '[{}]'`)와 인라인 코드를 **제거한 뒤** 검사하므로 이 경우 양쪽 훅이 동시에 무음이었다 — 훅의 경고문 자체가 중괄호 형태를 예시하고 있어 현실적인 실패 경로다. 그래서 인라인 코드를 걷어내고 `#업무/(?![{\s])`로 판정한다.
-  - `#부서/`는 검사하지 않는다: 실측 미보유 56/201(28%)로 관행이 아니어서 **선택 필드로 강등**했다(2026-08-02 사용자 결정).
-- **Check 6 — change 노트 `system`·`date`·`screen_id` (`14_Changes/{incident,improvement}/`, `type: index` 제외):** `system`이 고정 어휘가 아니거나 없음, `date`가 `YYYY-MM-DD`가 아니거나 없음, `screen_id` 형식 위반, 파일명에서 읽은 값과 frontmatter 값 불일치 → warn (2026-11-21 신설). 파일명이 Bases·Dataview 필터 값과 어긋나면 둘 중 하나가 거짓이 되므로 일치까지 본다. 어휘·형식은 `change_naming.py`가 단일 원천이다. 있으면 `validate-tags.sh`가 형식을 보고, **부재는 위반도 감점도 아니다** — 평가자도 지적하지 않는다.
+  - `#부서/`는 검사하지 않는다: 실측 미보유 56/201(28%)로 관행이 아니어서 **선택 필드로 강등**했다(2026-08-02 사용자 결정). 있으면 `validate-tags.sh`가 형식을 보고, **부재는 위반도 감점도 아니다** — 평가자도 지적하지 않는다.
+- **Check 6 — change 노트 `system`·`date`·`screen_id` (`14_Changes/{incident,improvement}/`, `type: index` 제외):** `system`이 고정 어휘가 아니거나 없음, `date`가 `YYYY-MM-DD`가 아니거나 없음, `screen_id` 형식 위반, 파일명에서 읽은 값과 frontmatter 값 불일치 → warn (2026-11-21 신설). 파일명이 Bases·Dataview 필터 값과 어긋나면 둘 중 하나가 거짓이 되므로 일치까지 본다. 어휘·형식은 `change_naming.py`가 단일 원천이다.
 
 Skips: `99_Template`, `docs`, `.claude`, `90_Archive`, `_Wiki`, `_Sources`, `01_Inbox`, `_work`, `backlog.md`, `tasks.md`, `AGENTS.md`, `CLAUDE.md`. Warning-only, exit 0.
 

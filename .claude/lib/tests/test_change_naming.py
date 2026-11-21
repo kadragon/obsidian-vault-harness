@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """change_naming 규칙과 그것을 쓰는 세 곳(생성 스크립트·Rule 4 훅·note_rules Check 6)의 회귀 테스트."""
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -53,11 +54,21 @@ class NameRule(unittest.TestCase):
     def test_build_normalizes_screen_id_and_rejects_bad_summary(self):
         self.assertEqual(cn.build_name("2026-06-25", "PATIS", "hl-3020906-v", "성적입력현황 성능 개선"),
                          "2026-06-25 PATIS hl_3020906_v 성적입력현황 성능 개선")
-        for bad in ("a/b", "x" * 46, "부연 — 설명", "", "[링크]"):
+        for bad in ("a/b", "x" * 46, "부연 — 설명", "", "[링크]", "줄\n바꿈", "탭\t문자"):
             with self.assertRaises(ValueError):
                 cn.build_name("2026-06-25", "PATIS", "", bad)
         with self.assertRaises(ValueError):
             cn.build_name("2026-06-25", "PATIS", "hl09", "약칭은 화면ID가 아님")
+
+    def test_build_accepts_only_dashed_iso_date(self):
+        for bad in ("20260625", "2026-W26-4", "2026-6-25", "2026-02-30"):
+            with self.assertRaises(ValueError, msg=bad):
+                cn.build_name(bad, "PATIS", "", "저장 오류")
+
+    def test_build_rejects_summary_starting_with_screen_id_when_screen_id_empty(self):
+        with self.assertRaises(ValueError):
+            cn.build_name("2026-06-25", "PATIS", "", "hl_3020701_u 외 2개 화면 조회 개선")
+        self.assertIsNotNone(cn.build_name("2026-06-25", "PATIS", "hl_3020701_u", "hl_3020702_u 연계 조회 개선"))
 
     def test_compute_path_half_year_and_collision_across_kinds(self):
         with tempfile.TemporaryDirectory() as d:
@@ -70,12 +81,22 @@ class NameRule(unittest.TestCase):
             p = cn.compute_path(v, "incident", "2026-07-01", "PATIS", "", "저장 오류")
             self.assertEqual(p.name, "2026-07-01 PATIS 저장 오류 (2).md")
 
+    def test_compute_path_collision_ignores_case(self):
+        with tempfile.TemporaryDirectory() as d:
+            v = pathlib.Path(d)
+            folder = v / "14_Changes/incident/2026/하반기"
+            folder.mkdir(parents=True)
+            (folder / "2026-07-01 PATIS API 저장 오류.md").write_text("x", encoding="utf-8")
+            p = cn.compute_path(v, "incident", "2026-07-01", "PATIS", "", "api 저장 오류")
+            self.assertEqual(p.name, "2026-07-01 PATIS api 저장 오류 (2).md")
+
 
 class Generators(unittest.TestCase):
     def run_gen(self, kind, *args):
         with tempfile.TemporaryDirectory() as d:
             return subprocess.run([sys.executable, str(GEN[kind]), "--vault", d, *args],
-                                  capture_output=True, text=True, encoding="utf-8")
+                                  capture_output=True, text=True, encoding="utf-8",
+                                  env={**os.environ, "PYTHONIOENCODING": "utf-8"})
 
     def test_incident_generator_prints_path(self):
         r = self.run_gen("incident", "--date", "2026-04-10", "--system", "PATIS",
@@ -101,6 +122,12 @@ class FolderHookRule4(unittest.TestCase):
 
     def test_legacy_free_improvement_name_warns(self):
         self.assertIn("파일명 규칙 위반", self.hook("C:/V/14_Changes/improvement/2026/하반기/수강신청 로그 개선.md"))
+
+    def test_hook_delegates_to_change_naming_without_own_filename_regex(self):
+        src = HOOK.read_text(encoding="utf-8")
+        self.assertIn("change_naming.parse_name(", src)
+        self.assertNotIn("오류 처리", src)
+        self.assertNotIn(r"\d{4}-\d{2}-\d{2}", src)
 
     def test_new_names_pass_including_folder_note(self):
         self.assertEqual(self.hook("C:/V/14_Changes/incident/2026/하반기/2026-11-20 PATIS hl_3020701_u 저장 오류.md"), "")
@@ -130,6 +157,11 @@ class NoteRulesCheck6(unittest.TestCase):
         self.assertTrue(any("비표준 system" in x for x in v))
         self.assertTrue(any("date 형식" in x for x in v))
         self.assertTrue(any("screen_id 형식" in x for x in v))
+
+    def test_inline_yaml_comments_are_not_values(self):
+        text = fm(system="PATIS\t# 시스템", screen_id="# 여러 화면", date="2026-11-18 # 발생일")
+        v = note_rules.check("/v/14_Changes/incident/2026/하반기/2026-11-18 PATIS 저장 오류.md", text)
+        self.assertEqual(v, [])
 
     def test_index_note_exempt(self):
         self.assertEqual([x for x in note_rules.check("/v/14_Changes/incident/_Changes.md",

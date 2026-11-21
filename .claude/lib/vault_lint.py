@@ -233,7 +233,8 @@ def run(root, checks):
 def rules_digest():
     """Reject snapshots from different lint or template rules."""
     source = pathlib.Path(__file__).read_text(encoding="utf-8")
-    rules = pathlib.Path(note_rules.__file__).read_text(encoding="utf-8")
+    rules = "".join(pathlib.Path(m.__file__).read_text(encoding="utf-8")
+                    for m in (note_rules, note_rules.change_naming))
     return hashlib.sha256((source + rules).encode("utf-8")).hexdigest()
 
 

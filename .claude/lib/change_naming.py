@@ -17,10 +17,10 @@ import unicodedata
 from datetime import date
 from pathlib import Path
 
-# 고정 어휘 — 레포 단위(patis·sugang·webservice·uniweb) + 대표 홈페이지 + 여러 시스템에 걸친 건.
 SYSTEMS = ("PATIS", "sugang", "webservice", "uniweb", "홈페이지", "공통")
-# Nexacro 화면 ID: 모듈 2글자 + 메뉴코드 7자리 + 유형(u·v·b·r…) + 선택 번호. 'hl09' 같은 약칭은 아니다.
-SCREEN_ID_RE = re.compile(r"[a-z]{2}_\d{7}_[a-z]\d{0,2}")
+MODULE, MENU_CODE, SCREEN_TYPE = r"[a-z]{2}", r"\d{7}", r"[a-z]\d{0,2}"
+SCREEN_ID_RE = re.compile(f"{MODULE}_{MENU_CODE}_{SCREEN_TYPE}")
+ISO_DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 SUMMARY_MAX = 45
 # Windows 파일명 금지 문자 + Obsidian 링크를 깨는 문자 + 긴 대시(요약에 부연을 붙이는 관행 차단)
 FORBIDDEN = set('\\/:*?"<>|#^[]') | {"—"}
@@ -60,11 +60,15 @@ def summary_problems(summary: str) -> list[str]:
     bad = sorted({c for c in s if c in FORBIDDEN})
     if bad:
         out.append(f"요약에 금지 문자 {''.join(bad)}")
+    if any(ord(c) < 32 for c in summary):
+        out.append("요약에 줄바꿈·탭 등 제어 문자")
     return out
 
 
 def build_name(on: str, system: str, screen_id: str, summary: str) -> str:
     """규칙에 맞는 파일명(확장자 없음)을 만든다. 규칙 위반이면 ValueError."""
+    if not ISO_DATE_RE.fullmatch(on or ""):
+        raise ValueError(f"date '{on}' — YYYY-MM-DD 고정")
     date.fromisoformat(on)
     if system not in SYSTEMS:
         raise ValueError(f"system '{system}' — {'·'.join(SYSTEMS)} 중 하나")
@@ -74,6 +78,8 @@ def build_name(on: str, system: str, screen_id: str, summary: str) -> str:
     probs = summary_problems(summary)
     if probs:
         raise ValueError("; ".join(probs))
+    if not screen_id and re.match(SCREEN_ID_RE.pattern + r"(\s|$)", summary.strip()):
+        raise ValueError("screen_id 없이 요약이 화면ID로 시작함 — 파서가 화면ID로 읽는다. --screen-id를 쓰거나 요약 첫머리를 바꿀 것")
     return nfc(" ".join(p for p in (on, system, screen_id, summary.strip()) if p))
 
 
@@ -91,8 +97,9 @@ def compute_path(vault: Path, kind: str, on: str, system: str, screen_id: str, s
     stem = build_name(on, system, screen_id, summary)
     d = date.fromisoformat(on)
     root = vault / "14_Changes"
-    existing = {nfc(p.stem).lstrip("_") for p in root.rglob("*.md")} if root.exists() else set()
+    # Windows·macOS 기본 파일시스템은 대소문자를 가리지 않는다
+    existing = {nfc(p.stem).lstrip("_").casefold() for p in root.rglob("*.md")} if root.exists() else set()
     name, n = stem, 2
-    while name in existing:
+    while name.casefold() in existing:
         name, n = f"{stem} ({n})", n + 1
     return root / kind / str(d.year) / half_year(d.month) / f"{name}.md"
