@@ -12,6 +12,8 @@ import re
 import pathlib
 import unicodedata
 
+import change_naming  # 같은 lib 디렉터리 — 훅·vault_lint 모두 lib를 sys.path에 넣고 이 모듈을 부른다
+
 # 훅(쓰기 시점) 제외 경로: 하네스·메타·비노트 경로
 HOOK_SKIP = ("/99_Template/", "/docs/", "/.claude/", "/90_Archive/",
              "/_Wiki/", "/_Sources/", "/01_Inbox/", "/_work",
@@ -64,6 +66,42 @@ def is_area_body(fp_norm):
 
 def is_skipped(fp_norm, skip=HOOK_SKIP):
     return any(s in fp_norm for s in skip)
+
+
+def _fm_scalar(fm, key):
+    """frontmatter 한 줄 스칼라 값. 따옴표·인라인 주석을 뗀다. 없으면 None, 빈 값이면 ''."""
+    m = re.search(rf'^{re.escape(key)}:[ \t]*(.*?)[ \t]*$', fm, re.MULTILINE)
+    if not m:
+        return None
+    return m.group(1).split(' #')[0].strip().strip('"\'')
+
+
+def change_field_problems(fp_norm, fm):
+    """Check 6 — 14_Changes 노트의 system·date·screen_id (2026-11-21 개명과 함께 신설).
+
+    파일명 '{date} {system} {screen_id} {요약}'과 같은 값을 frontmatter에도 둬서 Bases/Dataview로
+    거른다. 둘이 어긋나면 필터와 파일명 중 하나가 거짓이 되므로 일치까지 본다.
+    어휘·형식은 change_naming.py가 단일 원천이다."""
+    out = []
+    system = _fm_scalar(fm, "system")
+    on = _fm_scalar(fm, "date")
+    sid = _fm_scalar(fm, "screen_id") or ""
+    if not system:
+        out.append("frontmatter에 system: 없음 — " + "·".join(change_naming.SYSTEMS) + " 중 하나 (99_Template/_메타데이터 규칙.md)")
+    elif system not in change_naming.SYSTEMS:
+        out.append(f"비표준 system: '{system}' — " + "·".join(change_naming.SYSTEMS) + " 중 하나")
+    if not on:
+        out.append("frontmatter에 date: 없음 — YYYY-MM-DD (incident 발생일 · improvement 작업 완료일)")
+    elif not re.fullmatch(r'\d{4}-\d{2}-\d{2}', on):
+        out.append(f"date 형식 위반: '{on}' — YYYY-MM-DD 고정")
+    if sid and not change_naming.SCREEN_ID_RE.fullmatch(sid):
+        out.append(f"screen_id 형식 위반: '{sid}' — 소문자·밑줄 xx_NNNNNNN_x (예: hl_3020701_u)")
+    parsed = change_naming.parse_name(fp_norm.rsplit("/", 1)[-1][:-3])
+    if parsed:
+        for key, val in (("date", on or ""), ("system", system or ""), ("screen_id", sid)):
+            if parsed[key] != val:
+                out.append(f"파일명과 frontmatter {key} 불일치: 파일명 '{parsed[key]}' · frontmatter '{val}'")
+    return out
 
 
 def check(file_path, text, skip=HOOK_SKIP):
@@ -169,6 +207,10 @@ def check(file_path, text, skip=HOOK_SKIP):
                     violations.append(
                         f"{ct} frontmatter에 'change_type: {ct}' 없음 "
                         f"(99_Template/_{'인시던트' if ct == 'incident' else '개선'}.md 사용)")
+
+            # Check 6: 14_Changes 이름 메타데이터 — 근거는 change_field_problems docstring
+            if re.search(r"/14_Changes/(incident|improvement)/", fp_norm) and note_type != "index":
+                violations.extend(change_field_problems(fp_norm, fm))
         else:
             violations.append("frontmatter 없음 — 99_Template/ 해당 템플릿 사용 필요 (GP#2)")
 

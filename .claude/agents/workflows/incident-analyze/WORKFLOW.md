@@ -55,17 +55,22 @@ Analyze 통합학사시스템 errors and produce a structured incident note.
 
 #### 경로 + 파일명 (스크립트 위임)
 
-반기 판단, 경로 조합, 순번 결정은 모두 `scripts/new_incident_path.py`로 위임한다. LLM이 직접 Glob·카운팅을 수행하지 말 것.
+반기 판단, 경로 조합, 파일명 검증·중복 suffix는 모두 `scripts/new_incident_path.py`로 위임한다. LLM은 `system`·`screen_id`·요약만 정한다.
 
 ```bash
-python3 .claude/agents/workflows/incident-analyze/scripts/new_incident_path.py {YYYY-MM-DD}
+python3 .claude/agents/workflows/incident-analyze/scripts/new_incident_path.py \
+  --date {발생일 YYYY-MM-DD} --system PATIS --screen-id {hl_3020303_u|생략} --summary "{메뉴·기능 + 증상, 45자 이하}"
 ```
 
-출력 예: `/Users/.../14_Changes/incident/2026/상반기/통합학사시스템 오류 처리 2026-04-10_3.md`
+출력 예: `/Users/.../14_Changes/incident/2026/상반기/2026-04-10 PATIS hl_3020303_u 담당교수관리 저장 시 강의교수 PK 중복 오류.md`
 
-스크립트가 하는 일: 발생월 1~6 → `상반기` / 7~12 → `하반기`, 같은 날짜의 기존 파일을 NFC 정규화 후 스캔해 최대 순번 + 1. 파일은 생성하지 않고 경로만 반환한다.
+스크립트가 하는 일: 발생월 1~6 → `상반기` / 7~12 → `하반기`, `system` 어휘·`screen_id` 형식·요약 길이/금지 문자 검증(위반 시 exit 2), `14_Changes` 안에 같은 이름이 있으면 ` (2)`. 파일은 생성하지 않고 경로만 반환한다.
 
-파일명 `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}.md`은 **단일 명명규칙으로 mechanical 강제**된다 (`check-folder-rules.py` Rule 4, PostToolUse Write). 다른 형식(`Error_*`, `오류 처리 *` 등)으로 생성 시 경고. 반드시 위 스크립트 출력 경로를 사용할 것.
+- `system`: `PATIS`·`sugang`·`webservice`·`uniweb`·`홈페이지`·`공통` 중 하나 (`99_Template/_메타데이터 규칙.md`)
+- `screen_id`: 오류가 난 화면 ID(소문자·밑줄). `mc=3020714`처럼 숫자 메뉴코드만 있으면 patis 레포 xfdl 파일명으로 찾는다. 화면이 특정되지 않으면 생략
+- 요약: 어느 메뉴·기능에서 무엇이 실패했는지 (`성적입력 저장 시 YEAR NULL 삽입 오류`)
+
+파일명 `{YYYY-MM-DD} {system} {screen_id} {요약}.md`은 **단일 명명규칙으로 mechanical 강제**된다 (`check-folder-rules.py` Rule 4, 규칙 원천 `.claude/lib/change_naming.py`). 옛 형식 `통합학사시스템 오류 처리 {날짜}_{순번}`은 2026-11-21 폐기 — 쓰면 경고. 반드시 위 스크립트 출력 경로를 사용할 것.
 
 #### 중복 방지
 
@@ -77,8 +82,8 @@ python3 .claude/agents/workflows/incident-analyze/scripts/new_incident_path.py {
 
 | 섹션 | 채우는 내용 |
 |------|-----------|
-| frontmatter | `type: change`, `change_type: incident`, `status: open` (`date created`/`date modified`는 Linter가 자동 관리 -- 직접 넣지 않음). 공문으로 접수된 장애면 `doc_date: YYYY-MM-DD`(공문 시행일), 접수일이 다를 때만 `recv_date` 추가 -- `99_Template/_메타데이터 규칙.md` |
-| `#` 제목 | `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}` |
+| frontmatter | `type: change`, `change_type: incident`, `status: open`, `system`·`screen_id`(있을 때만)·`date`(발생일) — 스크립트에 넘긴 값과 같게 (`note_rules.py` Check 6이 파일명과 대조). (`date created`/`date modified`는 Linter가 자동 관리 -- 직접 넣지 않음). 공문으로 접수된 장애면 `doc_date: YYYY-MM-DD`(공문 시행일), 접수일이 다를 때만 `recv_date` 추가 -- `99_Template/_메타데이터 규칙.md` |
+| `#` 제목 | 파일명과 같게 (`{YYYY-MM-DD} {system} {screen_id} {요약}`) |
 | `## 관련` | 태그는 **직접 작성** (`validate_tag.py --json`으로 검증. tag-validator 위임 금지 — 서브에이전트는 서브에이전트를 호출할 수 없다). 형식: `#부서/{부서명}/{직급}_{이름}` + `#업무/{영역}/{하위영역}/{메뉴명}` |
 | `## 발생 정보` | 발생 일시 (`YYYY-MM-DD HH:mm`) + 기타 맥락 |
 | `## 프로시저` | `{ServiceName/methodName}` |

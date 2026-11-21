@@ -40,7 +40,8 @@ obsidian help <command>    # 특정 명령어 상��� 옵션
 
 ## 볼트 규칙 (반드시 준수)
 
-- 인시던트 파일명: `통합학사시스템 오류 처리 {YYYY-MM-DD}_{seq}.md`
+- change 노트 파일명: `{YYYY-MM-DD} {system} {screen_id} {요약}.md` — `new_incident_path.py`/`new_improvement_path.py`로 생성 (`docs/conventions.md`)
+- change 노트 frontmatter: `system`·`screen_id`(있을 때만)·`date`를 파일명과 같게
 - 경로 구조: `14_Changes/{incident|improvement}/{year}/{상반기|하반기}/`
 - 반기 판단: 1~6월 = 상반기, 7~12월 = 하반기
 - Frontmatter에 `tags`, `systems`, `people`, `area` 필드 넣지 않음

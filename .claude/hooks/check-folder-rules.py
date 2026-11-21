@@ -4,7 +4,7 @@
 #   1. 12_Projects/ 직접 하위 .md 금지 (폴더만 허용)
 #   2. 90_Archive/ 파일 생성 금지
 #   3. 10_Areas/ 깊이 제한 및 무첨부 래퍼 폴더 검사
-#   4. 14_Changes/incident/ 파일명 단일 명명규칙 강제
+#   4. 14_Changes/{incident,improvement}/ 파일명 단일 명명규칙 강제 (lib/change_naming.py)
 import json, sys, re, pathlib, time, unicodedata
 
 # 래퍼 폴더가 방금 생성됐으면(첨부 저장 전 과도기) 무첨부 경고를 스킵하는 유예 시간(초)
@@ -85,17 +85,28 @@ if "/10_Areas/" in fp_norm:
             except OSError:
                 pass
 
-# Rule 4: 14_Changes/incident/ — single canonical filename pattern
-#   '통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}.md'
-#   과거 드리프트(Error_*, '오류 처리 *', '_통합학사…') 재발 차단.
-#   경로/순번은 incident-analyze 워크플로우의 scripts/new_incident_path.py가 생성한다.
-if "/14_Changes/incident/" in fp_norm:
-    name = unicodedata.normalize("NFC", pathlib.Path(fp).name)
-    if not re.match(r'^통합학사시스템 오류 처리 \d{4}-\d{2}-\d{2}_\d+\.md$', name):
-        violations.append(
-            "14_Changes/incident/ 파일명 규칙 위반 — "
-            "'통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}.md' 형식 필수. "
-            "new_incident_path.py로 경로를 생성할 것 (명명규칙 단일화)")
+# Rule 4: 14_Changes/{incident,improvement}/ — single filename rule (2026-11-21)
+#   '{YYYY-MM-DD} {system} {screen_id} {요약}.md' (screen_id 선택). 규칙 본문은
+#   .claude/lib/change_naming.py 하나뿐이다 — 여기서 정규식을 재구현하지 않는다.
+#   경로는 incident-analyze·improvement-plan 워크플로우의 new_*_path.py가 생성한다.
+#   이전 규칙('통합학사시스템 오류 처리 {날짜}_{순번}')은 357건 일괄 개명으로 폐기.
+if re.search(r"/14_Changes/(incident|improvement)/", fp_norm):
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "lib"))
+    try:
+        import change_naming
+    except ModuleNotFoundError:
+        change_naming = None
+    if change_naming is not None:
+        stem = unicodedata.normalize("NFC", pathlib.Path(fp).stem)
+        parsed = change_naming.parse_name(stem)
+        if parsed is None:
+            violations.append(
+                "14_Changes 파일명 규칙 위반 — '{YYYY-MM-DD} {system} {screen_id} {요약}.md' "
+                f"(system: {'·'.join(change_naming.SYSTEMS)}, screen_id는 있을 때만). "
+                "new_incident_path.py / new_improvement_path.py로 경로를 생성할 것")
+        else:
+            violations.extend("14_Changes 파일명 " + p
+                              for p in change_naming.summary_problems(parsed["summary"]))
 
 if violations:
     fname = pathlib.Path(fp).name
