@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- [done] Unified 14_Changes note naming (date·system·screen_id·summary) with system/screen_id/date properties; 356 notes renamed (2026-11-21) → docs/conventions.md
 - [done] inbox-process defaults to full scope without asking; appended request text processed as inline items (2026-11-17)
 - [done] collect_active_notes encoding debt closed: 0 non-UTF-8 notes in 617 scanned, fail-loud kept (2026-11-14)
 - [done] Single harness test runner (`.claude/lib/run_tests.py`) wired into GitHub Actions; `99_Template/` tracked for the status-sync contract test (2026-10-24)

@@ -36,14 +36,15 @@ syntheses 에 기존 분석이 있으면 이후 단계에서 해당 내용을 �
 
 #### 경로 + 파일명 (스크립트 위임)
 
-반기 판단과 동명 파일 suffix 결정은 `scripts/new_improvement_path.py`에 위임한다.
+반기 판단, 파일명 검증, 동명 파일 suffix 결정은 `scripts/new_improvement_path.py`에 위임한다. LLM은 `system`·`screen_id`·요약만 정한다.
 
 ```bash
-python3 .claude/agents/workflows/improvement-plan/scripts/new_improvement_path.py "수강신청 로그 개선"
-# → /Users/.../14_Changes/improvement/2026/상반기/수강신청 로그 개선.md
+python3 .claude/agents/workflows/improvement-plan/scripts/new_improvement_path.py \
+  --date 2026-01-17 --system sugang --summary "NetFUNNEL 거절 시 serviceID·actionID 로그 저장"
+# → /Users/.../14_Changes/improvement/2026/상반기/2026-01-17 sugang NetFUNNEL 거절 시 serviceID·actionID 로그 저장.md
 ```
 
-스크립트가 하는 일: 작성월 1~6 → `상반기` / 7~12 → `하반기`, 해당 연도(양 반기 모두)에서 동일 파일명이 있으면 `_2`, `_3` 자동 증가. 제목은 내용 기반 자유 형식 한글로 LLM이 결정한다 (예: `메뉴접속수 지연 쿼리 수정`, `수강신청 시스템 로그 개선`).
+스크립트가 하는 일: `--date`(작업 완료일, 생략 시 오늘)의 월 1~6 → `상반기` / 7~12 → `하반기`, `system` 어휘·`screen_id` 형식·요약 길이(45자)/금지 문자 검증(위반 시 exit 2), `14_Changes` 안에 같은 이름이 있으면 ` (2)`. 파일명 규칙: `{완료일} {system} {screen_id} {무엇이 어떻게 바뀌었는지}` — screen_id는 노트가 화면 하나를 다룰 때만 (`docs/conventions.md` → `14_Changes/` Naming).
 
 #### 노트 구조
 
@@ -51,8 +52,8 @@ python3 .claude/agents/workflows/improvement-plan/scripts/new_improvement_path.p
 
 | 섹션 | 채우는 내용 |
 |------|-----------|
-| frontmatter | `type: change`, `change_type: improvement`, `status: open` (`date created`/`date modified`는 Linter가 자동 관리 -- 직접 넣지 않음). 공문에서 비롯된 개선이면 `doc_date: YYYY-MM-DD`(공문 시행일), 접수일이 다를 때만 `recv_date` 추가 -- `99_Template/_메타데이터 규칙.md` |
-| `#` 제목 | 개선 제목 |
+| frontmatter | `type: change`, `change_type: improvement`, `status: open`, `system`·`screen_id`(있을 때만)·`date`(완료일) — 스크립트에 넘긴 값과 같게 (`note_rules.py` Check 6이 파일명과 대조). (`date created`/`date modified`는 Linter가 자동 관리 -- 직접 넣지 않음). 공문에서 비롯된 개선이면 `doc_date: YYYY-MM-DD`(공문 시행일), 접수일이 다를 때만 `recv_date` 추가 -- `99_Template/_메타데이터 규칙.md` |
+| `#` 제목 | 파일명과 같게 (`{YYYY-MM-DD} {system} {screen_id} {요약}`) |
 | `## 🏷 Todo` | `- [ ] {구체적 작업 항목} 📅 {YYYY-MM-DD} ➕ {오늘 날짜}` |
 | `## 📑 메뉴` | `{메뉴코드} / #업무/{영역}/{하위영역}/{메뉴명}` |
 | `## 📂 관련 파일` | `{파일명.xml}` 또는 `{프로시저명}` |

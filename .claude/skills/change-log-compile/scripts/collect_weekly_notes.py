@@ -30,6 +30,9 @@ import sys
 from datetime import date, timedelta
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "lib"))
+import change_naming  # noqa: E402
+
 # Windows Bash shells default to cp949; force UTF-8 for JSON output.
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -110,9 +113,11 @@ def read_frontmatter_date(text: str, key: str) -> date | None:
 
 def extract_title(text: str, fallback: Path) -> str:
     m = re.search(r"^#\s+(.+)$", text, re.MULTILINE)
-    if m:
-        return m.group(1).strip()
-    return fallback.stem.lstrip("_")
+    title = m.group(1).strip() if m else fallback.stem.lstrip("_")
+    parsed = change_naming.parse_name(title)
+    if parsed:
+        return " ".join(p for p in (parsed["screen_id"], parsed["summary"]) if p)
+    return title
 
 
 def first_tag(text: str) -> str | None:

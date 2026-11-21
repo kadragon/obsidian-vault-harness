@@ -232,3 +232,17 @@ def test_body_flag_does_not_exclude_note():
 def test_frontmatter_flag_with_yaml_comment_excludes_note():
     text = '---\ntype: work\nweekly_exclude: true # one-time processing\n---\n# t\n'
     assert cw.is_excluded(text) is True
+
+
+def test_extract_title_strips_change_note_date_and_system_prefix():
+    text = "---\ntype: change\n---\n# 2026-11-19 PATIS hl_3020701_u 전자출석부 강의일자 기본값 개선\n"
+    assert cw.extract_title(text, Path("x.md")) == "hl_3020701_u 전자출석부 강의일자 기본값 개선"
+    text = "# 2026-10-23 홈페이지 게시글 대표 URL canonical 적용\n"
+    assert cw.extract_title(text, Path("x.md")) == "게시글 대표 URL canonical 적용"
+
+
+def test_extract_title_keeps_free_titles():
+    assert cw.extract_title("# 202606_강의평가 삭제 요청\n", Path("x.md")) == "202606_강의평가 삭제 요청"
+    assert cw.extract_title("no heading", Path("_수강신청 로그 개선.md")) == "수강신청 로그 개선"
+    # H1이 없으면 파일명으로 대신하고, 그 파일명도 같은 규칙으로 접두를 뗀다
+    assert cw.extract_title("no heading", Path("_2026-11-19 PATIS 저장 오류.md")) == "저장 오류"

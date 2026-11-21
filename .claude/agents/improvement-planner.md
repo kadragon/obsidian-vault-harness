@@ -30,7 +30,7 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 ## 입출력 프로토콜
 
 - **입력**: 개선 ��구사항 (구두 설명, ITSM 요청, 에러 분석 결과 등)
-- **출력**: `14_Changes/improvement/{year}/{상반기|하반기}/` 경로에 개선 노트 생성
+- **출력**: `14_Changes/improvement/{year}/{상반기|하반기}/{완료일} {system} {screen_id} {변경 요약}.md` — 경로는 `new_improvement_path.py`가 만든다
 - **반기 판단**: 작성월 1~6월 = 상반기, 7~12월 = 하반기
 
 ## 태그 작성

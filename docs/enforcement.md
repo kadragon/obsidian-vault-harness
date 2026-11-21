@@ -233,6 +233,7 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
   - **심의 서식도 제외한다** (2026-08-02): Check 2b와 같은 근거·같은 `is_simui_form` 키. 실측상 status 누락 10건과 `#업무/` 미보유 10건이 동일 집합이었다.
   - **"존재"가 아니라 "구체 태그"를 요구한다:** 원시 substring 검사(`#업무/`)는 템플릿 플레이스홀더 `#업무/{영역}/{하위영역}/{메뉴명}`과 인라인 코드 안의 예시 태그도 통과시켰다. `validate-tags.sh`는 중괄호 태그(`grep -v '[{}]'`)와 인라인 코드를 **제거한 뒤** 검사하므로 이 경우 양쪽 훅이 동시에 무음이었다 — 훅의 경고문 자체가 중괄호 형태를 예시하고 있어 현실적인 실패 경로다. 그래서 인라인 코드를 걷어내고 `#업무/(?![{\s])`로 판정한다.
   - `#부서/`는 검사하지 않는다: 실측 미보유 56/201(28%)로 관행이 아니어서 **선택 필드로 강등**했다(2026-08-02 사용자 결정). 있으면 `validate-tags.sh`가 형식을 보고, **부재는 위반도 감점도 아니다** — 평가자도 지적하지 않는다.
+- **Check 6 — change 노트 `system`·`date`·`screen_id` (`14_Changes/{incident,improvement}/`, `type: index` 제외):** `system`이 고정 어휘가 아니거나 없음, `date`가 `YYYY-MM-DD`가 아니거나 없음, `screen_id` 형식 위반, 파일명에서 읽은 값과 frontmatter 값 불일치 → warn (2026-11-21 신설). 파일명이 Bases·Dataview 필터 값과 어긋나면 둘 중 하나가 거짓이 되므로 일치까지 본다. 어휘·형식은 `change_naming.py`가 단일 원천이다.
 
 Skips: `99_Template`, `docs`, `.claude`, `90_Archive`, `_Wiki`, `_Sources`, `01_Inbox`, `_work`, `backlog.md`, `tasks.md`, `AGENTS.md`, `CLAUDE.md`. Warning-only, exit 0.
 
@@ -248,7 +249,7 @@ Skips: `99_Template`, `docs`, `.claude`, `90_Archive`, `_Wiki`, `_Sources`, `01_
    - **첨부는 재귀로 센다 (2026-07-29 수정).** 이전에는 래퍼의 **직속 자식만** 훑어서, 첨부가 `{wrapper}/2026-012/결과물/x.pdf`처럼 한 단계 아래 놓이면 "무첨부"로 읽혔다. 실볼트에서 첨부 37~147개를 가진 `10_Areas/과업심의/` 래퍼 5개가 전부 오탐으로 걸리고 있었다(해당 노트를 편집할 때마다 헛경고). `rglob`으로 바꿔 오탐 5→0.
    - **남아 있는 사각지대 (2026-07-24 실측):** 래퍼 폴더 생성 후 `GRACE_SECONDS`(60초) 이내 Write는 검사를 통째로 건너뛴다. 첨부가 노트보다 늦게 저장되는 경우의 오탐을 막으려는 유예인데, 폴더·노트를 한 번에 만드는 **최초 생성 경로에서는 항상 유예에 걸려** 무첨부 래퍼가 잡히지 않는다(재현 확인: 신규 폴더 + 노트 Write → 무경고). 이후 같은 노트를 편집하면 검사된다. 유예 자체는 의도된 오탐 방지책이라 유지한다.
    - **잔존분 검출 (2026-07-29):** `reorg_archive.py find-bare-wrappers 10_Areas --json`이 `10_Areas/` 전체를 훑어 "첨부 0 + `.md` ≤1"인 래퍼 폴더를 목록화한다. 판정 로직은 Rule 3과 동일하게 맞춰 놨다 — 어긋나면 사각지대를 하나 더 만드는 셈이다. **탐지 전용**(이동 없음); 절차는 `.claude/skills/vault-clean/references/mode-reorganize.md` Step 5. 1차 방어는 여전히 생성 측 `new_work_path.py --flat`.
-4. **`14_Changes/incident/`** — filename must match `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}.md` (NFC-normalized) → warn. Blocks legacy drift patterns (`Error_*`, `오류 처리 *`, `_통합학사…`). Fires on `Write` only, so editing the ~96 pre-existing legacy notes is not nagged; new incident notes must use the `incident-analyze` 워크플로우의 `new_incident_path.py`.
+4. **`14_Changes/{incident,improvement}/`** — filename must parse as `{YYYY-MM-DD} {system} {screen_id} {요약}.md` (screen_id optional, `_` prefix allowed for attachment-folder notes) and the summary must pass the length/forbidden-character rule → warn. The rule lives in `.claude/lib/change_naming.py`; the hook only calls it. Replaced the 2026-06 incident-only pattern `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}` when all 357 change notes were renamed (2026-11-21). New notes must use `new_incident_path.py` / `new_improvement_path.py`.
 
 Warning-only, exit 0.
 
@@ -283,6 +284,8 @@ All three layers are now active. Promotion log:
 20. ✅ `check-nested-delegation.py`의 탐지 알파벳이 `.claude/agents/*.md` 글롭 **단독**이라, 에이전트 파일을 지우는 순간 그 이름이 알파벳에서 빠져 남아 있는 산문 위임 지시가 무검사로 통과하던 문제 (2026-09-01, `dev:harness-curate` 삭제 후보 적대적 검토 중 발견) → `_agent_names()`를 글롭 ∪ `_FALLBACK_AGENT_NAMES` 합집합으로 변경. 폴백은 원래 `OSError` 경로에서만 쓰여, 정상 디렉터리 읽기는 줄어든 글롭을 그대로 반환했다. **교훈: 가드가 자기 검사 대상 목록을 삭제 가능한 파일에서 유도하면, 대상을 지우는 행위가 곧 가드를 끄는 행위가 된다** — 은퇴한 에이전트를 가리키는 지시야말로 잡아야 할 대상인데 정확히 그 순간 탐지가 꺼졌다. #17의 "0건은 세 가지 뜻"과 같은 계열이다.
 
 21. ✅ 단계가 쌓인 프로젝트 허브 노트가 날짜별 진행 로그로 149줄까지 늘어도 신호가 없던 문제 → `check-project-hub-length.py`(120줄 초과 경고) + `project-restructure` 스킬 (2026-09-28). 허브 판정은 `{폴더}/_{폴더}.md`이면서 프로젝트 폴더가 `12_Projects/` 또는 `12_Projects/{YYYY}/` 바로 아래일 때만 — 단계 폴더 안 `_3. 과업심의.md` 같은 이름도 파일명 조건은 통과하므로 위치 조건이 필요했다(테스트가 발견). `Write` 전용인 `check-folder-rules.py`에 넣지 않은 이유: 허브는 주로 Edit로 길어진다.
+
+22. ✅ change 노트 이름이 `통합학사시스템 오류 처리 {날짜}_{순번}`(incident)과 자유 제목(improvement) 두 갈래라 파일명만으로 시스템·화면·내용을 알 수 없고 필터 속성도 없던 문제 → `.claude/lib/change_naming.py` 단일 규칙 + Rule 4 확장(incident·improvement 공통) + `note_rules.py` Check 6 + 생성 스크립트 2종 교체, 357건 일괄 개명(2026-11-21)
 
 ## Generator Config (not version-controlled)
 

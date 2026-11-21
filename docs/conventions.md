@@ -4,11 +4,19 @@
 
 | Note type | Pattern | Example |
 |-----------|---------|---------|
-| Incident | `통합학사시스템 오류 처리 {YYYY-MM-DD}_{순번}` (generator: `incident-analyze` 워크플로우의 `new_incident_path.py`) | `통합학사시스템 오류 처리 2026-04-10_1` |
-| Improvement | `{제목}` — `14_Changes/improvement/{YYYY}/{반기}/` 디렉터리로 분류 (generator: `improvement-plan` 워크플로우의 `new_improvement_path.py`) | `대학 검색 팝업 조회 기능 개선` |
+| Incident | `{발생일} {system} {screen_id} {오류 요약}` — screen_id는 있을 때만 (generator: `incident-analyze` 워크플로우의 `new_incident_path.py`) | `2026-04-10 PATIS hl_3020303_u 담당교수관리 저장 시 강의교수 PK 중복 오류` |
+| Improvement | `{완료일} {system} {screen_id} {변경 요약}` (generator: `improvement-plan` 워크플로우의 `new_improvement_path.py`) | `2026-10-23 홈페이지 게시글 대표 URL canonical 적용` |
 | Work matter | `YYYYMM_{summary}` | `202604_학점교류 신청서류 간소화` |
 | Training | `YYYY-MM-DD {name}` | `2026-04-10 정보보안 교육` |
 | Project | `{identifier}` (folder name) | `2026_과업심의_API분리` |
+
+### `14_Changes/` Naming (2026-11-21)
+
+- 규칙 원천: `.claude/lib/change_naming.py` — 생성 스크립트·`check-folder-rules.py` Rule 4·`note_rules.py` Check 6이 같은 모듈을 쓴다.
+- `system` 어휘: `PATIS` · `sugang` · `webservice` · `uniweb` · `홈페이지` · `공통`. `screen_id`는 소문자·밑줄(`hl_3020701_u`).
+- 요약은 40자 안팎(상한 45자). `\ / : * ? " < > | # ^ [ ]`와 `—`는 쓰지 않는다 — 긴 부연은 본문 요약 callout에 둔다.
+- 폴더는 `{incident|improvement}/{YYYY}/{상반기|하반기}/`(2023년분은 월 폴더 유지). 첨부가 있으면 `{이름}/_{이름}.md`.
+- frontmatter `system`·`screen_id`·`date`를 파일명과 같게 둔다. 같은 이름이 있으면 ` (2)`.
 
 ### `10_Areas/` Depth Rules
 

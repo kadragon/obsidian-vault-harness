@@ -29,7 +29,7 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill, WebFetch, WebSearch, ToolSear
 ## 입출력 프로토콜
 
 - **입력**: 에러 로그 텍스트 (PARAMETER_INFO, ERR_INFO, 스택 트레이스 등)
-- **출력**: `14_Changes/incident/{year}/{상반기|하반기}/` 경로에 인시던트 노트 생성
+- **출력**: `14_Changes/incident/{year}/{상반기|하반기}/{발생일} {system} {screen_id} {오류 요약}.md` — 경로는 `new_incident_path.py`가 만든다
 - **반기 판단**: 발생월 1~6월 = 상반기, 7~12월 = 하반기
 
 ## 태그 작성

@@ -1,81 +1,44 @@
 #!/usr/bin/env python3
-"""Compute the target path for a new improvement note.
+"""Compute the target path for a new improvement note (14_Changes/improvement/).
 
-Rules (from improvement-plan WORKFLOW.md):
-  - Directory: `14_Changes/improvement/{YYYY}/{상반기|하반기}/`
-  - Half-year: month 1-6 → 상반기, 7-12 → 하반기
-  - Filename:  `{제목}.md`, free-form Korean title
-  - Dup rule:  if `{제목}.md` already exists (anywhere under the year dir),
-               append `_2`, `_3`, ... until unique
+Naming rule lives in .claude/lib/change_naming.py:
+  "{YYYY-MM-DD} {system} {screen_id} {summary}.md" — screen_id only when the note
+  centers on one Nexacro screen; system in PATIS·sugang·webservice·uniweb·홈페이지·공통.
+  Folder: {YYYY}/{상반기|하반기}/ by the date. Same name anywhere under 14_Changes -> " (2)", " (3)" ...
+  Date = 작업 완료일. Summary says what changed.
 
 Usage:
-    python3 new_improvement_path.py "수강신청 로그 개선" \\
-        [--date YYYY-MM-DD] [--vault /path/to/vault]
+    python3 new_improvement_path.py --date YYYY-MM-DD --system PATIS \
+        [--screen-id hl_3020701_u] --summary "요약 45자 이하" [--vault /path/to/vault]
 
 Output: absolute path of the new note on stdout. Does NOT create the file.
+Exit 2 on a rule violation (message on stderr).
 """
 from __future__ import annotations
 
 import argparse
 import sys
-import unicodedata
 from datetime import date
 from pathlib import Path
 
-
-def _nfc(s: str) -> str:
-    return unicodedata.normalize("NFC", s)
-
-
-def half_year(month: int) -> str:
-    if not 1 <= month <= 12:
-        raise ValueError(f"invalid month: {month}")
-    return "상반기" if month <= 6 else "하반기"
-
-
-def compute_path(vault: Path, title: str, on: date) -> Path:
-    year_dir = vault / "14_Changes" / "improvement" / str(on.year)
-    folder = year_dir / half_year(on.month)
-
-    # Dup check spans the whole year (cross-half-boundary safety).
-    # macOS stores names in NFD — normalize both sides before comparing.
-    existing: set[str] = (
-        {_nfc(p.name) for p in year_dir.rglob("*.md")}
-        if year_dir.exists() else set()
-    )
-
-    def first_free(base: str) -> str:
-        candidate = _nfc(f"{base}.md")
-        if candidate not in existing:
-            return candidate
-        n = 2
-        while _nfc(f"{base}_{n}.md") in existing:
-            n += 1
-        return _nfc(f"{base}_{n}.md")
-
-    return folder / first_free(title)
+sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "lib"))
+import change_naming  # noqa: E402
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("title", help="improvement note title (no .md suffix)")
-    p.add_argument("--date", default=None,
-                   help="reference date for half-year (default: today)")
-    p.add_argument("--vault", default=".",
-                   help="vault root (default: cwd)")
-    args = p.parse_args()
-
-    on = date.fromisoformat(args.date) if args.date else date.today()
-    vault = Path(args.vault).resolve()
-
-    if not args.title.strip():
-        print("error: title is empty", file=sys.stderr)
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--date", default=None, help="work completion date, YYYY-MM-DD (default: today)")
+    p.add_argument("--system", required=True, help="·".join(change_naming.SYSTEMS))
+    p.add_argument("--screen-id", default="", help="primary Nexacro screen, e.g. hl_3020701_u (optional)")
+    p.add_argument("--summary", required=True, help="one-line Korean summary, <= 45 chars")
+    p.add_argument("--vault", default=".", help="vault root (default: cwd)")
+    a = p.parse_args()
+    on = a.date or date.today().isoformat()
+    try:
+        print(change_naming.compute_path(Path(a.vault).resolve(), "improvement", on, a.system, a.screen_id, a.summary))
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
         return 2
-    if "/" in args.title:
-        print("error: title must not contain '/'", file=sys.stderr)
-        return 2
-
-    print(compute_path(vault, args.title.strip(), on))
     return 0
 
 
