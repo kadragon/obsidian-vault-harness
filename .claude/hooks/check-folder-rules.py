@@ -5,7 +5,6 @@
 #   2. 90_Archive/ 파일 생성 금지
 #   3. 10_Areas/ 깊이 제한 및 무첨부 래퍼 폴더 검사
 #   4. 14_Changes/incident/ 파일명 단일 명명규칙 강제
-# post-write.py 러너는 tool_name == "Write" 일 때만 이 검사를 부른다.
 import sys, re, pathlib, time, unicodedata
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "lib"))

@@ -81,6 +81,26 @@ class PostWriteTest(unittest.TestCase):
         self.assertIn("#업무/학사/없는영역 → #업무/없는영역", msg)
         self.assertNotIn("다음 줄", msg)
 
+    def test_dept_tag_in_frontmatter_with_crlf(self):
+        body = "---\r\ntype: work\r\nstatus: open\r\n#부서/학사관리과\r\n---\r\n# t\r\n#업무/학사\r\n"
+        msg = run_runner(self.vault, "10_Areas/학사/n.md", body)
+        self.assertIn("#부서 태그가 frontmatter에 있음", msg)
+
+    @unittest.skipUnless(os.name == "nt", "MSYS-style drive paths exist only on Windows")
+    def test_msys_style_path_is_accepted(self):
+        note = self.vault / "10_Areas/학사/n.md"
+        note.parent.mkdir(parents=True, exist_ok=True)
+        note.write_text(BAD_TAGS, encoding="utf-8", newline="")
+        drive, rest = str(note).split(":", 1)
+        msys = "/" + drive.lower() + rest.replace("\\", "/")
+        result = subprocess.run(
+            [sys.executable, str(self.vault / ".claude" / "hooks" / "check-tags.py")],
+            input=json.dumps({"tool_input": {"file_path": msys}}),
+            text=True, encoding="utf-8", capture_output=True,
+            env={**os.environ, "CLAUDE_PROJECT_DIR": str(self.vault)})
+        self.assertIn("[태그 검증 경고]",
+                      json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"])
+
     def test_dept_tag_in_frontmatter(self):
         msg = run_runner(self.vault, "10_Areas/학사/n.md",
                          "---\ntype: work\nstatus: open\n#부서/학사관리과\n---\n# t\n#업무/학사\n")

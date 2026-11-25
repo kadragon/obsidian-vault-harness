@@ -17,7 +17,7 @@ from hook_io import run_standalone
 try:
     import validate_tag
 except ModuleNotFoundError:
-    validate_tag = None   # 라이브러리 부재 시 조용히 통과 — 쓰기를 막지 않는다
+    validate_tag = None
 
 VAULT_ROOT = pathlib.Path(__file__).resolve().parents[2]
 SKIP_DIRS = ("/.claude/", "/99_Template/", "/docs/")
@@ -27,7 +27,10 @@ TAG_RE = re.compile(r'#(업무|부서)/[^ \t"]*')
 
 
 def _norm(path: str) -> str:
-    return os.path.abspath(path).replace("\\", "/")
+    """Comparable form of a path: MSYS /c/... -> C:/..., links resolved, forward slashes."""
+    if os.name == "nt" and re.match(r"^/[A-Za-z](/|$)", path):
+        path = path[1].upper() + ":" + path[2:]
+    return os.path.realpath(path).replace("\\", "/")
 
 
 def _strip_code(text: str) -> list[str]:
@@ -44,7 +47,6 @@ def _strip_code(text: str) -> list[str]:
 
 
 def _frontmatter_has_dept_tag(text: str) -> bool:
-    """Lines from the first '---' up to (excluding) the next '---' contain '#부서/'."""
     count = 0
     for ln in text.split("\n"):
         if ln == "---":
@@ -57,7 +59,10 @@ def _frontmatter_has_dept_tag(text: str) -> bool:
 
 
 def check(fp, tool_name=None):
-    if validate_tag is None or not fp or not fp.endswith(".md"):
+    if not fp or not fp.endswith(".md"):
+        return None
+    if validate_tag is None:
+        print("check-tags: validate_tag.py not found — tag validation skipped", file=sys.stderr)
         return None
     full = _norm(fp)
     if not full.lower().startswith(_norm(str(VAULT_ROOT)).lower() + "/"):
@@ -65,7 +70,7 @@ def check(fp, tool_name=None):
     if any(s in full for s in SKIP_DIRS):
         return None
     try:
-        with open(fp, encoding="utf-8", errors="replace", newline="") as f:
+        with open(full, encoding="utf-8", errors="replace") as f:
             text = f.read()
     except OSError:
         return None
@@ -73,7 +78,6 @@ def check(fp, tool_name=None):
     violations = []
 
     # Placeholder tags in docs/templates ({area}, {부서명}) are markup — drop braces.
-    # Per line, like grep -o: a tag never spans a newline.
     tags = sorted({m.group(0).strip() for ln in _strip_code(text) for m in TAG_RE.finditer(ln)
                    if not re.search(r"[{}]", m.group(0))})
     report = []

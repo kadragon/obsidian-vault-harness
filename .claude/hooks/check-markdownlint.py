@@ -11,6 +11,8 @@
 # installed lazily on first use; a failed install is not retried for FAIL_RETRY_SECONDS.
 # Kept as its own hook (not inside post-write.py) so the Node process runs in parallel
 # with the in-process Python checks.
+from __future__ import annotations
+
 import os
 import pathlib
 import re
@@ -33,12 +35,45 @@ HIT_RE = re.compile(r"^(?P<file>.+?\.md):(?P<line>\d+)(?::\d+)? (?P<rule>MD\d{3}
 def cache_dir() -> pathlib.Path:
     override = os.environ.get("MARKDOWNLINT_CACHE_DIR")
     if override:
-        return pathlib.Path(override)
+        return pathlib.Path(override).expanduser().resolve()
     return pathlib.Path.home() / ".cache" / "knue-vault-harness" / f"markdownlint-cli2-{VERSION}"
 
 
 def entry_point(cache: pathlib.Path) -> pathlib.Path:
     return cache / "node_modules" / "markdownlint-cli2" / "markdownlint-cli2-bin.mjs"
+
+
+def publish_install(staging: pathlib.Path, cache: pathlib.Path) -> None:
+    """Move the staged node_modules into cache, replacing a stale or partial copy."""
+    cache.mkdir(parents=True, exist_ok=True)
+    target = cache / "node_modules"
+    for _ in range(2):
+        try:
+            os.replace(staging / "node_modules", target)
+            return
+        except OSError:
+            if entry_point(cache).is_file():
+                return
+            shutil.rmtree(target, ignore_errors=True)
+
+
+def install_atomically(cache: pathlib.Path, npm: str) -> bool:
+    staging = cache.with_name(f"{cache.name}.tmp-{os.getpid()}")
+    try:
+        staging.mkdir(parents=True, exist_ok=True)
+        # No pipes: on Windows npm is a .cmd wrapper, and a pipe held by an orphaned child
+        # would keep subprocess.run blocked past its timeout.
+        r = subprocess.run(
+            [npm, "install", "--no-audit", "--no-fund", "--silent", "--prefix", str(staging),
+             f"markdownlint-cli2@{VERSION}"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=INSTALL_TIMEOUT)
+        if r.returncode == 0 and entry_point(staging).is_file():
+            publish_install(staging, cache)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+    return entry_point(cache).is_file()
 
 
 def ensure_installed() -> pathlib.Path | None:
@@ -56,33 +91,19 @@ def ensure_installed() -> pathlib.Path | None:
     npm = shutil.which("npm")
     if not npm:
         return None
-    # Install beside the target, then rename: concurrent sessions never see a half install.
-    staging = cache.with_name(f"{cache.name}.tmp-{os.getpid()}")
-    ok = False
-    try:
-        staging.mkdir(parents=True, exist_ok=True)
-        r = subprocess.run(
-            [npm, "install", "--no-audit", "--no-fund", "--silent", "--prefix", str(staging),
-             f"markdownlint-cli2@{VERSION}"],
-            capture_output=True, text=True, encoding="utf-8", timeout=INSTALL_TIMEOUT)
-        ok = r.returncode == 0 and entry_point(staging).is_file()
-        if ok:
-            try:
-                os.replace(staging, cache)
-            except OSError:
-                pass  # another session installed first
-    except (OSError, subprocess.TimeoutExpired):
-        ok = False
-    finally:
-        shutil.rmtree(staging, ignore_errors=True)
-    if entry.is_file():
-        return entry
+    # The marker goes down before npm runs, so a hook killed mid-install still backs off.
     try:
         marker.parent.mkdir(parents=True, exist_ok=True)
         marker.touch()
     except OSError:
         pass
-    return None
+    if not install_atomically(cache, npm):
+        return None
+    try:
+        marker.unlink()
+    except OSError:
+        pass
+    return entry
 
 
 def check(fp, tool_name=None):

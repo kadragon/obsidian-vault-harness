@@ -2,6 +2,14 @@
 
 ## Review Backlog
 
+### PR #39 — [HARNESS] Consolidate per-edit PostToolUse hooks into one runner (2026-11-26)
+
+- [ ] [constraint] Encode the "markdownlint stays a separate hook" rule: assert settings.json registers check-markdownlint.py on its own and post-write.CHECKS omits it, then drop the comments (source: comments) — .claude/hooks/check-markdownlint.py:12, .claude/hooks/post-write.py:16
+- [ ] [constraint] Test that check-tags.py takes verdicts from validate_tag.validate (stub the module) instead of a header comment (source: comments) — .claude/hooks/check-tags.py:4
+- [ ] [constraint] Test that bash .claude/hooks/validate-tags.sh prints the same output as check-tags.py, then drop the legacy-entry-point comment (source: comments) — .claude/hooks/validate-tags.sh:2
+- [ ] [debt] Make CHECKS entries a NamedTuple (filename, write_only) instead of a bare tuple (source: comments) — .claude/hooks/post-write.py:CHECKS
+- [ ] [debt] Move the Write-only gate of check-folder-rules.py into check() so the rule lives in that file, not the runner table (source: comments) — .claude/hooks/check-folder-rules.py
+
 ### PR #25 — [REFACTOR] make note-evaluator default to source fact-check table (2026-10-03)
 
 - [ ] [verify] 새 평가자 계약의 실제 호출 1회 관찰 검증(spec Testing Decisions) — 에이전트 정의가 세션 시작 시 로드돼 같은 세션에서는 관찰 불가. 다음 inbox 처리에서 3-b 호출 시 표·`VERDICT`·`HOLD_DELETE` 반환 여부 확인 (source: task-next) — `.claude/agents/note-evaluator.md` *(deferred: live inbox run needed — agent definitions load at session start)*

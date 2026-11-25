@@ -64,6 +64,12 @@ class MarkdownlintHookTest(unittest.TestCase):
     def test_non_markdown_is_silent(self):
         self.assertEqual(run_hook("10_Areas/학사/a.txt", TABLE_GLUED), "")
 
+    def test_existing_empty_cache_dir_is_filled(self):
+        # a pre-created (empty) cache directory must not make the install look failed
+        with tempfile.TemporaryDirectory() as cache:
+            env = {**os.environ, "MARKDOWNLINT_CACHE_DIR": cache}
+            self.assertIn("MD056", run_hook("10_Areas/학사/노트.md", TABLE_GLUED, env=env))
+
     def test_missing_install_without_npm_is_silent(self):
         # empty cache + no node/npm on PATH: skip quietly, never fail the write
         with tempfile.TemporaryDirectory() as cache:

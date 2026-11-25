@@ -9,10 +9,6 @@
 # (advisory text, or None when clean) and can still be run alone: `python3 check-x.py < payload`.
 # The messages are joined into one additionalContext; nothing here blocks a write.
 #
-# A check that raises (e.g. a SyntaxError in lib/note_rules.py) must not vanish silently
-# — that turns a broken check into "no findings" — so it is reported in the output and
-# on stderr while the remaining checks still run.
-#
 # markdownlint is a Node process and stays a separate hook (check-markdownlint.py) so it
 # runs in parallel with this one.
 import importlib.util
@@ -25,7 +21,6 @@ HOOKS = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HOOKS.parent / "lib"))
 from hook_io import emit, payload_fields
 
-# (file, write_only) — order is the order the messages appear in.
 CHECKS = (
     ("check-todo-due-date.py", False),
     ("check-tags.py", False),
@@ -34,7 +29,7 @@ CHECKS = (
     ("check-skill-doc.py", False),
     ("check-bare-python.py", False),
     ("check-project-hub-length.py", False),
-    ("check-folder-rules.py", True),   # path rules apply to newly created files only
+    ("check-folder-rules.py", True),
 )
 
 
