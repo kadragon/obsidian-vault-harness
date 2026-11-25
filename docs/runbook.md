@@ -220,7 +220,7 @@ python3 .claude/lib/tests/test_vault_lint.py
 
 | 스크립트 | 호출처 |
 |---------|-------|
-| `.claude/lib/validate_tag.py` | `validate-tags.sh` 훅 · `incident-analyst`·`improvement-planner`·`training-note-manager` 에이전트 · `inbox-process` 스킬 · `improvement-plan` 워크플로우 |
+| `.claude/lib/validate_tag.py` | `check-tags.py` 훅 검사 · `incident-analyst`·`improvement-planner`·`training-note-manager` 에이전트 · `inbox-process` 스킬 · `improvement-plan` 워크플로우 |
 | `.claude/lib/moc_gate.py` | `inbox-process` 스킬 · `docs/workflows.md` sweep 헬스체크 |
 | `.claude/lib/hwpx_text.py` | `gwaeop-simui-review` `extract_bundle.py` · `inbox-process` 스킬(0단계·reference 갈래) · `inbox-reference-worker` 에이전트 |
 | `.claude/lib/run_tests.py` | 하네스 변경 마무리 시 전체 회귀 검사(`dev:task-review` 등) |
@@ -246,11 +246,11 @@ python3 .claude/lib/tests/test_vault_lint.py
 
 ## Common Failures
 
-### validate-tags.sh fires on every edit
+### check-tags.py fires on every edit
 
 **Symptom:** Hook warnings appear after every Write/Edit to `.md` files.  
 **Cause:** Correct behavior — hook is warning-only, not blocking.  
-**Fix:** Review warning. If false positive, note exception. Hook lives at `.claude/hooks/validate-tags.sh`.
+**Fix:** Review warning. If false positive, note exception. Check lives at `.claude/hooks/check-tags.py` (run by `post-write.py`). A `[훅 오류] …` line in the hook output means a check raised and was skipped — fix that file; the other checks still ran.
 
 ### Syncthing conflict files appear
 

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- [done] Consolidate per-edit PostToolUse hooks into one runner; markdownlint runs from a local install (2026-11-26) → docs/enforcement.md
 - [done] inbox-process defaults to full scope without asking; appended request text processed as inline items (2026-11-17)
 - [done] collect_active_notes encoding debt closed: 0 non-UTF-8 notes in 617 scanned, fail-loud kept (2026-11-14)
 - [done] Single harness test runner (`.claude/lib/run_tests.py`) wired into GitHub Actions; `99_Template/` tracked for the status-sync contract test (2026-10-24)

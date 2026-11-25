@@ -14,10 +14,12 @@
 # 사용:
 #   (훅) stdin JSON {"tool_input":{"file_path":...}}
 #   python3 .claude/hooks/check-skill-doc.py --sweep [vault_root]   # 전수, 발견 시 exit 1
-import json
 import pathlib
 import re
 import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "lib"))
+from hook_io import run_standalone
 
 MAX_SKILL_LINES = 250
 MAX_REF_LINES = 350
@@ -36,7 +38,7 @@ def is_skill_doc(path: pathlib.Path) -> bool:
     return "/.claude/skills/" in p and p.endswith(".md") and "/.pytest_cache/" not in p
 
 
-def check(path: pathlib.Path) -> list[str]:
+def lint_doc(path: pathlib.Path) -> list[str]:
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
     except OSError:
@@ -76,7 +78,7 @@ def sweep(root: pathlib.Path) -> int:
     for p in sorted((root / ".claude" / "skills").rglob("*.md")):
         if not is_skill_doc(p):
             continue
-        hits = check(p)
+        hits = lint_doc(p)
         if hits:
             total += len(hits)
             print(f"{p.relative_to(root)}")
@@ -86,32 +88,27 @@ def sweep(root: pathlib.Path) -> int:
     return 1 if total else 0
 
 
-def main() -> None:
-    if len(sys.argv) > 1 and sys.argv[1] == "--sweep":
-        root = pathlib.Path(sys.argv[2] if len(sys.argv) > 2 else ".").resolve()
-        sys.exit(sweep(root))
-
-    try:
-        d = json.loads(sys.stdin.read())
-    except Exception:
-        sys.exit(0)
-    fp = (d.get("tool_input") or {}).get("file_path", "")
+def check(fp, tool_name=None):
     if not fp:
-        sys.exit(0)
+        return None
     path = pathlib.Path(fp)
     if not path.is_file() or not is_skill_doc(path):
-        sys.exit(0)
-    hits = check(path)
+        return None
+    hits = lint_doc(path)
     if not hits:
-        sys.exit(0)
-    msg = (
+        return None
+    return (
         f"[스킬 문서 경고] {path.name}\n" + "\n".join(f"  {h}" for h in hits)
         + "\n조치: 규칙은 명령형 한 줄로, 근거는 docs/harness-log.md로, 환경 판단은 스크립트로 옮겨라."
     )
-    print(json.dumps({
-        "hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": msg}
-    }))
+
+
+def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] == "--sweep":
+        root = pathlib.Path(sys.argv[2] if len(sys.argv) > 2 else ".").resolve()
+        return sweep(root)
+    return run_standalone(check)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

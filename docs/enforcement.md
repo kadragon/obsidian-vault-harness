@@ -10,7 +10,7 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 |-----------------|-------------------|--------|
 | #1 Existing notes immutable | AGENTS.md rule + Hard Stop + 대량편집 dry-run 규율 | Doc-enforced (의도적) |
 | #2 Follow templates | `check-template.py` PostToolUse hook이 `.claude/lib/note_rules.py`(규칙 SSOT)를 호출 (mechanical) | Shell-enforced (committed · SSOT 분리 2026-08-25) |
-| #3 Normalize tags (form + semantic) | `validate-tags.sh` PostToolUse hook이 태그를 추출해 `validate_tag.py --json`에 파이프 (mechanical) → 문맥 의존 건만 `tag-validator` | Shell-enforced (form: committed · semantic: 2026-07-29) |
+| #3 Normalize tags (form + semantic) | `check-tags.py` 검사(`post-write.py` 러너가 호출, `validate-tags.sh`는 같은 검사의 호환용 진입점)가 태그를 추출해 `validate_tag.py --json`에 파이프 (mechanical) → 문맥 의존 건만 `tag-validator` | Shell-enforced (form: committed · semantic: 2026-07-29) |
 | 위임 비용 규칙 #1 (중첩 위임 금지) | `.claude/agents/*.md` `tools:` 화이트리스트 (런타임 차단) + `check-nested-delegation.py` PostToolUse hook (산문 린터) | Shell-enforced (committed) |
 | #4 Folder rules | `check-folder-rules.py` PostToolUse hook (mechanical) | Shell-enforced (committed) |
 | #2 Task date fields | `check-todo-due-date.py` PostToolUse hook (mechanical) | Shell-enforced |
@@ -18,8 +18,18 @@ Notes-only vault — no git pre-commit / CI layer. Only Claude Code PostToolUse 
 | 스킬 문서 장황함·환경 종속 (규칙+근거 서사 혼재, 머신 사실 하드코딩) | `check-skill-doc.py` PostToolUse hook + `--sweep` 전수 스캔 (mechanical, warning-only) | Shell-enforced (2026-09-05) |
 | 하네스 파일의 맨 `python` 호출 (검사 무력화) | `check-bare-python.py` PostToolUse hook + `--sweep` 전수 스캔 (mechanical) | Shell-enforced (2026-08-02) |
 | 프로젝트 허브 노트 비대 (`12_Projects/…/{폴더}/_{폴더}.md` > 120줄) | `check-project-hub-length.py` PostToolUse `Write\|Edit` hook → `project-restructure` 스킬 제안 (mechanical, warning-only) | Shell-enforced (2026-09-28) |
-| 마크다운 문법 (표 깨짐·끝 공백·코드블록 언어 등) | `check-markdownlint.py` PostToolUse `Write\|Edit` hook → `npx markdownlint-cli2` 단건, 규칙은 `.markdownlint-cli2.jsonc` Obsidian 화이트리스트 (mechanical, warning-only; npx 부재 시 무음 통과). 전수: `npx markdownlint-cli2 "**/*.md"`. `--fix`는 MD009·MD047·MD058만 실효 — MD011·MD037·MD038은 오탐·오수정으로 제외 | Shell-enforced (2026-11-12) |
+| 마크다운 문법 (표 깨짐·끝 공백·코드블록 언어 등) | `check-markdownlint.py` PostToolUse `Write\|Edit` hook → 고정 버전 로컬 설치본(`~/.cache/knue-vault-harness/markdownlint-cli2-0.17.2`, 최초 1회 자동 설치) 단건, 규칙은 `.markdownlint-cli2.jsonc` Obsidian 화이트리스트 (mechanical, warning-only; npx 부재 시 무음 통과). 전수: `npx markdownlint-cli2 "**/*.md"`. `--fix`는 MD009·MD047·MD058만 실효 — MD011·MD037·MD038은 오탐·오수정으로 제외 | Shell-enforced (2026-11-12) |
 | 머신 간 커밋 이력 갈라짐 (Syncthing이 `.git/` 제외) | `git-sync-check.py` SessionStart hook (mechanical) | Shell-enforced (2026-09-15) |
+
+## PostToolUse 러너 — `post-write.py` (2026-11-26)
+
+`settings.json`의 `Write|Edit` PostToolUse는 훅 2개만 등록한다: `post-write.py`(파이썬 검사 전부)와 `check-markdownlint.py`(Node 프로세스라 병렬로 따로 돈다). 편집당 훅 프로세스가 10개(bash→python3 홉마다 Windows에서 약 0.4초)였던 것을 줄이기 위해 합쳤다.
+
+- `post-write.py`는 페이로드를 한 번 읽고 `check-todo-due-date` → `check-tags` → `check-template` → `check-nested-delegation` → `check-skill-doc` → `check-bare-python` → `check-project-hub-length` 순으로 각 파일의 `check(fp, tool_name) -> str | None`을 같은 프로세스에서 부른다. `check-folder-rules`는 `tool_name == "Write"`일 때만. 메시지는 한 `additionalContext`로 이어 붙인다 (원문 그대로).
+- 각 `check-*.py`는 단독 실행(`python3 check-x.py < 페이로드`)도 유지한다 — 공용 입출력은 `.claude/lib/hook_io.py`.
+- **검사가 예외를 내면** 러너가 `[훅 오류] {파일}: {예외}`를 메시지와 stderr에 남기고 나머지 검사는 계속 돈다. 깨진 검사가 "발견 0건"으로 읽히는 것을 막는 규칙이다 (`check-template.py`의 SyntaxError 주석과 같은 이유).
+- 새 검사는 `check()`를 노출하는 `check-*.py`를 만들고 `post-write.py`의 `CHECKS`에 한 줄 추가한다. `settings.json`에 훅을 따로 등록하지 않는다.
+- markdownlint를 `npx --yes`에서 로컬 설치본으로 바꾼 이유: npx는 편집마다 레지스트리를 확인해 네트워크 상태에 따라 0.7~12초로 흔들렸다. 로컬 설치본은 약 0.9~1.2초로 일정하고 오프라인에서도 돈다. 설치 위치는 Syncthing 동기화 대상인 볼트 밖이다.
 
 ## 원격 동기화 훅 — `git-sync-check.py` (2026-09-15)
 
@@ -100,9 +110,9 @@ python3 .claude/lib/vault_lint.py --strict           # 발견 시 exit 1
 
 ## Tag Validation Hooks
 
-### Active: `validate-tags.sh` (mechanical)
+### Active: `check-tags.py` (mechanical)
 
-`.claude/hooks/validate-tags.sh`, registered in **`settings.json`** (committed) as `PostToolUse` on `Write|Edit`.
+`.claude/hooks/check-tags.py`(구 `validate-tags.sh`, 2026-11-26 파이썬 이식 — 경로로 부르는 문서·에이전트용으로 `validate-tags.sh`는 같은 검사를 실행하는 얇은 진입점으로 남김). `post-write.py` 러너가 호출하며 `settings.json`(committed)에서 `PostToolUse` `Write|Edit`로 돈다.
 
 훅 자체는 **태그를 추출해 `.claude/lib/validate_tag.py - --json`에 파이프**하고 결과를 보고할 뿐, 규칙을 스스로 판정하지 않는다 (2026-07-29). 태그 규칙의 단일 진실 원천은 `validate_tag.py` 하나다 — 예전처럼 훅이 정규식으로 같은 규칙을 재구현하면 두 사본이 드리프트한다.
 
@@ -240,7 +250,7 @@ Skips: `99_Template`, `docs`, `.claude`, `90_Archive`, `_Wiki`, `_Sources`, `01_
 
 ### Active: `check-folder-rules.py` (mechanical)
 
-`.claude/hooks/check-folder-rules.py`, registered in `settings.json` as `PostToolUse` on `Write`. Four path-only checks:
+`.claude/hooks/check-folder-rules.py`, run by `post-write.py` (PostToolUse `Write` only). Four path-only checks:
 
 1. **`12_Projects/`** — loose `.md` at root (no sub-folder) → warn
 2. **`90_Archive/`** — any write → warn (no file creation allowed)
