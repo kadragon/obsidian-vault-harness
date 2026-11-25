@@ -19,54 +19,14 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-todo-due-date.py\"",
-            "statusMessage": "할일 마감일 검사 중..."
-          },
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/validate-tags.sh\"",
-            "statusMessage": "태그 검증 중..."
-          },
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-template.py\"",
-            "statusMessage": "템플릿 검사 중..."
-          },
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-nested-delegation.py\"",
-            "statusMessage": "중첩 위임 검사 중..."
-          },
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-skill-doc.py\"",
-            "statusMessage": "스킬 문서 검사 중..."
-          },
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-bare-python.py\"",
-            "statusMessage": "맨 python 호출 검사 중..."
-          },
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-project-hub-length.py\"",
-            "statusMessage": "프로젝트 허브 길이 검사 중..."
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-write.py\"",
+            "statusMessage": "노트·하네스 검사 중..."
           },
           {
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-markdownlint.py\"",
-            "timeout": 30,
+            "timeout": 60,
             "statusMessage": "마크다운 lint 검사 중..."
-          }
-        ]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-folder-rules.py\"",
-            "statusMessage": "폴더 규칙 검사 중..."
           }
         ]
       }

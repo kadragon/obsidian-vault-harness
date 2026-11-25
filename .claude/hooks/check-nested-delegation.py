@@ -19,6 +19,9 @@
 #   - inbox-process 워커 절차서: references/action-branch.md, reference-branch.md
 import json, re, sys, pathlib
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "lib"))
+from hook_io import run_standalone
+
 # 이 볼트의 서브에이전트 이름 — 위임 지시 탐지 대상.
 # `.claude/agents/*.md` 에서 런타임에 유도한다. 하드코딩이면 에이전트를 추가할 때
 # 이 목록을 갱신하는 것을 잊어 산문 수준 탐지가 조용히 꺼진다(훅이 막으려는 바로 그 무음 실패).
@@ -91,24 +94,18 @@ def is_subagent_facing(path: pathlib.Path) -> bool:
     return False
 
 
-def main() -> None:
-    try:
-        d = json.loads(sys.stdin.read())
-    except Exception:
-        sys.exit(0)
-
-    fp = (d.get("tool_input") or {}).get("file_path", "")
+def check(fp, tool_name=None):
     if not fp or not fp.endswith(".md"):
-        sys.exit(0)
+        return None
 
     path = pathlib.Path(fp)
     if not path.is_file() or not is_subagent_facing(path):
-        sys.exit(0)
+        return None
 
     try:
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError:
-        sys.exit(0)
+        return None
 
     hits = [
         f"  L{i}: {ln.strip()[:120]}"
@@ -116,7 +113,7 @@ def main() -> None:
         if DELEGATE_PAT.search(ln) and not NEGATION_PAT.search(ln)
     ]
     if not hits:
-        sys.exit(0)
+        return None
 
     msg = (
         f"[중첩 위임 경고] {path.name}\n"
@@ -126,13 +123,8 @@ def main() -> None:
         + "\n조치: 해당 작업을 에이전트가 직접 수행하도록 바꾸거나(`Skill` 도구는 사용 가능), "
         "메인 스레드에 보고해 호출하게 하라."
     )
-    print(json.dumps({
-        "hookSpecificOutput": {
-            "hookEventName": "PostToolUse",
-            "additionalContext": msg,
-        }
-    }))
+    return msg
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(run_standalone(check))

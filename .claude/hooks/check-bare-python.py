@@ -20,10 +20,12 @@
 # `PYTHON=python` 대입, `alias py=python`, heredoc `python <<EOF`,
 # 확장자 없는 상대경로(`python bin/tool`), `python2`.
 # 전부 산문 오탐을 피하려고 일부러 뺐다. 넓히려면 오탐 실측을 먼저 하라.
-import json
 import re
 import sys
 import pathlib
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "lib"))
+from hook_io import run_standalone
 
 SCAN_DIRS = (".claude", "docs")
 SCAN_SUFFIXES = (".md", ".sh", ".py")
@@ -177,38 +179,27 @@ def sweep(argv: list) -> int:
     return 0
 
 
-def main() -> None:
-    if "--sweep" in sys.argv[1:]:
-        sys.exit(sweep([a for a in sys.argv[1:] if a != "--sweep"]))
-
-    # 훅 모드는 **무슨 일이 있어도 exit 0** 이어야 한다 — 훅이 죽으면 도구 호출이
-    # 실패한 것처럼 보인다. stdin 파싱뿐 아니라 페이로드 형태 접근까지 감싼다.
-    try:
-        d = json.loads(sys.stdin.read())
-        fp = d["tool_input"]["file_path"]
-        if not isinstance(fp, str):
-            raise TypeError
-    except Exception:
-        sys.exit(0)
-
+def check(fp, tool_name=None):
+    """훅 모드는 경고만 한다 — 못 읽거나 범위 밖이면 조용히 None."""
+    if not isinstance(fp, str) or not fp:
+        return None
     path = pathlib.Path(fp)
-    if not fp or not path.is_file() or not in_scope(path, repo_root()):
-        sys.exit(0)
-
+    if not path.is_file() or not in_scope(path, repo_root()):
+        return None
     try:
         hits = scan(path)
     except OSError:
-        sys.exit(0)  # 훅 모드는 항상 exit 0 — 못 읽으면 조용히 넘어간다.
-    if not hits:
-        sys.exit(0)
+        return None  # 훅 모드는 항상 exit 0 — 못 읽으면 조용히 넘어간다.
+    return warn_text(path, hits) if hits else None
 
-    print(json.dumps({
-        "hookSpecificOutput": {
-            "hookEventName": "PostToolUse",
-            "additionalContext": warn_text(path, hits),
-        }
-    }))
+
+def main() -> int:
+    if "--sweep" in sys.argv[1:]:
+        return sweep([a for a in sys.argv[1:] if a != "--sweep"])
+    # 훅 모드는 **무슨 일이 있어도 exit 0** 이어야 한다 — 훅이 죽으면 도구 호출이
+    # 실패한 것처럼 보인다. run_standalone 이 stdin 파싱 실패를 exit 0 으로 처리한다.
+    return run_standalone(check)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

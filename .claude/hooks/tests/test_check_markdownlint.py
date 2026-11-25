@@ -2,7 +2,8 @@
 """Regression tests for the markdownlint advisory hook.
 
 Run with: python3 .claude/hooks/tests/test_check_markdownlint.py
-Needs npx on PATH (skipped otherwise); the first run downloads markdownlint-cli2.
+Needs node and npm on PATH (skipped otherwise); the first run installs markdownlint-cli2
+into the hook's cache (MARKDOWNLINT_CACHE_DIR, default ~/.cache/knue-vault-harness).
 """
 from __future__ import annotations
 
@@ -23,7 +24,7 @@ CLEAN = "# 제목\n\n#업무/학사\n\n- 항목\n\t- 탭 들여쓰기 하위 항
 TABLE_GLUED = "# 제목\n\n| a | b |\n|---|---|\n| 1 | 2 |\n※ 표 바로 뒤 문장\n"
 
 
-def run_hook(rel_path: str, body: str, with_config: bool = True) -> str:
+def run_hook(rel_path: str, body: str, with_config: bool = True, env: dict | None = None) -> str:
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         if with_config:
@@ -35,14 +36,14 @@ def run_hook(rel_path: str, body: str, with_config: bool = True) -> str:
             [sys.executable, str(HOOK)],
             input=json.dumps({"tool_input": {"file_path": str(note)}}),
             text=True, encoding="utf-8", capture_output=True, check=True,
-            env={**os.environ, "CLAUDE_PROJECT_DIR": str(root)},
+            env={**(env if env is not None else os.environ), "CLAUDE_PROJECT_DIR": str(root)},
         )
     if not result.stdout.strip():
         return ""
     return json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
 
 
-@unittest.skipUnless(shutil.which("npx"), "npx not available")
+@unittest.skipUnless(shutil.which("node") and shutil.which("npm"), "node/npm not available")
 class MarkdownlintHookTest(unittest.TestCase):
     def test_obsidian_syntax_is_clean(self):
         # line-start #tags, tab-indented lists and wikilinks must not warn
@@ -62,6 +63,18 @@ class MarkdownlintHookTest(unittest.TestCase):
 
     def test_non_markdown_is_silent(self):
         self.assertEqual(run_hook("10_Areas/학사/a.txt", TABLE_GLUED), "")
+
+    def test_existing_empty_cache_dir_is_filled(self):
+        # a pre-created (empty) cache directory must not make the install look failed
+        with tempfile.TemporaryDirectory() as cache:
+            env = {**os.environ, "MARKDOWNLINT_CACHE_DIR": cache}
+            self.assertIn("MD056", run_hook("10_Areas/학사/노트.md", TABLE_GLUED, env=env))
+
+    def test_missing_install_without_npm_is_silent(self):
+        # empty cache + no node/npm on PATH: skip quietly, never fail the write
+        with tempfile.TemporaryDirectory() as cache:
+            env = {**os.environ, "PATH": "", "MARKDOWNLINT_CACHE_DIR": str(Path(cache) / "none")}
+            self.assertEqual(run_hook("10_Areas/학사/노트.md", TABLE_GLUED, env=env), "")
 
 
 if __name__ == "__main__":
